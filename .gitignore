@@ -1,0 +1,15 @@
+# Python 虚拟环境
+.venv/
+venv/
+__pycache__/
+
+# 运行时生成的文件
+*.jpg
+*.png
+daily_card.jpg
+
+# PyCharm 配置
+.idea/
+
+# 系统文件
+.DS_Store
