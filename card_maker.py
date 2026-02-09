@@ -24,7 +24,7 @@ class LyricCard:
         if not self.font_path:
             raise FileNotFoundError("❌ 找不到支持日文的系统字体，请手动指定 font_path！")
 
-    def create_card(self, text, output_name="result.jpg"):
+    def create_card(self, text, output_name="demo.jpg"):
         print(f">>> [Image] Loading background: {self.bg_path}")
 
         # 1. 打开图片并转换为 RGB (防止 PNG 透明底报错)
@@ -99,7 +99,7 @@ if __name__ == "__main__":
         card.create_card(sample_lyric)
 
         # Windows 下自动打开图片查看结果
-        os.startfile("result.jpg")
+        os.startfile("demo.jpg")
 
     except Exception as e:
         print(f"❌ Error: {e}")
