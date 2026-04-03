@@ -1,4 +1,5 @@
-playwright
-fastapi
-uvicorn
-pillow
+playwright>=1.40.0
+fastapi>=0.115.0
+uvicorn>=0.30.0
+pillow>=10.0.0
+slowapi>=0.1.9

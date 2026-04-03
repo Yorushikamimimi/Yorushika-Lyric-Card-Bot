@@ -1,28 +1,29 @@
-# 使用官方 Python 轻量级镜像
 FROM python:3.10-slim
 
-# 1. 设置工作目录
 WORKDIR /app
 
-# 2. 安装系统依赖 (Playwright 需要的一些库 + 字体支持)
+# Install system deps and Playwright (requires root)
 RUN apt-get update && apt-get install -y \
     wget \
+    curl \
     fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
-# 3. 复制依赖文件并安装 Python 库
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && playwright install chromium \
+    && playwright install-deps
 
-# 4. 安装 Playwright 浏览器内核 (及依赖)
-RUN playwright install chromium
-RUN playwright install-deps
+# Create non-root user for running the app
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
-# 5. 复制项目代码和素材
-COPY . .
+# Copy project files and set ownership
+COPY --chown=appuser:appgroup . .
 
-# 6. 暴露端口
+USER appuser
+
 EXPOSE 8000
 
-# 7. 启动命令
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/ || exit 1
+
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

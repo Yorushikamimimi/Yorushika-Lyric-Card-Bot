@@ -15,19 +15,23 @@ Everything is served via a high-performance **FastAPI** endpoint.
 ## ✨ Features
 - **Async Scraping**: Powered by `Playwright (Async)` to handle dynamic JS-rendering sites (Uta-Net).
 - **Auto-Retry Mechanism**: Robust error handling with automatic retries and human-like delays.
-- **Image Synthesis**: Uses `Pillow` to apply dark overlays, center text, and render Japanese fonts (Microsoft YaHei/Meiryo).
-- **RESTful API**: Simple `GET /card` endpoint to trigger the pipeline.
-- **Dockerized**: Ready to deploy on any Linux server.
+- **Polaroid-Style Cards**: 1080x1080 photo area with white border, shadow effect, and artist/song info footer.
+- **Japanese Typography**: Bundled NotoSerifJP font, works cross-platform (Windows/Linux/Docker).
+- **RESTful API**: Simple `GET /card` endpoint with rate limiting (10 calls/min per IP).
+- **Dockerized**: Ready to deploy on any Linux server with non-root user and health checks.
+- **Configurable**: Proxy URL and artist URL configurable via environment variables.
 
 ## 📸 Demo
-*(Place your screenshot here, e.g., assets/demo.jpg)*
-![Demo Result](asset/demo.jpg)
+![Demo Result](demo.jpg)
+
+> Card output with Polaroid border, shadow, and song info footer.
 
 ## 🛠️ Tech Stack
 - **Core**: Python 3.10+
-- **Web Framework**: FastAPI + Uvicorn
+- **Web Framework**: FastAPI + Uvicorn + SlowAPI (rate limiting)
 - **Crawler**: Playwright (Chromium)
 - **Image Processing**: Pillow (PIL)
+- **Font**: NotoSerifJP (bundled, cross-platform)
 
 ## 🚀 Quick Start
 
