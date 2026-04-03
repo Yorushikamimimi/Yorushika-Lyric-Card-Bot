@@ -1,8 +1,9 @@
+import os
 import asyncio
 from playwright.async_api import async_playwright
 
-# === 把你刚才成功的 Proxy 配置复制过来 ===
-PROXY_URL = "http://127.0.0.1:26001"
+# 代理地址（默认本地 Clash）
+PROXY_URL = os.environ.get("PROXY_URL", "http://127.0.0.1:26001")
 
 
 # ========================================
@@ -12,7 +13,6 @@ async def fetch_one_lyric():
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(
-            channel="msedge",
             headless=False,
             proxy={"server": PROXY_URL}
         )

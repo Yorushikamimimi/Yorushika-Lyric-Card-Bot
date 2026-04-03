@@ -1,10 +1,12 @@
+import os
 import asyncio
 from playwright.async_api import async_playwright
 
 # =================配置区=================
-# 请根据你的实际情况修改端口，Clash通常是7890
-PROXY_URL = "http://127.0.0.1:26001"
-TARGET_URL = "https://www.uta-net.com/artist/22669/"
+# 代理地址（默认本地 Clash）
+PROXY_URL = os.environ.get("PROXY_URL", "http://127.0.0.1:26001")
+# Yorushika 在 Uta-Net 的艺术家页面
+TARGET_URL = os.environ.get("UTANET_ARTIST_URL", "https://www.uta-net.com/artist/22669/")
 
 
 # ========================================
@@ -16,7 +18,6 @@ async def main():
         # 1. 启动浏览器时明确指定 proxy
         # channel="msedge" 使用你本地的 Edge
         browser = await p.chromium.launch(
-            channel="msedge",
             headless=False,
             proxy={"server": PROXY_URL}  # <--- 核心修改：强制走代理
         )

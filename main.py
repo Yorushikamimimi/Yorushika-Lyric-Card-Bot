@@ -1,12 +1,19 @@
 import os
 import random
 import asyncio
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from crawler import YorushikaCrawler
 from card_maker import LyricCard
 
+# Rate limiter — 10 calls per minute per IP
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="Yorushika Bot")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # 全局配置
 ASSETS_DIR = "assets"
@@ -19,7 +26,8 @@ async def root():
 
 
 @app.get("/card")
-async def generate_lyric_card():
+@limiter.limit("10/minute")
+async def generate_lyric_card(request: Request):
     """ 核心接口：触发爬虫 -> 合成图片 -> 返回图片 """
     crawler = YorushikaCrawler()
 
@@ -32,7 +40,7 @@ async def generate_lyric_card():
         url = await crawler.get_random_song_url()
 
         print(f">>> [API] 2. Fetching Lyric from {url}...")
-        lyric = await crawler.get_lyric_by_url(url)
+        lyric, song_title = await crawler.get_lyric_by_url(url)
 
         # 3. 随机选一张背景图
         # 列出 assets 文件夹下所有的图片
@@ -47,7 +55,7 @@ async def generate_lyric_card():
         # 4. 合成图片
         # 实例化卡片制作器
         card_maker = LyricCard(bg_path)
-        card_maker.create_card(lyric, output_name=OUTPUT_FILE)
+        card_maker.create_card(lyric, output_name=OUTPUT_FILE, song_title=song_title)
 
         # 5. 返回生成的图片文件
         print(">>> [API] 4. Returning image...")

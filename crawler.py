@@ -1,11 +1,13 @@
+import os
 import asyncio
 import random
 from playwright.async_api import async_playwright, Page
 
 # === 配置区 ===
-# 你的代理地址
-PROXY_URL = "http://127.0.0.1:26001"
-ARTIST_URL = "https://www.uta-net.com/artist/22669/"
+# 代理地址（默认本地 Clash）
+PROXY_URL = os.environ.get("PROXY_URL", "http://127.0.0.1:26001")
+# Yorushika 在 Uta-Net 的艺术家页面
+ARTIST_URL = os.environ.get("UTANET_ARTIST_URL", "https://www.uta-net.com/artist/22669/")
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 
@@ -21,7 +23,6 @@ class YorushikaCrawler:
         self.playwright = await async_playwright().start()
         # 依然使用 headless=True 保持静默
         self.browser = await self.playwright.chromium.launch(
-            channel="msedge",
             headless=True,
             proxy={"server": PROXY_URL}
         )
@@ -82,32 +83,40 @@ class YorushikaCrawler:
         finally:
             await page.close()
 
-    async def get_lyric_by_url(self, url: str) -> str:
-        # 【拟人化】在请求详情页之前，故意休息 2 秒，防止被服务器判定为机器人
-        print(">>> [Crawler] 🛌 Resting for 2s...")
+    async def get_lyric_by_url(self, url: str) -> tuple[str, str]:
+        “””抓取歌词和歌曲标题，返回 (歌词, 歌曲标题)”””
+        print(“>>> [Crawler] 🛌 Resting for 2s...”)
         await asyncio.sleep(2)
 
         page = await self.browser.new_page(user_agent=USER_AGENT)
         try:
-            print(f">>> [Crawler] 2. Fetching lyric...")
+            print(f”>>> [Crawler] 2. Fetching lyric...”)
             await self._goto_with_retry(page, url)
 
-            await page.wait_for_selector("#kashi_area", timeout=10000)
-            raw = await page.locator("#kashi_area").inner_text()
+            # 提取歌曲标题
+            song_title = “”
+            try:
+                # Uta-Net 歌曲页的标题在 h2 或 .title 类中
+                title_el = page.locator(“h2”)
+                if await title_el.count() > 0:
+                    song_title = await title_el.first.inner_text()
+                    song_title = song_title.strip()
+            except Exception:
+                pass
 
-            # 简单清洗
+            await page.wait_for_selector(“#kashi_area”, timeout=10000)
+            raw = await page.locator(“#kashi_area”).inner_text()
+
             lines = [line.strip() for line in raw.split('\n') if line.strip()]
 
-            # 为了卡片好看，我们只取比较“整齐”的一段
-            # 比如取中间的几句，或者直接取前几句
             if len(lines) > 5:
-                # 稍微取一点稍微长一点的歌词，太短的不好看
-                preview = "\n".join(lines[:8])
+                preview = “\n”.join(lines[:8])
             else:
-                preview = "\n".join(lines)
+                preview = “\n”.join(lines)
 
-            print(f"✅ [Crawler] Lyric captured! ({len(preview)} chars)")
-            return preview
+            print(f”✅ [Crawler] Lyric captured! ({len(preview)} chars)”)
+            print(f”✅ [Crawler] Song title: {song_title}”)
+            return preview, song_title
 
         finally:
             await page.close()
