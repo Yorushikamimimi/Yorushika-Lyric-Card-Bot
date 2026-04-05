@@ -7,11 +7,11 @@ async def run_smoke_test():
 
     async with async_playwright() as p:
         # Launch browser
-        # headless=True 是默认的，但在开发阶段有时候改成 False 方便 Debug 看看发生了什么
+        # headless=True is the default, but during development it's sometimes set to False for easier debugging
         print(">>> [Browser] Launching Chromium...")
         browser = await p.chromium.launch(headless=True)
 
-        # Context 和 Page 也就是浏览器实例和标签页
+        # Context and Page are the browser instance and tab
         context = await browser.new_context()
         page = await context.new_page()
 
@@ -19,13 +19,13 @@ async def run_smoke_test():
         print(f">>> [Network] Navigating to {target_url} ...")
 
         try:
-            # timeout=10000 意思是 10秒没加载完就报错，防止死等
+            # timeout=10000 means error if not loaded in 10 seconds, prevents indefinite waiting
             await page.goto(target_url, timeout=10000)
 
-            # 获取页面 Title
+            # Get page title
             title = await page.title()
 
-            # Double Check: 验证 title 是否包含预期关键字
+            # Double Check: verify title contains expected keywords
             if "ヨルシカ" in title or "Yorushika" in title:
                 print(f"✅ [Success] Connected! Page Title: {title}")
             else:
@@ -40,5 +40,5 @@ async def run_smoke_test():
 
 
 if __name__ == "__main__":
-    # PyCharm 直接右键 Run 'test_env' 即可
+    # In PyCharm, right-click and Run 'test_env' directly
     asyncio.run(run_smoke_test())
