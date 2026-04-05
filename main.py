@@ -15,7 +15,7 @@ app = FastAPI(title="Yorushika Bot")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# 全局配置
+# Global configuration
 ASSETS_DIR = "assets"
 OUTPUT_FILE = "daily_card.jpg"
 
@@ -28,22 +28,22 @@ async def root():
 @app.get("/card")
 @limiter.limit("10/minute")
 async def generate_lyric_card(request: Request):
-    """ 核心接口：触发爬虫 -> 合成图片 -> 返回图片 """
+    """Core endpoint: trigger crawler -> composite image -> return image"""
     crawler = YorushikaCrawler()
 
     try:
-        # 1. 启动爬虫
+        # 1. Start crawler
         await crawler.start()
 
-        # 2. 抓取流程
+        # 2. Fetching process
         print(">>> [API] 1. Getting URL...")
         url = await crawler.get_random_song_url()
 
         print(f">>> [API] 2. Fetching Lyric from {url}...")
         lyric, song_title = await crawler.get_lyric_by_url(url)
 
-        # 3. 随机选一张背景图
-        # 列出 assets 文件夹下所有的图片
+        # 3. Randomly select a background image
+        # List all images in assets folder
         bg_files = [f for f in os.listdir(ASSETS_DIR) if f.lower().endswith(('.jpg', '.png', '.jpeg'))]
         if not bg_files:
             return {"error": "No background images found in assets/ folder!"}
@@ -52,12 +52,12 @@ async def generate_lyric_card(request: Request):
         bg_path = os.path.join(ASSETS_DIR, selected_bg)
         print(f">>> [API] 3. Selected background: {selected_bg}")
 
-        # 4. 合成图片
-        # 实例化卡片制作器
+        # 4. Composite image
+        # Instantiate card maker
         card_maker = LyricCard(bg_path)
         card_maker.create_card(lyric, output_name=OUTPUT_FILE, song_title=song_title)
 
-        # 5. 返回生成的图片文件
+        # 5. Return generated image file
         print(">>> [API] 4. Returning image...")
         return FileResponse(OUTPUT_FILE, media_type="image/jpeg")
 
@@ -66,12 +66,12 @@ async def generate_lyric_card(request: Request):
         return {"error": str(e)}
 
     finally:
-        # 别忘了关浏览器
+        # Don't forget to close browser
         await crawler.stop()
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    # 启动本地服务器，端口 8000
+    # Start local server, port 8000
     uvicorn.run(app, host="127.0.0.1", port=8000)
