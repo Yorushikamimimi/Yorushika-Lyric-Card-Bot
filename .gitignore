@@ -13,3 +13,20 @@ daily_card.jpg
 
 # 系统文件
 .DS_Store
+
+# Local media exports, browser evidence and test caches
+output/
+outputs/
+.playwright-mcp/
+.pytest_cache/
+
+# Local configuration and media sources are not part of the code repository.
+.env
+.env.*
+*.mp4
+*.mkv
+*.mov
+*.webm
+*.m4v
+*.flv
+*.avi

@@ -1,0 +1,3 @@
+# Optional test dependencies; the local studio does not need these to run.
+-r requirements.txt
+httpx>=0.27.0,<1

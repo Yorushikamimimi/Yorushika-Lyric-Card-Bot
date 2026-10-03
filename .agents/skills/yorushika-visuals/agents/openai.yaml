@@ -1,0 +1,4 @@
+interface:
+  display_name: "ヨルシカ视觉工房"
+  short_description: "按项目审美标准增量精选Live/MV与夜鹿头像，制作后刷新网页即可查看"
+  default_prompt: "使用 $yorushika-visuals，先读项目进度和VISUAL_GUIDE并查看校准图，按当前允许的素材范围新增壁纸或头像，完成入库，让我刷新现有网页即可选择。"

@@ -2,7 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [2026-10-03] 本地视觉工房主线
+
+- 默认入口转为本机网页工房：浏览Live/MV候选与精选、加载真实原帧、按电脑/手机/头像规格裁切导出，并查看本地GPT二创与插画。
+- 固定使用方式为本机网页配合当前GPT主控；GPT通过内置图像工具制作二创，网页整理需求和展示成品，不增加外置Agent服务。
+- 默认运行依赖统一到 `requirements.txt`，仅声明FastAPI、Uvicorn、Pydantic与Pillow；移除默认Playwright/Chromium与SlowAPI需求。视频处理使用已有ffmpeg/ffprobe；测试依赖单列，旧安装清单保留兼容引用。
+- 将现有网页、视频工具、测试、Skill与接手文档纳入Git。源视频和 `output/` 中的候选、成品、来源记录仍保留在本机，GitHub更新不等同于素材备份。
+- 旧歌词卡停用，历史分支 `codex/legacy-lyric-card` 指向 `8d39bce`；不再维护抓词接口或Docker部署。旧脚本保留作参考。
+- 实际测试、合入与推送状态以 `CURRENT_PROGRESS.md` 为准。
+
+## [Unreleased] 历史歌词卡版本（已停止维护）
 
 ### Security Fixes
 
