@@ -1,8 +1,16 @@
 # 当前进度
 
-更新：2026-10-03（Asia/Shanghai）。状态：用户认可当前本地工房，已授权将新版设为主线、合入main并推送现有GitHub仓库。新版已合入并推送远程main，旧歌词卡历史分支已保留；26项测试、远程克隆源码启动与真实网页操作本轮验证通过，待用户验收。第四轮作品及旧批次继续保留在本机。
+更新：2026-10-03（Asia/Shanghai）。状态：README已简化并加入用户提供的六张界面截图；本轮同步移除旧提交中的Claude共同作者署名，原历史已备份。本轮已提交并同步远程main与旧版分支；GitHub新README显示正常，Contributors仍显示Claude，待平台缓存刷新。当前本地工房与图库保留。
 
-## 2026-10-03 工房主线与Git发布
+## 2026-10-03 README截图与贡献署名调整
+
+- 用户要求README简洁易懂，加入六张提供的界面截图，并在同轮commit中解决Claude Contributors待办。沿用当前main和既有远程更新流程；本轮仅涉及展示文档、截图及已明确说明的历史署名调整，不更改应用代码、素材或仓库可见性。
+- README改为用途、界面、功能、启动和维护入口。六张原始PNG逐字节复制到 `docs/screenshots/`，均3406×1758；主界面直接显示，其他五张放在两个可展开区域。Git忽略规则仅为这个展示目录放行PNG，`output/`仍不进Git。
+- 两条旧提交移除 `Co-Authored-By: Claude <noreply@anthropic.com>`；作者、提交时间、各历史版本文件树均相同。后续提交仅随父提交散列变化：旧 `0502cba`→`2b1f679`、旧 `8d39bce`→`68c3420`，工房代码 `54f3123`→`45bb2d4`、主线发布文档 `5fef2cb`→`ec85d83`。下方发布记录保留当时散列；当前旧版分支为 `codex/legacy-lyric-card`，指向 `68c3420`，本机工房分支也同步映射。
+- 可恢复原历史在本机 `output/readme-contributors-20261003-v1/history-before.bundle`，已验证bundle；原进度的未提交待办也已保存。使用精确远程旧散列保护的更新方式同步main与历史分支，防止覆盖期间的他人提交。详细映射与执行结果保存在同目录，备份不上传GitHub。
+- 本轮截图完整性、原图散列、README图片/文档链接与历史文件树/作者日期检查通过。GitHub Markdown API渲染后的HTML在本机浏览器实测：六图均载入为3406×1758，两个展开区域可用，无横向溢出、无console警告/错误。应用代码未修改，单元测试N/A，不重跑上轮26项测试。远程README逐字节一致、六张截图Git对象散列一致，main与旧版分支散列已核对；当前提交只含README、进度、CHANGELOG、忽略规则和六图。认证Chrome实测仓库首页已显示新README，头像展开区域可用；Contributors仍显示2人及Claude，主页显示移除尚未证实，不反复改仓库设置来触发刷新。执行结果见同目录 `github-page-verification.json` 与 `published-verification.json`。GitHub贡献者显示有缓存，历史署名清除和主页显示刷新分别验证；不能用Contributors API代替截图中的主页名单（调整前API本身就未返回Claude）。未使用子Agent。
+
+## 2026-10-03 工房主线与Git发布（历史记录）
 
 - 用户明确批准本机网页搭配当前GPT主控的方案；不建设外置Agent服务。旧歌词卡停止维护，历史分支 `codex/legacy-lyric-card` 保存完整 `8d39bce535ae16ff273378ca697328653e792b21`。原旧脚本、Docker文件及字体原样保留作参考，不在当前运行/安装/测试流程中；不维护融合版或部署入口。
 - 默认 `requirements.txt` 只声明FastAPI、Uvicorn、Pydantic、Pillow四项运行依赖，退出Playwright/Chromium与SlowAPI。`requirements-studio.txt`变为兼容引用，测试用 `requirements-dev.txt` 单列httpx。ffmpeg/ffprobe继续使用本机已有工具；没有安装新依赖或卸载用户环境中的旧包。
@@ -166,6 +174,7 @@
 
 ## 明确的限制与后续
 
+- Claude旧共同作者署名已清除并同步远程；GitHub主页Contributors仍显示，待平台缓存刷新，尚未证实显示移除。具体映射、备份和验证见上方记录；以后不自动加入无依据的AI共同作者署名。
 - 网页预览已改真实原帧，但历史MV的1080p编码、新源可能的修复放大、镜头软焦与原画特效都不能靠锐化恢复。手机从横屏裁切后放大较多；新增像素不是新增细节。
 - cover不会新增黑边，但不会自动去除原片烘焙边条。《春泥棒》第二轮横屏保留原边；第四轮樱花与柯基版本已精确裁切去边。网页自行导出仍需注意原片边条。
 - HDR转换1000nit仍是参考显示假设，不使用Dolby Vision动态元数据；非专业母版等色验收。

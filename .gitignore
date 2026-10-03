@@ -6,6 +6,7 @@ __pycache__/
 # 运行时生成的文件
 *.jpg
 *.png
+!docs/screenshots/*.png
 daily_card.jpg
 
 # PyCharm 配置
