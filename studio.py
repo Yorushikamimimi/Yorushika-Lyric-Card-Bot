@@ -64,6 +64,12 @@ class PreviewRequest(BaseModel):
     candidate_id: str = Field(min_length=1, max_length=64)
 
 
+class FavoriteRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    candidate_id: str = Field(min_length=1, max_length=64)
+    favorite: bool
+
+
 class AvatarExportRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
     avatar_id: str = Field(min_length=1, max_length=64)
@@ -84,6 +90,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
     tasks: set[asyncio.Task] = set()
     preview_slot = asyncio.Semaphore(1)
     artwork_slots = asyncio.Semaphore(2)
+    favorite_lock = asyncio.Lock()
 
     @asynccontextmanager
     async def lifespan(_app):
@@ -131,12 +138,30 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         except (OSError, ValueError):
             return {}
 
+    def read_favorites() -> tuple[set[tuple[str, str]], str | None]:
+        path = output / "favorites.json"
+        if not path.exists():
+            return set(), None
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, ValueError):
+            return set(), "收藏文件无法读取或不是有效 JSON，已保留原文件。"
+        if not isinstance(data, dict) or data.get("version", 1) != 1 or not isinstance(data.get("items"), list):
+            return set(), "收藏文件结构无效，已保留原文件。"
+        items: set[tuple[str, str]] = set()
+        for item in data["items"]:
+            if not isinstance(item, dict) or not isinstance(item.get("manifest"), str) or not isinstance(item.get("candidate_id"), str) or not item["candidate_id"]:
+                return set(), "收藏文件条目无效，已保留原文件。"
+            items.add((item["manifest"], item["candidate_id"]))
+        return items, None
+
     def library() -> dict:
         found: dict[str, dict] = {}
         rows = []
         selection = read_json(output / "selection.json")
         selection_items = selection.get("items", []) if isinstance(selection, dict) else []
         picks = {(str(x.get("manifest") or ""), str(x.get("candidate_id"))): x for x in selection_items if isinstance(x, dict)}
+        favorite_keys, _favorite_error = read_favorites()
         selection_order = {id(item): index for index, item in enumerate(selection_items) if isinstance(item, dict)}
         manifests = sorted(output.glob("*/manifest.json")) if output.exists() and within(output, root) else []
         if within(output, root) and (output / "manifest.json").exists():
@@ -189,6 +214,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                     "timecode": str(row.get("timecode") or f"{int(timestamp)//60:02d}:{int(timestamp)%60:02d}"),
                     "timestamp": timestamp, "chapter": row.get("chapter"),
                     "selected": bool(pick), "reviewed": pick.get("reviewed") is True,
+                    "favorite": (manifest_scope, original_id) in favorite_keys,
                     "selection_order": selection_order.get(id(pick)),
                     "note": str(pick.get("note") or ""),
                     "recommended_for": pick.get("recommended_for", []),
@@ -228,6 +254,20 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         avatars.update(found_avatars)
         rows.sort(key=lambda row: (not row["selected"], row["selection_order"] if row["selection_order"] is not None else len(selection_items), row["source_label"], row["timestamp"]))
         return {"candidates": rows, "avatars": avatar_rows, "manifest_count": len(manifests)}
+
+    def favorite_set() -> set[tuple[str, str]]:
+        items, error = read_favorites()
+        if error:
+            raise ValueError(error)
+        return items
+
+    def write_favorites(items: set[tuple[str, str]]) -> None:
+        output.mkdir(parents=True, exist_ok=True)
+        path = output / "favorites.json"
+        temporary = path.with_suffix(".json.tmp")
+        payload = {"version": 1, "items": [{"manifest": manifest, "candidate_id": candidate_id} for manifest, candidate_id in sorted(items)]}
+        temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        temporary.replace(path)
 
     async def render_cli(candidate: dict, params: ExportRequest, destination: Path):
         command = [sys.executable, str(root / "live_wallpaper.py"), "render", "--source", candidate["source"], "--timestamp", str(candidate["timestamp"]), "--output", str(destination), "--size", f"{params.width}x{params.height}", "--fit", params.fit, "--focus-x", str(params.focus_x), "--focus-y", str(params.focus_y), "--exposure", str(params.exposure), "--contrast", str(params.contrast), "--sharpen", str(params.sharpen)]
@@ -366,6 +406,27 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
     @app.get("/api/library")
     async def get_library():
         return await asyncio.to_thread(library)
+
+    @app.post("/api/favorites")
+    async def update_favorite(params: FavoriteRequest):
+        candidate = candidates.get(params.candidate_id)
+        if candidate is None:
+            raise HTTPException(404, "候选画面不存在，请刷新选片。")
+        key = (str(candidate["manifest"]), str(candidate["candidate_id"]))
+        async with favorite_lock:
+            try:
+                items = await asyncio.to_thread(favorite_set)
+            except ValueError as exc:
+                raise HTTPException(409, str(exc))
+            if params.favorite:
+                items.add(key)
+            else:
+                items.discard(key)
+            try:
+                await asyncio.to_thread(write_favorites, items)
+            except OSError:
+                raise HTTPException(500, "收藏保存失败，请检查本地图库目录权限。")
+        return {"candidate_id": params.candidate_id, "favorite": params.favorite}
 
     @app.post("/api/exports", status_code=202)
     async def export_image(params: ExportRequest):

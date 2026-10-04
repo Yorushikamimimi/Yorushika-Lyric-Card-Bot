@@ -1,6 +1,6 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
-const state = {candidates: [], avatars: [], selected: null, filter: "selected", exporting: false, avatarExporting: false, previewSerial: 0, previewAbort: null, previewTimer: null};
+const state = {candidates: [], avatars: [], selected: null, filter: "selected", exporting: false, avatarExporting: false, previewSerial: 0, previewAbort: null, previewTimer: null, favoriteSaving: new Set()};
 const defaultSettings = {"size-preset": "2560x1440", fit: "contain", "focus-x": ".5", "focus-y": ".5", exposure: "0", contrast: "1", sharpen: ".25"};
 function status(message, error = false) { $("export-status").textContent = message; $("export-status").classList.toggle("error", error); }
 function params() {
@@ -101,27 +101,53 @@ function choose(candidate) {
 }
 function renderGallery() {
   const picks = state.candidates.filter(c => c.selected);
-  const filtered = state.filter === "selected" ? picks : state.filter === "all" ? state.candidates : state.candidates.filter(c => c.source_kind === state.filter);
+  const filtered = state.filter === "selected" ? picks : state.filter === "favorites" ? state.candidates.filter(c => c.favorite) : state.filter === "all" ? state.candidates : state.candidates.filter(c => c.source_kind === state.filter);
   const visible = state.filter === "selected" ? filtered : [...filtered].sort((a, b) => a.source_label.localeCompare(b.source_label, "zh-CN") || a.timestamp - b.timestamp);
   const grid = $("candidate-grid");
+  const focusedId = grid.contains(document.activeElement) ? document.activeElement.id : null;
   grid.replaceChildren();
   for (const c of visible) {
-    const button = document.createElement("button");
-    button.className = "candidate" + (state.selected?.id === c.id ? " selected" : "");
-    button.setAttribute("aria-pressed", String(state.selected?.id === c.id));
-    button.setAttribute("aria-label", `选择 ${c.title} ${c.timecode}`);
+    const card = document.createElement("article");
+    card.className = "candidate" + (state.selected?.id === c.id ? " selected" : "");
+    const surface = document.createElement("button"); surface.type = "button"; surface.className = "candidate-surface"; surface.setAttribute("aria-pressed", String(state.selected?.id === c.id)); surface.setAttribute("aria-label", `选择 ${c.title} ${c.timecode}`);
+    surface.id = `candidate-surface-${c.id}`; surface.addEventListener("click", () => choose(c));
     const wrap = document.createElement("div"); wrap.className = "candidate-image";
     const image = document.createElement("img"); image.src = c.thumbnail || c.preview; image.alt = c.title; image.loading = "lazy";
     const time = document.createElement("span"); time.className = "candidate-time"; time.textContent = c.timecode;
-    const title = document.createElement("h3"); title.textContent = c.title;
+    const titleRow = document.createElement("div"); titleRow.className = "candidate-title-row";
+    const title = document.createElement("h3"); title.className = "candidate-title";
+    const titleButton = document.createElement("button"); titleButton.type = "button"; titleButton.className = "candidate-title-select"; titleButton.id = `candidate-title-${c.id}`; titleButton.textContent = c.title; titleButton.setAttribute("aria-pressed", String(state.selected?.id === c.id)); titleButton.addEventListener("click", () => choose(c)); title.append(titleButton);
     const source = document.createElement("p"); source.textContent = c.source_label;
-    wrap.append(image, time); button.append(wrap, title, source);
-    button.addEventListener("click", () => choose(c)); grid.append(button);
+    const chooseButton = document.createElement("button"); chooseButton.type = "button"; chooseButton.className = "candidate-select"; chooseButton.setAttribute("aria-pressed", String(state.selected?.id === c.id)); chooseButton.setAttribute("aria-label", `选择 ${c.title} ${c.timecode}`); chooseButton.textContent = "查看这一帧";
+    chooseButton.id = `candidate-view-${c.id}`;
+    const favorite = document.createElement("button"); favorite.type = "button"; favorite.className = "favorite-toggle" + (c.favorite ? " is-favorite" : ""); favorite.setAttribute("aria-label", c.favorite ? "取消收藏" : "收藏画面"); favorite.setAttribute("aria-pressed", String(Boolean(c.favorite))); favorite.title = c.favorite ? "取消收藏" : "收藏画面"; favorite.disabled = state.favoriteSaving.has(c.id);
+    favorite.id = `candidate-favorite-${c.id}`;
+    const heart = document.createElementNS("http://www.w3.org/2000/svg", "svg"); heart.setAttribute("viewBox", "0 0 24 24"); heart.setAttribute("aria-hidden", "true"); heart.classList.add("favorite-icon");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); path.setAttribute("d", "M12 20.2 4.8 13A4.8 4.8 0 0 1 11.6 6.2L12 6.7l.4-.5A4.8 4.8 0 0 1 19.2 13L12 20.2Z"); heart.append(path); favorite.append(heart);
+    surface.append(wrap); chooseButton.addEventListener("click", () => choose(c));
+    favorite.addEventListener("click", () => toggleFavorite(c));
+    titleRow.append(title, favorite); wrap.append(image, time); card.append(surface, titleRow, source, chooseButton); grid.append(card);
   }
-  $("gallery-summary").textContent = `${picks.length} 张精选 / ${state.candidates.length} 张候选。自动评分用于初筛；人物、歌词和构图以实际画面为准。`;
+  $("gallery-summary").textContent = state.filter === "favorites" ? `${filtered.length} 张收藏 / ${state.candidates.length} 张候选。收藏由你管理，与精选分开保存。` : `${picks.length} 张精选 / ${state.candidates.length} 张候选 · ${state.candidates.filter(c => c.favorite).length} 张收藏。自动评分用于初筛；人物、歌词和构图以实际画面为准。`;
   $("gallery-empty").hidden = visible.length > 0;
-  $("gallery-empty").textContent = state.candidates.length ? (state.filter === "selected" ? "还没有精选。切到「全部候选」，从视频里挑一张。" : "这一类还没有候选画面，提取后点击刷新。") : "还没有视频候选。请让 Codex 从本地 Live 或 MV 提取选片，完成后点击刷新。";
+  $("gallery-empty").textContent = state.filter === "favorites" ? "还没有收藏。浏览精选或候选画面，点按标题右侧的心形即可收藏。" : state.candidates.length ? (state.filter === "selected" ? "还没有精选。切到「全部候选」，从视频里挑一张。" : "这一类还没有候选画面，提取后点击刷新。") : "还没有视频候选。请让 Codex 从本地 Live 或 MV 提取选片，完成后点击刷新。";
   for (const filter of ["selected", "all", "live", "mv"]) {const active = state.filter === filter; $(`${filter}-filter`).classList.toggle("active", active); $(`${filter}-filter`).setAttribute("aria-pressed", String(active));}
+  const favoriteFilter = $("favorite-filter"); favoriteFilter.classList.toggle("active", state.filter === "favorites"); favoriteFilter.setAttribute("aria-pressed", String(state.filter === "favorites"));
+  if (focusedId) {
+    const target = $(focusedId) || grid.querySelector("button") || favoriteFilter;
+    if (!target.disabled) target.focus({preventScroll: true});
+  }
+}
+async function toggleFavorite(candidate) {
+  if (state.favoriteSaving.has(candidate.id)) return;
+  const focusedId = document.activeElement.id === `candidate-favorite-${candidate.id}` ? document.activeElement.id : null;
+  const previous = Boolean(candidate.favorite); candidate.favorite = !previous; state.favoriteSaving.add(candidate.id);
+  try {
+    renderGallery();
+    const response = await fetch("/api/favorites", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({candidate_id: candidate.id, favorite: candidate.favorite})});
+    const result = await response.json(); if (!response.ok) throw new Error(typeof result.detail === "string" ? result.detail : "收藏暂时无法保存。"); candidate.favorite = result.favorite;
+  } catch (error) {candidate.favorite = previous; status(error.message, true);}
+  finally {state.favoriteSaving.delete(candidate.id); try {renderGallery(); if (focusedId && document.activeElement === document.body) {const target = $(focusedId) || $("candidate-grid").querySelector(".favorite-toggle") || $("favorite-filter"); if (!target.disabled) target.focus({preventScroll: true});}} catch (renderError) {status(renderError.message, true);}}
 }
 function renderAvatars() {
   $("avatar-grid").replaceChildren(); $("avatar-empty").hidden = state.avatars.length > 0;
@@ -185,7 +211,7 @@ async function loadLibrary() {
   try {
     const response = await fetch("/api/library"); if (!response.ok) throw new Error("视频画廊暂时无法打开，请确认本地服务仍在运行。");
     const data = await response.json(); state.candidates = data.candidates; state.avatars = data.avatars;
-    if (!state.candidates.some(c => c.selected)) state.filter = "all";
+    if (!state.candidates.some(c => c.selected) && state.filter === "selected") state.filter = "all";
     const selected = state.candidates.find(c => c.id === state.selected?.id) || state.candidates[0];
     if (selected) choose(selected);
     else {state.selected = null; $("main-preview").hidden = true; $("preview-empty").hidden = false; $("preview-empty").textContent = "等待第一组视频选片"; $("export-button").disabled = true;}
@@ -236,6 +262,7 @@ $("reset-settings").addEventListener("click", () => {for (const [id, value] of O
 $("selected-filter").addEventListener("click", () => {state.filter = "selected"; renderGallery();});
 $("all-filter").addEventListener("click", () => {state.filter = "all"; renderGallery();});
 for (const filter of ["live", "mv"]) $(`${filter}-filter`).addEventListener("click", () => {state.filter = filter; renderGallery();});
+$("favorite-filter").addEventListener("click", () => {state.filter = "favorites"; renderGallery();});
 $("refresh-library").addEventListener("click", loadLibrary);
 $("export-button").addEventListener("click", exportImage);
 for (const type of ["wallpaper", "avatar"]) $(`${type}-tab`).addEventListener("click", () => {for (const t of ["wallpaper", "avatar"]) {$(`${t}-panel`).hidden = t !== type; $(`${t}-tab`).classList.toggle("active", t === type); $(`${t}-tab`).setAttribute("aria-pressed", String(t === type));} if (type === "wallpaper") updatePreview();});

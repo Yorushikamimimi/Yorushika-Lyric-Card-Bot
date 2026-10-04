@@ -5,6 +5,7 @@ from pathlib import Path
 import tempfile
 import time
 import unittest
+from unittest import mock
 
 from fastapi.testclient import TestClient
 from PIL import Image, ImageDraw
@@ -68,6 +69,65 @@ class StudioTests(unittest.TestCase):
         self.assertEqual(len(candidate["id"]), 24)
         self.assertEqual(self.client.get(candidate["preview"]).status_code, 200)
         self.assertEqual(self.client.get("/media/unknown").status_code, 404)
+
+    def test_favorites_persist_are_manifest_scoped_and_do_not_change_selection(self):
+        candidate = self.candidate()
+        self.assertFalse(candidate["favorite"])
+        response = self.client.post("/api/favorites", json={"candidate_id": candidate["id"], "favorite": True}, headers=self.headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(self.client.get("/api/library").json()["candidates"][0]["favorite"])
+        stored = json.loads((self.output / "favorites.json").read_text())
+        self.assertEqual(stored["items"], [{"manifest": "samples/manifest.json", "candidate_id": "V01-C001"}])
+        self.assertTrue(self.client.get("/api/library").json()["candidates"][0]["selected"])
+        self.client.post("/api/favorites", json={"candidate_id": candidate["id"], "favorite": False}, headers=self.headers)
+        self.assertFalse(self.client.get("/api/library").json()["candidates"][0]["favorite"])
+
+    def test_favorites_do_not_cross_contaminate_duplicate_candidate_ids(self):
+        second_batch = self.output / "later-scan"
+        (second_batch / "previews").mkdir(parents=True)
+        Image.new("RGB", (160, 90), "blue").save(second_batch / "previews" / "frame.jpg")
+        other_source = self.root / "different-concert.mp4"
+        other_source.write_bytes(b"different fixture")
+        other_manifest = json.loads(json.dumps(self.manifest))
+        other_manifest["videos"][0]["source"] = str(other_source)
+        other_manifest["candidates"][0]["source"] = str(other_source)
+        (second_batch / "manifest.json").write_text(json.dumps(other_manifest))
+        rows = self.client.get("/api/library").json()["candidates"]
+        self.assertEqual(len(rows), 2)
+        self.client.post("/api/favorites", json={"candidate_id": rows[0]["id"], "favorite": True}, headers=self.headers)
+        rows = self.client.get("/api/library").json()["candidates"]
+        self.assertEqual(sum(row["favorite"] for row in rows), 1)
+        self.assertTrue(next(row for row in rows if row["manifest"] == rows[0]["manifest"])["favorite"])
+
+    def test_favorites_reject_unknown_candidate_and_empty_filter_data(self):
+        self.assertEqual(self.client.post("/api/favorites", json={"candidate_id": "missing", "favorite": True}, headers=self.headers).status_code, 404)
+        self.assertFalse((self.output / "favorites.json").exists())
+        self.assertFalse(any(row["favorite"] for row in self.client.get("/api/library").json()["candidates"]))
+
+    def test_invalid_favorites_file_is_preserved_and_library_stays_available(self):
+        favorites = self.output / "favorites.json"
+        for raw in ["not json", json.dumps({"version": 1, "items": None}), json.dumps({"version": 1, "items": [{"manifest": "x"}]})]:
+            favorites.write_text(raw)
+            library = self.client.get("/api/library")
+            self.assertEqual(library.status_code, 200)
+            self.assertIn("candidates", library.json())
+            before = favorites.read_bytes()
+            response = self.client.post("/api/favorites", json={"candidate_id": self.candidate()["id"], "favorite": True}, headers=self.headers)
+            self.assertEqual(response.status_code, 409)
+            self.assertEqual(favorites.read_bytes(), before)
+
+    def test_favorites_write_failure_preserves_existing_file(self):
+        favorites = self.output / "favorites.json"
+        favorites.write_text(json.dumps({"version": 1, "items": []}))
+        original = favorites.read_bytes()
+        favorites.chmod(0o400)
+        try:
+            with mock.patch("studio.Path.write_text", side_effect=OSError("read-only")):
+                response = self.client.post("/api/favorites", json={"candidate_id": self.candidate()["id"], "favorite": True}, headers=self.headers)
+            self.assertEqual(response.status_code, 500)
+            self.assertEqual(favorites.read_bytes(), original)
+        finally:
+            favorites.chmod(0o600)
 
     def test_duplicate_short_ids_require_manifest_scoped_selection(self):
         second_batch = self.output / "later-scan"
