@@ -162,6 +162,13 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         selection_items = selection.get("items", []) if isinstance(selection, dict) else []
         picks = {(str(x.get("manifest") or ""), str(x.get("candidate_id"))): x for x in selection_items if isinstance(x, dict)}
         favorite_keys, _favorite_error = read_favorites()
+        # A scoped local overlay preserves original manifests and stable IDs.
+        status = read_json(output / "candidate-status.json")
+        status_items = status.get("items", []) if isinstance(status, dict) else []
+        inactive = {(item.get("manifest"), item.get("candidate_id")) for item in status_items
+                    if isinstance(item, dict) and item.get("active") is False
+                    and isinstance(item.get("manifest"), str)
+                    and isinstance(item.get("candidate_id"), str)} if isinstance(status_items, list) else set()
         selection_order = {id(item): index for index, item in enumerate(selection_items) if isinstance(item, dict)}
         manifests = sorted(output.glob("*/manifest.json")) if output.exists() and within(output, root) else []
         if within(output, root) and (output / "manifest.json").exists():
@@ -209,20 +216,22 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                     "thumbnail": preview,
                     "manifest": manifest_scope,
                     "source_kind": data.get("source_kind", "live"),
-                    "title": str(pick.get("title") or row.get("chapter") or "视频片刻"),
+                    "title": str(pick.get("title") or row.get("title") or row.get("chapter") or "视频片刻"),
                     "source_label": str(video.get("label") or source.stem),
                     "timecode": str(row.get("timecode") or f"{int(timestamp)//60:02d}:{int(timestamp)%60:02d}"),
                     "timestamp": timestamp, "chapter": row.get("chapter"),
-                    "selected": bool(pick), "reviewed": pick.get("reviewed") is True,
+                    "selected": bool(pick), "reviewed": pick.get("reviewed", row.get("reviewed")) is True,
                     "favorite": (manifest_scope, original_id) in favorite_keys,
+                    "active": (manifest_scope, original_id) not in inactive,
                     "selection_order": selection_order.get(id(pick)),
-                    "note": str(pick.get("note") or ""),
-                    "recommended_for": pick.get("recommended_for", []),
+                    "note": str(pick.get("note") or row.get("note") or ""),
+                    "recommended_for": pick.get("recommended_for", row.get("recommended_for", [])),
                     "source_available": source.is_file(),
                     "scores": row.get("scores", {}),
                 }
                 found[key] = {**public, "source": str(source), "source_metadata": video.get("metadata", {})}
-                rows.append(public)
+                if public["active"] or public["favorite"] or public["selected"]:
+                    rows.append(public)
         candidates.clear()
         candidates.update(found)
         avatar_rows = []

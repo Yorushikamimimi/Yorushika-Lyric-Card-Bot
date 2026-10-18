@@ -4,25 +4,30 @@ const state = {candidates: [], avatars: [], selected: null, filter: "selected", 
 const defaultSettings = {"size-preset": "2560x1440", fit: "contain", "focus-x": ".5", "focus-y": ".5", exposure: "0", contrast: "1", sharpen: ".25"};
 // Temporary compositions share one source, output size and tone settings.
 const cropComparison = {schemes: [], group: null, nextId: 1};
-const galleryScope = {live: "", mv: ""};
+const galleryScope = {kind: null, value: ""};
 function sourceOptions(kind) {
   return [...new Set(state.candidates.filter(c => c.source_kind === kind).map(c => c.source_label))].sort((a, b) => a.localeCompare(b, "zh-CN", {numeric: true}));
 }
 function renderSourceFilters() {
   for (const kind of ["live", "mv"]) {
     const select = $(`${kind}-source-filter`), options = sourceOptions(kind);
-    if (!options.includes(galleryScope[kind])) galleryScope[kind] = "";
+    if (galleryScope.kind === kind && !options.includes(galleryScope.value)) galleryScope.value = "";
     select.replaceChildren(new Option(kind === "live" ? "全部场次" : "全部曲目", ""), ...options.map(label => new Option(label, label)));
-    select.value = galleryScope[kind];
+    select.value = galleryScope.kind === kind ? galleryScope.value : "";
     select.disabled = options.length === 0;
   }
 }
 function matchesSourceFilter(candidate) {
-  if (state.filter !== "live" && state.filter !== "mv" && (galleryScope.live || galleryScope.mv)) {
-    return Boolean(galleryScope[candidate.source_kind]) && candidate.source_label === galleryScope[candidate.source_kind];
+  return !galleryScope.kind || (candidate.source_kind === galleryScope.kind && (!galleryScope.value || candidate.source_label === galleryScope.value));
+}
+function setGalleryFilter(filter) {
+  if (filter === "all" || ((filter === "live" || filter === "mv") && galleryScope.kind !== filter)) {
+    galleryScope.kind = filter === "all" ? null : filter;
+    galleryScope.value = "";
   }
-  const scope = galleryScope[candidate.source_kind];
-  return !scope || candidate.source_label === scope;
+  state.filter = filter;
+  renderSourceFilters();
+  renderGallery();
 }
 function validSize(p) {
   return Number.isInteger(p.width) && Number.isInteger(p.height) && Math.min(p.width, p.height) >= 256 && Math.max(p.width, p.height) <= 8192 && p.width * p.height <= 34000000;
@@ -214,7 +219,8 @@ function choose(candidate) {
 }
 function renderGallery() {
   const picks = state.candidates.filter(c => c.selected);
-  const filtered = state.filter === "selected" ? picks : state.filter === "favorites" ? state.candidates.filter(c => c.favorite) : state.filter === "all" ? state.candidates : state.candidates.filter(c => c.source_kind === state.filter);
+  const active = state.candidates.filter(c => c.active !== false);
+  const filtered = state.filter === "selected" ? picks : state.filter === "favorites" ? state.candidates.filter(c => c.favorite) : state.filter === "all" ? active : active.filter(c => c.source_kind === state.filter);
   const scoped = filtered.filter(matchesSourceFilter);
   const visible = state.filter === "selected" ? scoped : [...scoped].sort((a, b) => a.source_label.localeCompare(b.source_label, "zh-CN") || a.timestamp - b.timestamp);
   const grid = $("candidate-grid");
@@ -245,8 +251,9 @@ function renderGallery() {
   $("gallery-summary").textContent = state.filter === "favorites" ? `${filtered.length} 张收藏 / ${state.candidates.length} 张候选。收藏由你管理，与精选分开保存。` : `${picks.length} 张精选 / ${state.candidates.length} 张候选 · ${state.candidates.filter(c => c.favorite).length} 张收藏。自动评分用于初筛；人物、歌词和构图以实际画面为准。`;
   $("gallery-empty").hidden = visible.length > 0;
   $("gallery-empty").textContent = state.filter === "favorites" ? "当前分类还没有收藏。切换分类，或浏览候选画面，点按标题右侧的心形即可收藏。" : state.candidates.length ? (state.filter === "selected" ? "当前分类还没有精选。切到「全部候选」，从视频里挑一张。" : "当前分类还没有候选画面。可切换分类，或让 GPT 补充选片后刷新。") : "还没有视频候选。请让 Codex 从本地 Live 或 MV 提取选片，完成后点击刷新。";
-  $("live-source-label").hidden = state.filter === "mv";
-  $("mv-source-label").hidden = state.filter === "live";
+  $("source-filters").hidden = !galleryScope.kind;
+  $("live-source-label").hidden = galleryScope.kind !== "live";
+  $("mv-source-label").hidden = galleryScope.kind !== "mv";
   $("source-filter-count").textContent = `显示 ${visible.length} 张`;
   for (const filter of ["selected", "all", "live", "mv"]) {const active = state.filter === filter; $(`${filter}-filter`).classList.toggle("active", active); $(`${filter}-filter`).setAttribute("aria-pressed", String(active));}
   const favoriteFilter = $("favorite-filter"); favoriteFilter.classList.toggle("active", state.filter === "favorites"); favoriteFilter.setAttribute("aria-pressed", String(state.filter === "favorites"));
@@ -376,11 +383,11 @@ for (const id of ["fit", "focus-x", "focus-y", "exposure", "contrast", "sharpen"
 $("desktop-preset").addEventListener("click", () => {$("size-preset").value = "2560x1440"; sizeChanged();});
 $("phone-preset").addEventListener("click", () => {$("size-preset").value = "1284x2778"; sizeChanged();});
 $("reset-settings").addEventListener("click", () => {for (const [id, value] of Object.entries(defaultSettings)) if (id !== "size-preset") $(id).value = value; sizeChanged();});
-$("selected-filter").addEventListener("click", () => {state.filter = "selected"; renderGallery();});
-$("all-filter").addEventListener("click", () => {state.filter = "all"; renderGallery();});
-for (const filter of ["live", "mv"]) $(`${filter}-filter`).addEventListener("click", () => {state.filter = filter; renderGallery();});
-$("favorite-filter").addEventListener("click", () => {state.filter = "favorites"; renderGallery();});
-for (const kind of ["live", "mv"]) $(`${kind}-source-filter`).addEventListener("change", () => {galleryScope[kind] = $(`${kind}-source-filter`).value; renderGallery();});
+$("selected-filter").addEventListener("click", () => setGalleryFilter("selected"));
+$("all-filter").addEventListener("click", () => setGalleryFilter("all"));
+for (const filter of ["live", "mv"]) $(`${filter}-filter`).addEventListener("click", () => setGalleryFilter(filter));
+$("favorite-filter").addEventListener("click", () => setGalleryFilter("favorites"));
+for (const kind of ["live", "mv"]) $(`${kind}-source-filter`).addEventListener("change", () => {if (galleryScope.kind !== kind) return; galleryScope.value = $(`${kind}-source-filter`).value; renderGallery();});
 $("refresh-library").addEventListener("click", loadLibrary);
 $("export-button").addEventListener("click", exportImage);
 $("save-crop-scheme").addEventListener("click", saveCropScheme);

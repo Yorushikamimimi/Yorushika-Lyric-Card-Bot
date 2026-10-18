@@ -104,6 +104,41 @@ class StudioTests(unittest.TestCase):
         self.assertFalse((self.output / "favorites.json").exists())
         self.assertFalse(any(row["favorite"] for row in self.client.get("/api/library").json()["candidates"]))
 
+    def test_inactive_overlay_preserves_ids_favorites_picks_and_preview(self):
+        candidate = self.candidate()
+        overlay = self.output / "candidate-status.json"
+        overlay.write_text(json.dumps({"version": 1, "items": [{"manifest": "samples/manifest.json", "candidate_id": "V01-C001", "active": False}]}))
+        # Existing picks stay accessible; normal UI can omit active=False.
+        self.assertFalse(self.candidate()["active"])
+        (self.output / "selection.json").write_text(json.dumps({"items": []}))
+        self.assertEqual(self.client.get("/api/library").json()["candidates"], [])
+        # Hidden entries remain addressable without reassigning opaque IDs.
+        response = self.client.post("/api/previews", json={"candidate_id": candidate["id"]}, headers=self.headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.post("/api/favorites", json={"candidate_id": candidate["id"], "favorite": True}, headers=self.headers).status_code, 200)
+        favorite = self.candidate()
+        self.assertEqual(favorite["id"], candidate["id"])
+        self.assertTrue(favorite["favorite"])
+        self.assertFalse(favorite["active"])
+        overlay.write_text(json.dumps({"items": []}))
+        self.assertTrue(self.candidate()["active"])
+        self.assertEqual(self.candidate()["id"], candidate["id"])
+
+    def test_inactive_overlay_is_manifest_scoped(self):
+        (self.output / "candidate-status.json").write_text(json.dumps({"items": [{"manifest": "another/manifest.json", "candidate_id": "V01-C001", "active": False}]}))
+        self.assertTrue(self.candidate()["active"])
+
+    def test_reviewed_candidate_is_not_implicitly_a_pick_or_favorite(self):
+        (self.output / "selection.json").write_text(json.dumps({"items": []}))
+        self.manifest["candidates"][0].update(title="审过的画面", note="保留原片构图", reviewed=True, recommended_for=["desktop"])
+        self.write_manifest()
+        candidate = self.candidate()
+        self.assertTrue(candidate["reviewed"])
+        self.assertFalse(candidate["selected"])
+        self.assertFalse(candidate["favorite"])
+        self.assertEqual(candidate["title"], "审过的画面")
+        self.assertEqual(candidate["note"], "保留原片构图")
+
     def test_invalid_favorites_file_is_preserved_and_library_stays_available(self):
         favorites = self.output / "favorites.json"
         for raw in ["not json", json.dumps({"version": 1, "items": None}), json.dumps({"version": 1, "items": [{"manifest": "x"}]})]:
