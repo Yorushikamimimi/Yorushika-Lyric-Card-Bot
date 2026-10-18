@@ -1,51 +1,45 @@
+"""Legacy lyric-card renderer; the current visual studio does not import it."""
+from pathlib import Path
+
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
-import os
+
+
+FONT_CANDIDATES = (
+    Path(__file__).parent / "fonts/NotoSerifJP-Regular.otf",
+    Path(__file__).parent / "fonts/NotoSerifJP-Regular.ttf",
+    "C:/Windows/Fonts/msyh.ttc",
+    "C:/Windows/Fonts/simhei.ttf",
+    "C:/Windows/Fonts/meiryo.ttc",
+    "/System/Library/Fonts/ヒラギノ明朝 ProN.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc",
+    "/usr/share/fonts/truetype/noto/NotoSerifCJK-Regular.ttc",
+    "/usr/share/fonts/noto-cjk/NotoSerifCJK-Regular.ttc",
+)
+
+
+def resolve_font(font_path=None):
+    """Reject explicit invalid files and skip unreadable automatic candidates."""
+    for candidate in (font_path,) if font_path is not None else FONT_CANDIDATES:
+        try:
+            ImageFont.truetype(str(candidate), 16)
+        except (OSError, ValueError) as error:
+            if font_path is not None:
+                raise ValueError(
+                    "font_path is not a loadable font. Supply a valid Japanese font "
+                    "that you are permitted to use; HTML download pages are not fonts."
+                ) from error
+            continue
+        return str(candidate)
+    raise FileNotFoundError(
+        "No loadable Japanese font found. Supply font_path for a valid local font "
+        "with Japanese glyphs and an appropriate license. No font is downloaded automatically."
+    )
 
 
 class LyricCard:
     def __init__(self, bg_path, font_path=None):
         self.bg_path = bg_path
-        # Font priority: project bundled > Windows > Linux
-        self.font_path = font_path
-        if not self.font_path:
-            # Project bundled fonts (used in Docker)
-            project_fonts = [
-                "fonts/NotoSerifJP-Regular.otf",
-                "fonts/NotoSerifJP-Regular.ttf",
-            ]
-            for f in project_fonts:
-                if os.path.exists(f):
-                    self.font_path = f
-                    break
-
-            # Windows system fonts
-            if not self.font_path:
-                windows_fonts = [
-                    "C:/Windows/Fonts/msyh.ttc",  # Microsoft YaHei
-                    "C:/Windows/Fonts/simhei.ttf",  # SimHei
-                    "C:/Windows/Fonts/meiryo.ttc",  # Meiryo
-                ]
-                for f in windows_fonts:
-                    if os.path.exists(f):
-                        self.font_path = f
-                        break
-
-            # Linux system fonts (fonts-noto-cjk in Docker)
-            if not self.font_path:
-                linux_fonts = [
-                    "/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc",
-                    "/usr/share/fonts/truetype/noto/NotoSerifCJK-Regular.ttc",
-                    "/usr/share/fonts/noto-cjk/NotoSerifCJK-Regular.ttc",
-                ]
-                for f in linux_fonts:
-                    if os.path.exists(f):
-                        self.font_path = f
-                        break
-
-        if not self.font_path:
-            raise FileNotFoundError(
-                "No Japanese font found. Please specify font_path or add fonts/NotoSerifJP-Regular.otf to the project."
-            )
+        self.font_path = resolve_font(font_path)
 
     def create_card(self, text, output_name="demo.jpg", artist_name=None, song_title=None):
         print(f">>> [Image] Loading background: {self.bg_path}")
