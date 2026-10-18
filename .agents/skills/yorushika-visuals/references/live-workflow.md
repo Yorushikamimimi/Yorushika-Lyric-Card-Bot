@@ -2,6 +2,19 @@
 
 从仓库根目录执行。依赖 Python / Pillow、ffmpeg 和 ffprobe。所有命令只读源视频，输出目录必须是新目录；错误时保留现场并换新版本名，不清空已有成果。
 
+## 首次建库
+
+此步骤由能够读取用户指定视频目录并执行本机命令的Agent完成；普通网页GPT无法仅凭本机路径操作文件。以下从仓库根目录执行，`/path/to/my-live`替换为用户实际授权的目录，输出目录每次使用新名称。
+
+```bash
+python3 live_wallpaper.py catalog --input "/path/to/my-live" --output output/first-catalog-v1
+python3 live_wallpaper.py sample --input "/path/to/my-live" --per-chapter 3 --count 24 --thumb-width 1280 --output output/first-live-v1
+```
+
+`catalog`只核验并记录视频信息，不会填充图库。`sample`生成`output/first-live-v1/manifest.json`和缩略图，现有网页刷新即可发现候选；它不自动生成Agent精选，也不等于完成原帧审美检查或制作设备成品。首次建库仍须按指南实际看图、筛选并记录来源。章节存在时使用`--per-chapter`；`--count`只作用于无章节视频。不要把整个采样目录中的每张图都当作好壁纸。
+
+MV可将输入换成自己的MV目录、输出换成新的`output/first-mv-v1`；Agent须按下方“Agent更新后，用户只需刷新网页”的第2项标记MV类型及曲目名，否则默认归入Live。已有图库不必重新初始化；复制旧`output/`到新机器后仍需核对清单中的视频路径。
+
 ## 找片
 
 ```bash
