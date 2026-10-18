@@ -2,6 +2,114 @@
 const $ = (id) => document.getElementById(id);
 const state = {candidates: [], avatars: [], selected: null, filter: "selected", exporting: false, avatarExporting: false, previewSerial: 0, previewAbort: null, previewTimer: null, favoriteSaving: new Set()};
 const defaultSettings = {"size-preset": "2560x1440", fit: "contain", "focus-x": ".5", "focus-y": ".5", exposure: "0", contrast: "1", sharpen: ".25"};
+// Temporary compositions share one source, output size and tone settings.
+const cropComparison = {schemes: [], group: null, nextId: 1};
+const galleryScope = {live: "", mv: ""};
+function sourceOptions(kind) {
+  return [...new Set(state.candidates.filter(c => c.source_kind === kind).map(c => c.source_label))].sort((a, b) => a.localeCompare(b, "zh-CN", {numeric: true}));
+}
+function renderSourceFilters() {
+  for (const kind of ["live", "mv"]) {
+    const select = $(`${kind}-source-filter`), options = sourceOptions(kind);
+    if (!options.includes(galleryScope[kind])) galleryScope[kind] = "";
+    select.replaceChildren(new Option(kind === "live" ? "全部场次" : "全部曲目", ""), ...options.map(label => new Option(label, label)));
+    select.value = galleryScope[kind];
+    select.disabled = options.length === 0;
+  }
+}
+function matchesSourceFilter(candidate) {
+  if (state.filter !== "live" && state.filter !== "mv" && (galleryScope.live || galleryScope.mv)) {
+    return Boolean(galleryScope[candidate.source_kind]) && candidate.source_label === galleryScope[candidate.source_kind];
+  }
+  const scope = galleryScope[candidate.source_kind];
+  return !scope || candidate.source_label === scope;
+}
+function validSize(p) {
+  return Number.isInteger(p.width) && Number.isInteger(p.height) && Math.min(p.width, p.height) >= 256 && Math.max(p.width, p.height) <= 8192 && p.width * p.height <= 34000000;
+}
+function sameCrop(a, b) {
+  if (a.fit !== b.fit) return false;
+  const image = $("main-preview"), p = params();
+  const sourceRatio = image.naturalWidth / image.naturalHeight, targetRatio = p.width / p.height;
+  // Ignore an axis when this fit leaves no room to move in that direction.
+  const movableX = a.fit === "cover" ? sourceRatio > targetRatio : sourceRatio < targetRatio;
+  const movableY = a.fit === "cover" ? sourceRatio < targetRatio : sourceRatio > targetRatio;
+  return (!movableX || a.focus_x === b.focus_x) && (!movableY || a.focus_y === b.focus_y);
+}
+function nativeReady() {
+  const image = $("main-preview");
+  return !!state.selected?.source_available && image.dataset.quality === "native" && image.dataset.candidateId === state.selected.id;
+}
+function clearCropComparison() {
+  cropComparison.schemes = []; cropComparison.group = null; cropComparison.nextId = 1;
+  $("crop-scheme-name").value = "";
+  renderCropComparison();
+}
+function saveCropScheme() {
+  const p = params();
+  if (!nativeReady() || !validSize(p) || cropComparison.schemes.length >= 3 || cropComparison.schemes.some(s => sameCrop(s, p))) return;
+  cropComparison.group = {candidate_id: p.candidate_id, width: p.width, height: p.height};
+  const id = cropComparison.nextId++;
+  cropComparison.schemes.push({id, name: $("crop-scheme-name").value.trim() || `方案 ${id}`, fit: p.fit, focus_x: p.focus_x, focus_y: p.focus_y});
+  $("crop-scheme-name").value = "";
+  renderCropComparison();
+}
+function renderCropComparison() {
+  const grid = $("crop-comparison-grid");
+  grid.replaceChildren();
+  for (const scheme of cropComparison.schemes) {
+    const card = document.createElement("article"); card.className = "crop-option";
+    const chooseButton = document.createElement("button"); chooseButton.type = "button"; chooseButton.className = "crop-option-select";
+    chooseButton.id = `crop-scheme-${scheme.id}`; chooseButton.setAttribute("aria-label", `使用 ${scheme.name}`);
+    const stage = document.createElement("span"); stage.className = "crop-option-stage";
+    const frame = document.createElement("span"); frame.className = "crop-option-frame";
+    const image = document.createElement("img"); image.src = $("main-preview").src; image.alt = `${scheme.name}的原帧取景`;
+    frame.append(image); stage.append(frame);
+    const caption = document.createElement("span"); caption.className = "crop-option-caption";
+    const title = document.createElement("span"); title.className = "crop-option-title"; title.textContent = scheme.name;
+    const badge = document.createElement("span"); badge.className = "crop-option-state";
+    caption.append(title, badge); chooseButton.append(stage, caption);
+    chooseButton.addEventListener("click", () => {
+      $("fit").value = scheme.fit; $("focus-x").value = scheme.focus_x; $("focus-y").value = scheme.focus_y;
+      $("export-result").hidden = true;
+      updatePreview();
+    });
+    const remove = document.createElement("button"); remove.type = "button"; remove.className = "text-button crop-option-remove";
+    remove.textContent = "移除"; remove.setAttribute("aria-label", `移除 ${scheme.name}`);
+    remove.addEventListener("click", () => {
+      cropComparison.schemes = cropComparison.schemes.filter(s => s.id !== scheme.id);
+      renderCropComparison();
+      (grid.querySelector("button") || $("save-crop-scheme")).focus({preventScroll: true});
+    });
+    card.append(chooseButton, remove); grid.append(card);
+  }
+  updateCropComparison();
+}
+function updateCropComparison() {
+  const p = params();
+  const count = cropComparison.schemes.length;
+  const duplicate = cropComparison.schemes.some(s => sameCrop(s, p));
+  $("save-crop-scheme").disabled = !nativeReady() || !validSize(p) || count >= 3 || duplicate;
+  $("crop-scheme-name").disabled = !nativeReady() || count >= 3;
+  $("crop-comparison").hidden = count === 0;
+  $("crop-save-hint").textContent = !state.selected ? "先选择一帧，再调整取景。" : !nativeReady() ? "原帧载入后，可留下最多 3 个取景方案。" : !validSize(p) ? "请先填写有效的导出尺寸。" : count >= 3 ? "已有 3 个方案；移除一个后可加入新的取景。" : duplicate ? "当前取景已在比较中；移动焦点后可加入另一个方案。" : "调好取景后留作比较，最多 3 个。";
+  if (!count) return;
+  $("crop-comparison-size").textContent = `${p.width} × ${p.height}`;
+  for (const scheme of cropComparison.schemes) {
+    const button = $(`crop-scheme-${scheme.id}`);
+    const active = sameCrop(scheme, p);
+    button.setAttribute("aria-pressed", String(active));
+    button.querySelector(".crop-option-state").textContent = active ? "使用中" : "选用";
+    const stage = button.querySelector(".crop-option-stage");
+    const frame = button.querySelector(".crop-option-frame");
+    frame.style.width = `${Math.min(Math.max(0, stage.clientWidth - 16), Math.max(0, stage.clientHeight - 16) * p.width / p.height)}px`;
+    frame.style.aspectRatio = `${p.width}/${p.height}`;
+    const image = frame.querySelector("img");
+    image.style.objectFit = scheme.fit;
+    image.style.objectPosition = `${scheme.focus_x * 100}% ${scheme.focus_y * 100}%`;
+    image.style.filter = $("main-preview").style.filter;
+  }
+}
 function status(message, error = false) { $("export-status").textContent = message; $("export-status").classList.toggle("error", error); }
 function params() {
   const size = $("size-preset").value === "custom" ? [Number($("width").value), Number($("height").value)] : $("size-preset").value.split("x").map(Number);
@@ -31,6 +139,8 @@ function updatePreview() {
   $("focus-x").disabled = $("focus-y").disabled = p.fit === "contain";
   $("crop-hint").textContent = p.fit === "contain" ? "完整保留原画面；屏幕比例不同时会补边。" : "拖动焦点取景；画框之外的内容会被裁掉。";
   for (const [id, active] of [["desktop-preset", width > height], ["phone-preset", width < height]]) { $(id).classList.toggle("active", active); $(id).setAttribute("aria-pressed", String(active)); }
+  if (cropComparison.group && (cropComparison.group.candidate_id !== p.candidate_id || cropComparison.group.width !== p.width || cropComparison.group.height !== p.height)) clearCropComparison();
+  updateCropComparison();
 }
 function sizeChanged() {
   const p = params();
@@ -64,9 +174,11 @@ async function loadNativePreview(candidate, serial, signal) {
     $("native-preview-link").href = job.original;
     $("native-download-link").href = job.download;
     $("native-preview-link").hidden = $("native-download-link").hidden = false;
+    updateCropComparison();
   } catch (error) {
     if (error.name === "AbortError" || serial !== state.previewSerial) return;
     $("preview-quality").textContent = `${error.message} 当前为选片缩略图。`;
+    updateCropComparison();
   }
 }
 function choose(candidate) {
@@ -77,6 +189,7 @@ function choose(candidate) {
   const serial = state.previewSerial;
   const signal = state.previewAbort.signal;
   state.selected = candidate;
+  clearCropComparison();
   const image = $("main-preview");
   image.src = candidate.thumbnail || candidate.preview;
   image.dataset.quality = "thumbnail";
@@ -102,7 +215,8 @@ function choose(candidate) {
 function renderGallery() {
   const picks = state.candidates.filter(c => c.selected);
   const filtered = state.filter === "selected" ? picks : state.filter === "favorites" ? state.candidates.filter(c => c.favorite) : state.filter === "all" ? state.candidates : state.candidates.filter(c => c.source_kind === state.filter);
-  const visible = state.filter === "selected" ? filtered : [...filtered].sort((a, b) => a.source_label.localeCompare(b.source_label, "zh-CN") || a.timestamp - b.timestamp);
+  const scoped = filtered.filter(matchesSourceFilter);
+  const visible = state.filter === "selected" ? scoped : [...scoped].sort((a, b) => a.source_label.localeCompare(b.source_label, "zh-CN") || a.timestamp - b.timestamp);
   const grid = $("candidate-grid");
   const focusedId = grid.contains(document.activeElement) ? document.activeElement.id : null;
   grid.replaceChildren();
@@ -130,7 +244,10 @@ function renderGallery() {
   }
   $("gallery-summary").textContent = state.filter === "favorites" ? `${filtered.length} 张收藏 / ${state.candidates.length} 张候选。收藏由你管理，与精选分开保存。` : `${picks.length} 张精选 / ${state.candidates.length} 张候选 · ${state.candidates.filter(c => c.favorite).length} 张收藏。自动评分用于初筛；人物、歌词和构图以实际画面为准。`;
   $("gallery-empty").hidden = visible.length > 0;
-  $("gallery-empty").textContent = state.filter === "favorites" ? "还没有收藏。浏览精选或候选画面，点按标题右侧的心形即可收藏。" : state.candidates.length ? (state.filter === "selected" ? "还没有精选。切到「全部候选」，从视频里挑一张。" : "这一类还没有候选画面，提取后点击刷新。") : "还没有视频候选。请让 Codex 从本地 Live 或 MV 提取选片，完成后点击刷新。";
+  $("gallery-empty").textContent = state.filter === "favorites" ? "当前分类还没有收藏。切换分类，或浏览候选画面，点按标题右侧的心形即可收藏。" : state.candidates.length ? (state.filter === "selected" ? "当前分类还没有精选。切到「全部候选」，从视频里挑一张。" : "当前分类还没有候选画面。可切换分类，或让 GPT 补充选片后刷新。") : "还没有视频候选。请让 Codex 从本地 Live 或 MV 提取选片，完成后点击刷新。";
+  $("live-source-label").hidden = state.filter === "mv";
+  $("mv-source-label").hidden = state.filter === "live";
+  $("source-filter-count").textContent = `显示 ${visible.length} 张`;
   for (const filter of ["selected", "all", "live", "mv"]) {const active = state.filter === filter; $(`${filter}-filter`).classList.toggle("active", active); $(`${filter}-filter`).setAttribute("aria-pressed", String(active));}
   const favoriteFilter = $("favorite-filter"); favoriteFilter.classList.toggle("active", state.filter === "favorites"); favoriteFilter.setAttribute("aria-pressed", String(state.filter === "favorites"));
   if (focusedId) {
@@ -214,15 +331,15 @@ async function loadLibrary() {
     if (!state.candidates.some(c => c.selected) && state.filter === "selected") state.filter = "all";
     const selected = state.candidates.find(c => c.id === state.selected?.id) || state.candidates[0];
     if (selected) choose(selected);
-    else {state.selected = null; $("main-preview").hidden = true; $("preview-empty").hidden = false; $("preview-empty").textContent = "等待第一组视频选片"; $("export-button").disabled = true;}
-    renderGallery(); renderAvatars();
+    else {state.selected = null; clearCropComparison(); $("main-preview").hidden = true; $("preview-empty").hidden = false; $("preview-empty").textContent = "等待第一组视频选片"; $("export-button").disabled = true;}
+    renderSourceFilters(); renderGallery(); renderAvatars();
   } catch (error) { status(error.message, true); $("preview-empty").textContent = "画廊暂时无法打开"; }
   finally { $("refresh-library").disabled = false; }
 }
 async function exportImage() {
   if (!state.selected || state.exporting) return;
   const p = params();
-  if (!Number.isInteger(p.width) || !Number.isInteger(p.height) || Math.min(p.width, p.height) < 256 || Math.max(p.width, p.height) > 8192 || p.width * p.height > 34000000) { status("尺寸需为 256–8192 的整数，且总像素不超过 3400 万。", true); return; }
+  if (!validSize(p)) { status("尺寸需为 256–8192 的整数，且总像素不超过 3400 万。", true); return; }
   state.exporting = true; $("export-button").disabled = true; $("export-result").hidden = true; status("正在从原视频提取这一帧…");
   try {
     const response = await fetch("/api/exports", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(p)});
@@ -263,8 +380,11 @@ $("selected-filter").addEventListener("click", () => {state.filter = "selected";
 $("all-filter").addEventListener("click", () => {state.filter = "all"; renderGallery();});
 for (const filter of ["live", "mv"]) $(`${filter}-filter`).addEventListener("click", () => {state.filter = filter; renderGallery();});
 $("favorite-filter").addEventListener("click", () => {state.filter = "favorites"; renderGallery();});
+for (const kind of ["live", "mv"]) $(`${kind}-source-filter`).addEventListener("change", () => {galleryScope[kind] = $(`${kind}-source-filter`).value; renderGallery();});
 $("refresh-library").addEventListener("click", loadLibrary);
 $("export-button").addEventListener("click", exportImage);
+$("save-crop-scheme").addEventListener("click", saveCropScheme);
+$("clear-crop-schemes").addEventListener("click", () => {clearCropComparison(); $("save-crop-scheme").focus({preventScroll: true});});
 for (const type of ["wallpaper", "avatar"]) $(`${type}-tab`).addEventListener("click", () => {for (const t of ["wallpaper", "avatar"]) {$(`${t}-panel`).hidden = t !== type; $(`${t}-tab`).classList.toggle("active", t === type); $(`${t}-tab`).setAttribute("aria-pressed", String(t === type));} if (type === "wallpaper") updatePreview();});
 for (const id of ["avatar-direction", "avatar-shape", "avatar-notes"]) $(id).addEventListener("input", avatarPrompt);
 $("copy-avatar-request").addEventListener("click", async () => {const prompt = avatarPrompt(); try {await navigator.clipboard.writeText(prompt); $("avatar-status").textContent = "已复制。粘贴到 Codex 即可生成；完成后回到这里刷新。";} catch (_) {$("avatar-prompt").closest("details").open = true; $("avatar-prompt").focus(); $("avatar-prompt").select(); $("avatar-status").textContent = "浏览器未允许自动复制，请复制下方已选中的需求。";}});
