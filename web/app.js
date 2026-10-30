@@ -1,10 +1,19 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
-const state = {candidates: [], avatars: [], selected: null, filter: "selected", exporting: false, avatarExporting: false, previewSerial: 0, previewAbort: null, previewTimer: null, favoriteSaving: new Set()};
+const state = {candidates: [], avatars: [], visible: [], selected: null, filter: "selected", renderLimit: 120, exporting: false, avatarExporting: false, previewSerial: 0, previewTimer: null, favoriteSaving: new Set(), native: new Map(), nativePending: new Map(), viewerIndex: -1, viewerSerial: 0};
 const defaultSettings = {"size-preset": "2560x1440", fit: "contain", "focus-x": ".5", "focus-y": ".5", exposure: "0", contrast: "1", sharpen: ".25"};
+const PAGE_SIZE = 120;
+const SCOPE_NAMES = {selected: "精选", all: "全部候选", favorites: "收藏"};
 // Temporary compositions share one source, output size and tone settings.
 const cropComparison = {schemes: [], group: null, nextId: 1};
 const galleryScope = {kind: null, value: ""};
+function displayTitle(candidate) {
+  // Drop the pick number and leading parts already shown in the source line.
+  const parts = candidate.title.replace(/^\s*\d+\s*·\s*/, "").split(/\s*·\s*/);
+  while (parts.length > 1 && (parts[0] === "MV" || candidate.source_label.includes(parts[0]))) parts.shift();
+  return parts.join(" · ");
+}
+function shortTime(candidate) { return candidate.timecode.replace(/\.\d+$/, ""); }
 function sourceOptions(kind) {
   return [...new Set(state.candidates.filter(c => c.source_kind === kind).map(c => c.source_label))].sort((a, b) => a.localeCompare(b, "zh-CN", {numeric: true}));
 }
@@ -20,15 +29,22 @@ function renderSourceFilters() {
 function matchesSourceFilter(candidate) {
   return !galleryScope.kind || (candidate.source_kind === galleryScope.kind && (!galleryScope.value || candidate.source_label === galleryScope.value));
 }
-function setGalleryFilter(filter) {
-  if (filter === "all" || ((filter === "live" || filter === "mv") && galleryScope.kind !== filter)) {
-    galleryScope.kind = filter === "all" ? null : filter;
-    galleryScope.value = "";
-  }
-  state.filter = filter;
-  renderSourceFilters();
-  renderGallery();
+function setScope(filter) { state.filter = filter; state.renderLimit = PAGE_SIZE; renderGallery(); }
+function setSourceKind(kind) {
+  if (galleryScope.kind !== kind) { galleryScope.kind = kind; galleryScope.value = ""; }
+  state.renderLimit = PAGE_SIZE;
+  renderSourceFilters(); renderGallery();
 }
+function scopePool() {
+  const active = state.candidates.filter(c => c.active !== false);
+  return state.filter === "selected" ? state.candidates.filter(c => c.selected) : state.filter === "favorites" ? state.candidates.filter(c => c.favorite) : active;
+}
+function visibleCandidates() {
+  const scoped = scopePool().filter(matchesSourceFilter);
+  return state.filter === "selected" ? scoped : [...scoped].sort((a, b) => a.source_label.localeCompare(b.source_label, "zh-CN") || a.timestamp - b.timestamp);
+}
+function sourceText() { return !galleryScope.kind ? "全部来源" : galleryScope.value || (galleryScope.kind === "live" ? "全部 Live 场次" : "全部 MV 曲目"); }
+function scopeText() { return `${sourceText()} · ${SCOPE_NAMES[state.filter]} ${state.visible.length} 张`; }
 function validSize(p) {
   return Number.isInteger(p.width) && Number.isInteger(p.height) && Math.min(p.width, p.height) >= 256 && Math.max(p.width, p.height) <= 8192 && p.width * p.height <= 34000000;
 }
@@ -152,25 +168,45 @@ function sizeChanged() {
   $("fit").value = p.height >= p.width ? "cover" : "contain";
   updatePreview();
 }
-async function loadNativePreview(candidate, serial, signal) {
-  try {
-    let response = await fetch("/api/previews", {method: "POST", signal, headers: {"Content-Type": "application/json"}, body: JSON.stringify({candidate_id: candidate.id})});
+// One shared request per frame, so the viewer, workspace and prefetch reuse each other's work.
+function nativeFor(candidate) {
+  if (state.native.has(candidate.id)) return Promise.resolve(state.native.get(candidate.id));
+  if (state.nativePending.has(candidate.id)) return state.nativePending.get(candidate.id);
+  const pending = (async () => {
+    let response = await fetch("/api/previews", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({candidate_id: candidate.id})});
     let job = await response.json();
     if (!response.ok) throw new Error(typeof job.detail === "string" ? job.detail : "原帧暂未载入。");
     const deadline = Date.now() + 210000;
     while (job.status !== "done") {
       if (job.status === "failed") throw new Error(job.error);
-      if (serial !== state.previewSerial || signal.aborted) return;
       if (Date.now() > deadline) throw new Error("原帧载入超时，可重新选择这一帧。");
       await new Promise(resolve => setTimeout(resolve, 550));
-      response = await fetch(`/api/preview-jobs/${encodeURIComponent(job.id)}`, {signal});
+      response = await fetch(`/api/preview-jobs/${encodeURIComponent(job.id)}`);
       job = await response.json();
       if (!response.ok) throw new Error("原帧载入状态暂时不可用。");
     }
     const picture = new Image();
     picture.src = job.preview;
     await picture.decode();
-    if (serial !== state.previewSerial || signal.aborted || state.selected?.id !== candidate.id) return;
+    state.native.set(candidate.id, job);
+    return job;
+  })();
+  state.nativePending.set(candidate.id, pending);
+  pending.finally(() => state.nativePending.delete(candidate.id)).catch(() => {});
+  return pending;
+}
+// Warm the next frames one at a time; the server keeps a single decoder.
+async function prefetchAfter(list, index, isCurrent) {
+  for (const candidate of list.slice(index + 1, index + 3)) {
+    if (!isCurrent()) return;
+    if (!candidate.source_available || state.native.has(candidate.id)) continue;
+    try { await nativeFor(candidate); } catch (_) { return; }
+  }
+}
+async function loadNativePreview(candidate, serial) {
+  try {
+    const job = await nativeFor(candidate);
+    if (serial !== state.previewSerial || state.selected?.id !== candidate.id) return;
     $("main-preview").src = job.preview;
     $("main-preview").dataset.quality = "native";
     $("main-preview").dataset.candidateId = candidate.id;
@@ -180,29 +216,28 @@ async function loadNativePreview(candidate, serial, signal) {
     $("native-download-link").href = job.download;
     $("native-preview-link").hidden = $("native-download-link").hidden = false;
     updateCropComparison();
+    if ($("viewer").hidden) prefetchAfter(state.visible, state.visible.indexOf(candidate), () => serial === state.previewSerial);
   } catch (error) {
-    if (error.name === "AbortError" || serial !== state.previewSerial) return;
+    if (serial !== state.previewSerial) return;
     $("preview-quality").textContent = `${error.message} 当前为选片缩略图。`;
     updateCropComparison();
   }
 }
 function choose(candidate) {
   state.previewSerial += 1;
-  state.previewAbort?.abort();
   clearTimeout(state.previewTimer);
-  state.previewAbort = new AbortController();
   const serial = state.previewSerial;
-  const signal = state.previewAbort.signal;
   state.selected = candidate;
   clearCropComparison();
   const image = $("main-preview");
+  const cached = state.native.get(candidate.id);
   image.src = candidate.thumbnail || candidate.preview;
   image.dataset.quality = "thumbnail";
   image.dataset.candidateId = candidate.id;
-  image.alt = `${candidate.title}，${candidate.source_label}，${candidate.timecode}`;
+  image.alt = `${displayTitle(candidate)}，${candidate.source_label}，${candidate.timecode}`;
   image.hidden = false;
   $("preview-empty").hidden = true;
-  $("image-title").textContent = candidate.title;
+  $("image-title").textContent = displayTitle(candidate);
   $("image-source").textContent = `${candidate.source_label} · ${candidate.timecode}`;
   $("image-note").textContent = candidate.note;
   $("preview-label").textContent = "选片缩略图";
@@ -211,54 +246,80 @@ function choose(candidate) {
   $("review-badge").hidden = false;
   $("review-badge").textContent = candidate.reviewed ? "Agent 已看画面" : "自动候选 · 待看画面";
   $("export-button").disabled = state.exporting || !candidate.source_available;
-  if (!state.exporting) status(candidate.source_available ? "导出 PNG，保留原始截图。" : "源视频已移动，暂时只能查看已有预览。", !candidate.source_available);
+  if (!state.exporting) status(candidate.source_available ? "完成后自动下载 PNG，并保留未处理原帧。" : "源视频已移动，暂时只能查看已有预览。", !candidate.source_available);
   $("export-result").hidden = true;
   renderGallery();
   updatePreview();
-  if (candidate.source_available) state.previewTimer = setTimeout(() => loadNativePreview(candidate, serial, signal), 180);
+  if (candidate.source_available) state.previewTimer = setTimeout(() => loadNativePreview(candidate, serial), cached ? 0 : 180);
+}
+function renderWorkspaceNav() {
+  const index = state.visible.findIndex(c => c.id === state.selected?.id);
+  $("workspace-position").textContent = !state.selected ? "" : index < 0 ? "不在当前筛选" : `${index + 1} / ${state.visible.length}`;
+  $("workspace-prev").disabled = $("workspace-next").disabled = !state.visible.length;
+  $("back-to-gallery").disabled = index < 0;
+}
+function stepWorkspace(delta) {
+  const list = state.visible;
+  if (!list.length) return;
+  const index = list.findIndex(c => c.id === state.selected?.id);
+  choose(list[index < 0 ? 0 : (index + delta + list.length) % list.length]);
+}
+function revealInGallery(candidate, focus = true) {
+  const index = state.visible.findIndex(c => c.id === candidate.id);
+  if (index < 0) return;
+  if (index >= state.renderLimit) { state.renderLimit = Math.ceil((index + 1) / PAGE_SIZE) * PAGE_SIZE; renderGallery(); }
+  const target = $(`candidate-surface-${candidate.id}`);
+  target?.scrollIntoView({block: "center"});
+  if (focus) target?.focus({preventScroll: true});
 }
 function renderGallery() {
-  const picks = state.candidates.filter(c => c.selected);
-  const active = state.candidates.filter(c => c.active !== false);
-  const filtered = state.filter === "selected" ? picks : state.filter === "favorites" ? state.candidates.filter(c => c.favorite) : state.filter === "all" ? active : active.filter(c => c.source_kind === state.filter);
-  const scoped = filtered.filter(matchesSourceFilter);
-  const visible = state.filter === "selected" ? scoped : [...scoped].sort((a, b) => a.source_label.localeCompare(b.source_label, "zh-CN") || a.timestamp - b.timestamp);
+  state.visible = visibleCandidates();
+  const visible = state.visible, shown = visible.slice(0, state.renderLimit);
   const grid = $("candidate-grid");
   const focusedId = grid.contains(document.activeElement) ? document.activeElement.id : null;
   grid.replaceChildren();
-  for (const c of visible) {
+  shown.forEach((c, index) => {
     const card = document.createElement("article");
     card.className = "candidate" + (state.selected?.id === c.id ? " selected" : "");
-    const surface = document.createElement("button"); surface.type = "button"; surface.className = "candidate-surface"; surface.setAttribute("aria-pressed", String(state.selected?.id === c.id)); surface.setAttribute("aria-label", `选择 ${c.title} ${c.timecode}`);
-    surface.id = `candidate-surface-${c.id}`; surface.addEventListener("click", () => choose(c));
+    const surface = document.createElement("button"); surface.type = "button"; surface.className = "candidate-surface"; surface.setAttribute("aria-label", `看大图：${displayTitle(c)} ${c.timecode}`);
+    surface.id = `candidate-surface-${c.id}`; surface.addEventListener("click", () => openViewer(index));
     const wrap = document.createElement("div"); wrap.className = "candidate-image";
-    const image = document.createElement("img"); image.src = c.thumbnail || c.preview; image.alt = c.title; image.loading = "lazy";
-    const time = document.createElement("span"); time.className = "candidate-time"; time.textContent = c.timecode;
+    const image = document.createElement("img"); image.src = c.thumbnail || c.preview; image.alt = displayTitle(c); image.loading = "lazy";
+    const time = document.createElement("span"); time.className = "candidate-time"; time.textContent = shortTime(c);
     const titleRow = document.createElement("div"); titleRow.className = "candidate-title-row";
+    const text = document.createElement("div"); text.style.cssText = "flex:1;min-width:0";
     const title = document.createElement("h3"); title.className = "candidate-title";
-    const titleButton = document.createElement("button"); titleButton.type = "button"; titleButton.className = "candidate-title-select"; titleButton.id = `candidate-title-${c.id}`; titleButton.textContent = c.title; titleButton.setAttribute("aria-pressed", String(state.selected?.id === c.id)); titleButton.addEventListener("click", () => choose(c)); title.append(titleButton);
-    const source = document.createElement("p"); source.textContent = c.source_label;
-    const chooseButton = document.createElement("button"); chooseButton.type = "button"; chooseButton.className = "candidate-select"; chooseButton.setAttribute("aria-pressed", String(state.selected?.id === c.id)); chooseButton.setAttribute("aria-label", `选择 ${c.title} ${c.timecode}`); chooseButton.textContent = "查看这一帧";
-    chooseButton.id = `candidate-view-${c.id}`;
+    const titleButton = document.createElement("button"); titleButton.type = "button"; titleButton.className = "candidate-title-select"; titleButton.id = `candidate-title-${c.id}`; titleButton.textContent = displayTitle(c); titleButton.addEventListener("click", () => openViewer(index)); title.append(titleButton);
+    const meta = document.createElement("p"); meta.className = "candidate-meta"; meta.textContent = `${c.source_label} · ${shortTime(c)}`;
     const favorite = document.createElement("button"); favorite.type = "button"; favorite.className = "favorite-toggle" + (c.favorite ? " is-favorite" : ""); favorite.setAttribute("aria-label", c.favorite ? "取消收藏" : "收藏画面"); favorite.setAttribute("aria-pressed", String(Boolean(c.favorite))); favorite.title = c.favorite ? "取消收藏" : "收藏画面"; favorite.disabled = state.favoriteSaving.has(c.id);
     favorite.id = `candidate-favorite-${c.id}`;
     const heart = document.createElementNS("http://www.w3.org/2000/svg", "svg"); heart.setAttribute("viewBox", "0 0 24 24"); heart.setAttribute("aria-hidden", "true"); heart.classList.add("favorite-icon");
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); path.setAttribute("d", "M12 20.2 4.8 13A4.8 4.8 0 0 1 11.6 6.2L12 6.7l.4-.5A4.8 4.8 0 0 1 19.2 13L12 20.2Z"); heart.append(path); favorite.append(heart);
-    surface.append(wrap); chooseButton.addEventListener("click", () => choose(c));
     favorite.addEventListener("click", () => toggleFavorite(c));
-    titleRow.append(title, favorite); wrap.append(image, time); card.append(surface, titleRow, source, chooseButton); grid.append(card);
+    wrap.append(image, time); surface.append(wrap); text.append(title, meta); titleRow.append(text, favorite); card.append(surface, titleRow); grid.append(card);
+  });
+  const remaining = visible.length - shown.length;
+  $("gallery-more").hidden = remaining <= 0;
+  $("gallery-more").textContent = `再显示 ${Math.min(PAGE_SIZE, remaining)} 张（还有 ${remaining} 张）`;
+  const summary = $("gallery-summary"); summary.replaceChildren();
+  const lead = document.createElement("span"); lead.append("正在看 ");
+  const strong = document.createElement("strong"); strong.textContent = scopeText(); lead.append(strong);
+  if (galleryScope.kind) lead.append(`（${SCOPE_NAMES[state.filter]}共 ${scopePool().length} 张）`);
+  summary.append(lead);
+  if (galleryScope.kind) {
+    const chip = document.createElement("span"); chip.className = "scope-chip"; chip.textContent = galleryScope.kind === "live" ? "Live" : "MV";
+    if (galleryScope.value) chip.append(` · ${galleryScope.value}`);
+    const clear = document.createElement("button"); clear.type = "button"; clear.textContent = "×"; clear.setAttribute("aria-label", "清除来源筛选"); clear.addEventListener("click", () => setSourceKind(null));
+    chip.append(clear); summary.append(chip);
   }
-  $("gallery-summary").textContent = state.filter === "favorites" ? `${filtered.length} 张收藏 / ${state.candidates.length} 张候选。收藏由你管理，与精选分开保存。` : `${picks.length} 张精选 / ${state.candidates.length} 张候选 · ${state.candidates.filter(c => c.favorite).length} 张收藏。自动评分用于初筛；人物、歌词和构图以实际画面为准。`;
   $("gallery-empty").hidden = visible.length > 0;
-  $("gallery-empty").textContent = state.filter === "favorites" ? "当前分类还没有收藏。切换分类，或浏览候选画面，点按标题右侧的心形即可收藏。" : state.candidates.length ? (state.filter === "selected" ? "当前分类还没有精选。切到「全部候选」，从视频里挑一张。" : "当前分类还没有候选画面。可切换分类，或让 GPT 补充选片后刷新。") : "还没有视频候选。请让 Codex 从本地 Live 或 MV 提取选片，完成后点击刷新。";
-  $("source-filters").hidden = !galleryScope.kind;
-  $("live-source-label").hidden = galleryScope.kind !== "live";
-  $("mv-source-label").hidden = galleryScope.kind !== "mv";
-  $("source-filter-count").textContent = `显示 ${visible.length} 张`;
-  for (const filter of ["selected", "all", "live", "mv"]) {const active = state.filter === filter; $(`${filter}-filter`).classList.toggle("active", active); $(`${filter}-filter`).setAttribute("aria-pressed", String(active));}
-  const favoriteFilter = $("favorite-filter"); favoriteFilter.classList.toggle("active", state.filter === "favorites"); favoriteFilter.setAttribute("aria-pressed", String(state.filter === "favorites"));
+  $("gallery-empty").textContent = state.filter === "favorites" ? "这个条件下还没有收藏。换个来源，或在看图模式里按 F 收藏。" : state.candidates.length ? (state.filter === "selected" ? "这个条件下还没有精选。切到「全部候选」，从视频里挑一张。" : "这个条件下还没有候选画面。换个来源，或让主控补充选片后刷新。") : "还没有视频候选。请让主控从本地 Live 或 MV 提取选片，完成后点击刷新。";
+  for (const [id, active] of [["selected-filter", state.filter === "selected"], ["all-filter", state.filter === "all"], ["favorite-filter", state.filter === "favorites"], ["all-kind-filter", !galleryScope.kind], ["live-filter", galleryScope.kind === "live"], ["mv-filter", galleryScope.kind === "mv"]]) $(id).setAttribute("aria-pressed", String(active));
+  $("live-source-filter").hidden = galleryScope.kind !== "live";
+  $("mv-source-filter").hidden = galleryScope.kind !== "mv";
+  renderWorkspaceNav();
   if (focusedId) {
-    const target = $(focusedId) || grid.querySelector("button") || favoriteFilter;
+    const target = $(focusedId) || grid.querySelector("button") || $("selected-filter");
     if (!target.disabled) target.focus({preventScroll: true});
   }
 }
@@ -267,11 +328,87 @@ async function toggleFavorite(candidate) {
   const focusedId = document.activeElement.id === `candidate-favorite-${candidate.id}` ? document.activeElement.id : null;
   const previous = Boolean(candidate.favorite); candidate.favorite = !previous; state.favoriteSaving.add(candidate.id);
   try {
-    renderGallery();
+    renderGallery(); renderViewerFavorite();
     const response = await fetch("/api/favorites", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({candidate_id: candidate.id, favorite: candidate.favorite})});
     const result = await response.json(); if (!response.ok) throw new Error(typeof result.detail === "string" ? result.detail : "收藏暂时无法保存。"); candidate.favorite = result.favorite;
-  } catch (error) {candidate.favorite = previous; status(error.message, true);}
-  finally {state.favoriteSaving.delete(candidate.id); try {renderGallery(); if (focusedId && document.activeElement === document.body) {const target = $(focusedId) || $("candidate-grid").querySelector(".favorite-toggle") || $("favorite-filter"); if (!target.disabled) target.focus({preventScroll: true});}} catch (renderError) {status(renderError.message, true);}}
+  } catch (error) {candidate.favorite = previous; status(error.message, true); if (!$("viewer").hidden) $("viewer-quality").textContent = error.message;}
+  finally {state.favoriteSaving.delete(candidate.id); try {renderGallery(); renderViewerFavorite(); if (focusedId && document.activeElement === document.body) {const target = $(focusedId) || $("candidate-grid").querySelector(".favorite-toggle") || $("favorite-filter"); if (!target.disabled) target.focus({preventScroll: true});}} catch (renderError) {status(renderError.message, true);}}
+}
+// Full-screen viewer over the current gallery list.
+function viewerCandidate() { return state.viewerList?.[state.viewerIndex]; }
+function renderViewerFavorite() {
+  const candidate = viewerCandidate();
+  if ($("viewer").hidden || !candidate) return;
+  const button = $("viewer-favorite");
+  button.firstChild.textContent = candidate.favorite ? "♥ 已收藏" : "♡ 收藏";
+  button.classList.toggle("is-favorite", Boolean(candidate.favorite));
+  button.setAttribute("aria-pressed", String(Boolean(candidate.favorite)));
+  button.disabled = state.favoriteSaving.has(candidate.id);
+}
+function renderViewerStrip() {
+  const strip = $("viewer-strip"), list = state.viewerList;
+  const start = Math.max(0, state.viewerIndex - 30), end = Math.min(list.length, state.viewerIndex + 31);
+  strip.replaceChildren();
+  for (let index = start; index < end; index++) {
+    const button = document.createElement("button"); button.type = "button"; button.className = index === state.viewerIndex ? "current" : "";
+    button.setAttribute("aria-label", `第 ${index + 1} 张：${displayTitle(list[index])}`);
+    const image = document.createElement("img"); image.src = list[index].thumbnail || list[index].preview; image.alt = ""; image.loading = "lazy";
+    button.append(image); button.addEventListener("click", () => showViewer(index)); strip.append(button);
+  }
+  strip.querySelector(".current")?.scrollIntoView({block: "nearest", inline: "center"});
+}
+function showViewer(index) {
+  const list = state.viewerList;
+  if (!list?.length) return;
+  state.viewerIndex = (index + list.length) % list.length;
+  const serial = ++state.viewerSerial, candidate = list[state.viewerIndex];
+  const cached = state.native.get(candidate.id), image = $("viewer-image"), quality = $("viewer-quality"), download = $("viewer-download");
+  image.src = cached?.preview || candidate.thumbnail || candidate.preview;
+  image.alt = `${displayTitle(candidate)}，${candidate.source_label}，${candidate.timecode}`;
+  $("viewer-title").textContent = displayTitle(candidate);
+  $("viewer-source").textContent = `${candidate.source_label} · ${candidate.timecode}`;
+  $("viewer-note").textContent = candidate.note; $("viewer-note").title = candidate.note;
+  $("viewer-position").replaceChildren(`${state.viewerScopeText} · `, Object.assign(document.createElement("strong"), {textContent: `第 ${state.viewerIndex + 1} 张`}));
+  download.hidden = !cached; if (cached) download.href = cached.download;
+  quality.classList.toggle("native", Boolean(cached));
+  quality.textContent = cached ? `原帧 ${cached.width} × ${cached.height}` : candidate.source_available ? "缩略图 · 正在载入原帧…" : "源视频不可用 · 缩略图";
+  $("viewer-use").disabled = !candidate.source_available;
+  renderViewerFavorite(); renderViewerStrip();
+  const current = () => serial === state.viewerSerial && !$("viewer").hidden;
+  if (!candidate.source_available) return;
+  (cached ? Promise.resolve(cached) : nativeFor(candidate)).then(job => {
+    if (!current()) return;
+    image.src = job.preview; download.href = job.download; download.hidden = false;
+    quality.classList.add("native"); quality.textContent = `原帧 ${job.width} × ${job.height}`;
+    prefetchAfter(list, state.viewerIndex, current);
+  }).catch(error => { if (current()) quality.textContent = `${error.message} 当前为缩略图。`; });
+}
+function openViewer(index, list = state.visible) {
+  state.viewerList = list; state.viewerScopeText = scopeText(); state.viewerReturn = document.activeElement;
+  $("viewer").hidden = false; $("viewer").classList.remove("pure"); document.body.classList.add("viewer-open");
+  showViewer(index); $("viewer").focus({preventScroll: true});
+}
+function closeViewer(revealCurrent = true) {
+  const candidate = viewerCandidate();
+  $("viewer").hidden = true; document.body.classList.remove("viewer-open"); state.viewerSerial += 1;
+  if (revealCurrent && candidate) revealInGallery(candidate);
+}
+function useViewerCandidate() {
+  const candidate = viewerCandidate();
+  if (!candidate?.source_available) return;
+  closeViewer(false); choose(candidate);
+  document.querySelector(".workspace").scrollIntoView({block: "start"});
+  $("export-button").focus({preventScroll: true});
+}
+function viewerKeydown(event) {
+  if ($("viewer").hidden || event.altKey || event.ctrlKey || event.metaKey) return;
+  const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+  const actions = {ArrowLeft: () => showViewer(state.viewerIndex - 1), ArrowRight: () => showViewer(state.viewerIndex + 1), Escape: () => closeViewer(), Enter: useViewerCandidate, f: () => { const c = viewerCandidate(); if (c) toggleFavorite(c); }, h: () => $("viewer").classList.toggle("pure"), " ": () => $("viewer").classList.toggle("pure")};
+  if (!actions[key]) return;
+  // Space always toggles the picture-only view, even when a viewer button has focus.
+  // Enter on a focused control keeps its own meaning; on the picture it picks the frame.
+  if (key === "Enter" && document.activeElement !== $("viewer") && $("viewer").contains(document.activeElement)) return;
+  event.preventDefault(); actions[key]();
 }
 function renderAvatars() {
   $("avatar-grid").replaceChildren(); $("avatar-empty").hidden = state.avatars.length > 0;
@@ -336,10 +473,11 @@ async function loadLibrary() {
     const response = await fetch("/api/library"); if (!response.ok) throw new Error("视频画廊暂时无法打开，请确认本地服务仍在运行。");
     const data = await response.json(); state.candidates = data.candidates; state.avatars = data.avatars;
     if (!state.candidates.some(c => c.selected) && state.filter === "selected") state.filter = "all";
+    renderSourceFilters(); renderGallery();
     const selected = state.candidates.find(c => c.id === state.selected?.id) || state.candidates[0];
     if (selected) choose(selected);
     else {state.selected = null; clearCropComparison(); $("main-preview").hidden = true; $("preview-empty").hidden = false; $("preview-empty").textContent = "等待第一组视频选片"; $("export-button").disabled = true;}
-    renderSourceFilters(); renderGallery(); renderAvatars();
+    renderAvatars();
   } catch (error) { status(error.message, true); $("preview-empty").textContent = "画廊暂时无法打开"; }
   finally { $("refresh-library").disabled = false; }
 }
@@ -347,7 +485,7 @@ async function exportImage() {
   if (!state.selected || state.exporting) return;
   const p = params();
   if (!validSize(p)) { status("尺寸需为 256–8192 的整数，且总像素不超过 3400 万。", true); return; }
-  state.exporting = true; $("export-button").disabled = true; $("export-result").hidden = true; status("正在从原视频提取这一帧…");
+  state.exporting = true; $("export-button").disabled = true; $("export-result").hidden = true; status("正在从原视频提取这一帧，通常 15 秒左右…");
   try {
     const response = await fetch("/api/exports", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(p)});
     const result = await response.json(); if (!response.ok) throw new Error(typeof result.detail === "string" ? result.detail : "导出参数有误，请检查尺寸与调整项。");
@@ -359,8 +497,10 @@ async function exportImage() {
       if (job.status === "failed") throw new Error(job.error);
       if (job.status === "done") {
         $("download-link").href = job.download; $("export-preview").src = job.preview;
+        $("export-filename").textContent = job.filename || "";
         $("original-link").hidden = !job.original; if (job.original) $("original-link").href = job.original;
-        $("export-result").hidden = false; status(`已导出 ${job.width} × ${job.height} PNG。下方是实际成品。`); return;
+        $("export-result").hidden = false; $("download-link").click();
+        status(`已导出 ${job.width} × ${job.height} PNG，已开始下载。下方是实际成品。`); return;
       }
       status("正在处理原帧并保存壁纸，请稍等…");
     }
@@ -383,11 +523,31 @@ for (const id of ["fit", "focus-x", "focus-y", "exposure", "contrast", "sharpen"
 $("desktop-preset").addEventListener("click", () => {$("size-preset").value = "2560x1440"; sizeChanged();});
 $("phone-preset").addEventListener("click", () => {$("size-preset").value = "1284x2778"; sizeChanged();});
 $("reset-settings").addEventListener("click", () => {for (const [id, value] of Object.entries(defaultSettings)) if (id !== "size-preset") $(id).value = value; sizeChanged();});
-$("selected-filter").addEventListener("click", () => setGalleryFilter("selected"));
-$("all-filter").addEventListener("click", () => setGalleryFilter("all"));
-for (const filter of ["live", "mv"]) $(`${filter}-filter`).addEventListener("click", () => setGalleryFilter(filter));
-$("favorite-filter").addEventListener("click", () => setGalleryFilter("favorites"));
-for (const kind of ["live", "mv"]) $(`${kind}-source-filter`).addEventListener("change", () => {if (galleryScope.kind !== kind) return; galleryScope.value = $(`${kind}-source-filter`).value; renderGallery();});
+$("selected-filter").addEventListener("click", () => setScope("selected"));
+$("all-filter").addEventListener("click", () => setScope("all"));
+$("favorite-filter").addEventListener("click", () => setScope("favorites"));
+$("all-kind-filter").addEventListener("click", () => setSourceKind(null));
+for (const kind of ["live", "mv"]) $(`${kind}-filter`).addEventListener("click", () => setSourceKind(kind));
+for (const kind of ["live", "mv"]) $(`${kind}-source-filter`).addEventListener("change", () => {if (galleryScope.kind !== kind) return; galleryScope.value = $(`${kind}-source-filter`).value; state.renderLimit = PAGE_SIZE; renderGallery();});
+$("gallery-more").addEventListener("click", () => {state.renderLimit += PAGE_SIZE; renderGallery();});
+$("workspace-prev").addEventListener("click", () => stepWorkspace(-1));
+$("workspace-next").addEventListener("click", () => stepWorkspace(1));
+$("back-to-gallery").addEventListener("click", () => {if (state.selected) revealInGallery(state.selected);});
+$("viewer-prev").addEventListener("click", () => showViewer(state.viewerIndex - 1));
+$("viewer-next").addEventListener("click", () => showViewer(state.viewerIndex + 1));
+$("viewer-close").addEventListener("click", () => closeViewer());
+$("viewer-pure").addEventListener("click", () => $("viewer").classList.toggle("pure"));
+$("viewer-image").addEventListener("click", () => $("viewer").classList.toggle("pure"));
+// The workspace preview opens the viewer too, within the current gallery list when it holds this frame.
+$("main-preview").addEventListener("click", () => {if (!state.selected) return; const index = state.visible.findIndex(c => c.id === state.selected.id); if (index >= 0) openViewer(index); else openViewer(0, [state.selected]);});
+$("viewer-use").addEventListener("click", useViewerCandidate);
+$("viewer-favorite").addEventListener("click", () => {const c = viewerCandidate(); if (c) toggleFavorite(c);});
+document.addEventListener("keydown", viewerKeydown);
+// Keep keyboard focus inside the viewer while it is open.
+document.addEventListener("focusin", event => {if (!$("viewer").hidden && !$("viewer").contains(event.target)) $("viewer").focus({preventScroll: true});});
+let swipeStart = null;
+$("viewer-image").addEventListener("touchstart", event => {swipeStart = event.touches[0].clientX;}, {passive: true});
+$("viewer-image").addEventListener("touchend", event => {if (swipeStart === null) return; const dx = event.changedTouches[0].clientX - swipeStart; swipeStart = null; if (Math.abs(dx) > 50) showViewer(state.viewerIndex + (dx < 0 ? 1 : -1));});
 $("refresh-library").addEventListener("click", loadLibrary);
 $("export-button").addEventListener("click", exportImage);
 $("save-crop-scheme").addEventListener("click", saveCropScheme);

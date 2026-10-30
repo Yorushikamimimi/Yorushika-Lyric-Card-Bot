@@ -10,6 +10,7 @@ import json
 import logging
 import math
 from pathlib import Path
+import re
 import sys
 from typing import Any, Awaitable, Callable, Literal
 from urllib.parse import urlsplit
@@ -32,6 +33,14 @@ def within(path: Path, root: Path) -> bool:
 
 def opaque(value: str) -> str:
     return hashlib.sha256(value.encode()).hexdigest()[:24]
+
+
+def download_name(candidate: dict, suffix: str) -> str:
+    """Readable file name: source, picture title, timecode and size or kind."""
+    title = re.sub(r"^\s*\d+\s*·\s*", "", str(candidate.get("title") or ""))
+    timecode = str(candidate.get("timecode") or "").split(".")[0].replace(":", "-")
+    parts = [re.sub(r'[\\/:*?"<>|\s·・]+', "", part) for part in (str(candidate.get("source_label") or ""), title, timecode, suffix)]
+    return "_".join(part for part in parts if part)[:150] + ".png"
 
 
 class ExportRequest(BaseModel):
@@ -84,6 +93,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
     output = root / "output"
     candidates: dict[str, dict] = {}
     media: dict[str, Path] = {}
+    media_names: dict[str, str] = {}
     avatars: dict[str, dict] = {}
     jobs: dict[str, dict] = {}
     preview_jobs: dict[str, dict] = {}
@@ -129,6 +139,10 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         key = opaque(str(path))
         media[key] = path
         return f"/media/{key}"
+
+    def name_media(url: str | None, name: str) -> None:
+        if url:
+            media_names[url.removeprefix("/media/")] = name
 
     def read_json(path: Path) -> Any:
         if not within(output, root) or not within(path, output):
@@ -300,7 +314,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         key = opaque(json.dumps(signature, sort_keys=True, ensure_ascii=False))
         return key, signature
 
-    def cached_preview(cache_dir: Path, signature: dict) -> dict | None:
+    def cached_preview(cache_dir: Path, signature: dict, candidate: dict) -> dict | None:
         record = read_json(cache_dir / "cache.json")
         if not isinstance(record, dict) or record.get("signature") != signature or not isinstance(record.get("image"), str):
             return None
@@ -315,6 +329,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                 width, height = picture.size
         except (OSError, ValueError):
             return None
+        name_media(image_url, download_name(candidate, "原帧"))
         return {"preview": image_url, "original": image_url, "download": image_url + "?download=true", "width": width, "height": height}
 
     async def render_native(candidate: dict, destination: Path):
@@ -344,7 +359,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                 record = {"signature": signature, "image": str((destination / "original.png").relative_to(cache_dir))}
                 record_path = cache_dir / "cache.json"
                 record_path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
-                result = cached_preview(cache_dir, signature)
+                result = cached_preview(cache_dir, signature, candidate)
                 if result is None:
                     raise RuntimeError("未找到可读取的原始帧。")
                 job.update(status="done", **result)
@@ -368,7 +383,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         cache_dir = output / "preview-cache" / key
         if not within(cache_dir, output) or not within(output, root):
             raise HTTPException(400, "预览缓存目录不在项目内。")
-        result = await asyncio.to_thread(cached_preview, cache_dir, signature)
+        result = await asyncio.to_thread(cached_preview, cache_dir, signature, candidate)
         if result is not None:
             return {"id": key, "candidate_id": params.candidate_id, "status": "done", "cached": True, **result}
         existing = preview_jobs.get(key)
@@ -403,7 +418,10 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
             original_url = register_image(destination / "original.png")
             if not image_url:
                 raise RuntimeError("导出没有产生可读取的壁纸文件。")
-            job.update(status="done", preview=image_url, download=image_url + "?download=true", original=original_url)
+            filename = download_name(candidate, f"{params.width}x{params.height}")
+            name_media(image_url, filename)
+            name_media(original_url, download_name(candidate, "原帧"))
+            job.update(filename=filename, status="done", preview=image_url, download=image_url + "?download=true", original=original_url)
         except asyncio.CancelledError:
             job.update(status="failed", error="服务关闭，导出已中止。")
             raise
@@ -509,7 +527,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         path = media.get(media_id)
         if path is None or not within(output, root) or not within(path, output) or not path.is_file():
             raise HTTPException(404, "图片不存在，请刷新。")
-        filename = path.name if download else None
+        filename = media_names.get(media_id, path.name) if download else None
         return FileResponse(path, filename=filename)
 
     @app.get("/")
