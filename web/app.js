@@ -612,7 +612,7 @@ function captureTime(seconds) {
   const tail = String(Math.floor(ticks % 600 / 10)).padStart(2, "0") + (ticks % 10 ? `.${ticks % 10}` : "");
   return hours ? `${hours}:${String(minutes).padStart(2, "0")}:${tail}` : `${minutes}:${tail}`;
 }
-const capture = {sources: [], source: null, seconds: 0, serial: 0, timer: null, ready: false, saving: false};
+const capture = {sources: [], source: null, seconds: 0, serial: 0, timer: null, ready: false, saving: false, step: 2, reel: null, touchedAt: 0, scrollLeft: 0};
 function stopCapture() { capture.serial++; clearTimeout(capture.timer); }
 function captureMessage(message, bad = false) {
   $("cap-chapter-line").textContent = message;
@@ -646,6 +646,109 @@ async function capturePicture(image, url) {
   image.src = url;
   await image.decode();
 }
+// The reel is for rough picking on a fixed grid (step seconds). It grows by
+// nine tiles at a time towards either side; the playhead marks the exact time.
+function reelRange(lo, hi, step) {
+  const times = [];
+  for (let k = 0; lo + k * step <= hi + 1e-6; k++) times.push(Math.round((lo + k * step) * 10) / 10);
+  return times;
+}
+function reelTop() { return Math.max(0, Math.floor((capture.source.duration - .05) / capture.reel.step) * capture.reel.step); }
+function reelCovers(seconds) {
+  const reel = capture.reel;
+  return reel && reel.sourceId === capture.source?.id && reel.step === capture.step && seconds >= reel.lo - reel.step && seconds <= reel.hi + reel.step;
+}
+function reelTile(t) {
+  const button = document.createElement("button"), image = document.createElement("img"), label = document.createElement("span");
+  button.type = "button"; button.className = "tile"; button.dataset.t = t; button.setAttribute("aria-label", `切换到 ${captureTime(t)}`);
+  image.alt = ""; label.textContent = captureTime(t); button.append(image, label);
+  const chapter = capture.source.chapters.find(c => t <= c.start && c.start < t + capture.reel.step);
+  if (chapter) button.dataset.chapter = `${capture.source.chapters.indexOf(chapter) + 1} ${chapter.title}`;
+  button.addEventListener("click", () => captureGo(t));
+  capture.reel.tiles.set(t, button);
+  return button;
+}
+function reelLabel(message, bad = false) {
+  const reel = capture.reel;
+  $("cap-loaded").textContent = message || (reel ? `已载入 ${captureTime(reel.lo)} – ${captureTime(reel.hi)} · ${reel.tiles.size} 张` : "");
+  $("cap-loaded").classList.toggle("busy", Boolean(message) && !bad); $("cap-loaded").classList.toggle("bad", bad);
+}
+function reelEdges() {
+  const reel = capture.reel;
+  $("cap-strip").querySelectorAll(".edge").forEach(edge => edge.remove());
+  for (const [side, at] of [["l", reel.lo <= 0], ["r", reel.hi >= reelTop()]]) {
+    if (!at) continue;
+    const edge = document.createElement("div"); edge.className = "tile edge"; edge.textContent = side === "l" ? "开头" : "结尾";
+    side === "l" ? $("cap-playhead").after(edge) : $("cap-strip").append(edge);
+  }
+}
+function standIn(url) {
+  if (capture.ready || !url) return;
+  $("cap-big").src = url; $("cap-big").hidden = false; $("cap-missing").hidden = true;
+}
+async function reelLoad(times, side) {
+  const reel = capture.reel;
+  if (side) reel.busy[side] = true;
+  reelLabel(`正在补 ${captureTime(times[0])} – ${captureTime(times[times.length - 1])}…`);
+  try {
+    const data = await captureJSON("/api/capture-strip", {source_id: reel.sourceId, start: times[0], step: reel.step, count: times.length});
+    if (reel !== capture.reel) return;
+    for (const {timestamp, url} of data.frames) {
+      const tile = reel.tiles.get(timestamp);
+      if (!tile) continue;
+      if (!url) { tile.classList.add("ready", "missing"); continue; }
+      const image = tile.querySelector("img"); image.src = url;
+      image.decode().then(() => tile.classList.add("ready"), () => tile.classList.add("ready", "missing"));
+      if (timestamp === capture.seconds) standIn(url);
+    }
+    reelLabel();
+  } catch (error) {
+    if (reel !== capture.reel) return;
+    times.forEach(t => reel.tiles.get(t)?.classList.add("ready", "missing"));
+    reelLabel(error.message, true);
+  } finally { if (side) reel.busy[side] = false; }
+}
+function reelBuild(center) {
+  const step = capture.step;
+  capture.reel = {sourceId: capture.source.id, step, lo: 0, hi: 0, tiles: new Map(), busy: {l: false, r: false}};
+  const top = reelTop(), grid = Math.min(top, Math.max(0, Math.round(center / step) * step));
+  Object.assign(capture.reel, {lo: Math.max(0, grid - 4 * step), hi: Math.min(top, grid + 4 * step)});
+  const times = reelRange(capture.reel.lo, capture.reel.hi, step);
+  $("cap-strip").replaceChildren($("cap-playhead"), ...times.map(reelTile));
+  reelEdges(); reelPlace(true); reelLoad(times);
+}
+function reelExtend(side) {
+  const reel = capture.reel;
+  if (!reel || reel.busy[side] || (side === "r" ? reel.hi >= reelTop() : reel.lo <= 0)) return;
+  const times = side === "r" ? reelRange(reel.hi + reel.step, Math.min(reelTop(), reel.hi + 9 * reel.step), reel.step)
+    : reelRange(Math.max(0, reel.lo - 9 * reel.step), reel.lo - reel.step, reel.step);
+  const strip = $("cap-strip"), before = strip.scrollWidth, tiles = times.map(reelTile);
+  if (side === "r") { strip.append(...tiles); reel.hi = times[times.length - 1]; }
+  else {
+    // Keep the visible tiles still while new ones appear on the left.
+    strip.style.scrollBehavior = "auto"; $("cap-playhead").after(...tiles);
+    strip.scrollLeft += strip.scrollWidth - before; strip.style.scrollBehavior = ""; reel.lo = times[0];
+  }
+  reelEdges(); reelPlace(false); reelLoad(times, side);
+}
+function reelPlace(scroll) {
+  const reel = capture.reel, strip = $("cap-strip");
+  if (!reel?.tiles.size) return;
+  let near = null;
+  for (const tile of reel.tiles.values()) if (!near || Math.abs(tile.dataset.t - capture.seconds) < Math.abs(near.dataset.t - capture.seconds)) near = tile;
+  reel.tiles.forEach(tile => tile.classList.toggle("on", tile === near));
+  const offset = (capture.seconds - near.dataset.t) / reel.step * (near.offsetWidth + 5);
+  $("cap-playhead").hidden = capture.seconds < reel.lo - reel.step / 2 || capture.seconds > reel.hi + reel.step / 2;
+  $("cap-playhead").style.left = `${near.offsetLeft + near.offsetWidth / 2 + offset - 1}px`;
+  if (scroll) {
+    capture.touchedAt = 0;
+    strip.scrollTo({left: near.offsetLeft - strip.clientWidth / 2 + near.offsetWidth / 2});
+  }
+}
+function captureKeyToast(text) {
+  $("cap-key").textContent = text; $("cap-key").classList.add("show");
+  clearTimeout(captureKeyToast.timer); captureKeyToast.timer = setTimeout(() => $("cap-key").classList.remove("show"), 900);
+}
 async function runCapture(serial) {
   if (serial !== capture.serial || !capture.source?.available) return;
   const seconds = capture.seconds, source = capture.source;
@@ -655,42 +758,22 @@ async function runCapture(serial) {
   $("cap-big").classList.add("loading"); $("cap-prog").classList.add("run");
   const timeLabel = document.createElement("strong"); timeLabel.textContent = captureTime(seconds);
   $("cap-big-meta").replaceChildren(timeLabel, document.createTextNode(` · ${source.label}${captureChapter(seconds) ? ` · ${captureChapter(seconds).title}` : ""}`));
-  const frames = Array.from({length: 9}, (_, i) => Math.round((seconds + (i - 4) * .5) * 10) / 10).filter(t => t >= 0 && t < source.duration);
-  const buttons = new Map(); $("cap-strip").replaceChildren();
-  for (const timestamp of frames) {
-    const button = document.createElement("button"), image = document.createElement("img"), label = document.createElement("span");
-    button.type = "button"; button.classList.toggle("on", timestamp === seconds); button.setAttribute("aria-label", `切换到 ${captureTime(timestamp)}`);
-    image.alt = ""; label.textContent = captureTime(timestamp); button.append(image, label);
-    button.addEventListener("click", () => captureGo(timestamp)); $("cap-strip").append(button); buttons.set(timestamp, {button, image});
-  }
-  async function display(timestamp, job) {
-    if (!job || serial !== capture.serial) return;
-    const {button, image} = buttons.get(timestamp);
-    await capturePicture(image, job.original);
-    if (serial !== capture.serial) return;
-    image.classList.add("in"); button.classList.add("ready");
-    if (timestamp === seconds) {
-      await capturePicture($("cap-big"), job.original);
-      if (serial !== capture.serial) return;
-      $("cap-big").hidden = false; $("cap-big").classList.remove("loading"); $("cap-missing").hidden = true;
-      $("cap-quality").textContent = `原帧 ${job.width} × ${job.height}`; $("cap-prog").classList.remove("run");
-      capture.ready = true; $("cap-add").disabled = capture.saving;
-    }
-  }
+  if (reelCovers(seconds)) reelPlace(true); else reelBuild(seconds);
+  const tile = capture.reel.tiles.get(seconds);
+  if (tile?.classList.contains("ready") && !tile.classList.contains("missing")) standIn(tile.querySelector("img").src);
+  else if (!$("cap-big").hidden) $("cap-missing").hidden = true;
   try {
     const current = await captureJSON("/api/capture-previews", {source_id: source.id, timestamp: seconds, priority: "current"});
     if (serial !== capture.serial || current.status === "cancelled") return;
-    // Three bounded workers plus the current frame remain below the server's
-    // eight active jobs. No more than nine distinct frames belong to a batch.
-    const pending = frames.filter(t => t !== seconds).sort((a, b) => Math.abs(a - seconds) - Math.abs(b - seconds));
-    const worker = async () => {
-      while (serial === capture.serial && pending.length) {
-        const timestamp = pending.shift();
-        const job = await captureJSON("/api/capture-previews", {source_id: source.id, timestamp, priority: "prefetch", generation: current.generation});
-        await display(timestamp, await capturePoll(job, serial));
-      }
-    };
-    await Promise.all([capturePoll(current, serial).then(job => display(seconds, job)), ...Array.from({length: 3}, worker)]);
+    const job = await capturePoll(current, serial);
+    if (!job || serial !== capture.serial) return;
+    // Decode off-screen: the blurred stand-in may still own cap-big.
+    await capturePicture(new Image(), job.original);
+    if (serial !== capture.serial) return;
+    capture.ready = true; $("cap-big").src = job.original;
+    $("cap-big").hidden = false; $("cap-big").classList.remove("loading"); $("cap-missing").hidden = true;
+    $("cap-quality").textContent = `原帧 ${job.width} × ${job.height}`; $("cap-prog").classList.remove("run");
+    $("cap-add").disabled = capture.saving;
   } catch (error) {
     if (serial === capture.serial) { captureMessage(error.message, true); $("cap-prog").classList.remove("run"); }
   }
@@ -703,6 +786,7 @@ function captureInput() {
   const absolute = Math.round((seconds + offset) * 10) / 10;
   if (absolute >= capture.source.duration) { captureMessage(`超出视频长度 ${captureTime(capture.source.duration)}`, true); return; }
   capture.seconds = absolute; captureFeedback(absolute);
+  if (reelCovers(absolute)) reelPlace(true);
   const serial = capture.serial;
   capture.timer = setTimeout(() => runCapture(serial), 350);
 }
@@ -713,7 +797,7 @@ function captureGo(seconds) {
   captureInput();
 }
 function captureSourceChanged() {
-  capture.source = capture.sources.find(source => source.id === $("cap-src").value);
+  capture.source = capture.sources.find(source => source.id === $("cap-src").value); capture.reel = null;
   $("cap-chap").replaceChildren(new Option("不指定（按整场时间）", ""), ...(capture.source?.chapters || []).map((c, i) => new Option(`${String(i + 1).padStart(2, "0")} ${c.title} · ${captureTime(c.start)}`, c.start)));
   $("cap-time").value = "0:00"; captureInput();
 }
@@ -759,10 +843,52 @@ $("cap-src").addEventListener("change", captureSourceChanged);
 $("cap-time").addEventListener("input", captureInput);
 $("cap-chap").addEventListener("change", () => { $("cap-time").value = "0:00"; captureInput(); $("cap-time").focus(); $("cap-time").select(); });
 document.querySelectorAll(".capture .nudge button").forEach(button => button.addEventListener("click", () => captureGo(capture.seconds + Number(button.dataset.d))));
-$("capture").addEventListener("keydown", event => {
-  if (event.target.matches("input, select, textarea, [contenteditable]")) return;
-  if (["ArrowLeft", "ArrowRight"].includes(event.key)) { event.preventDefault(); captureGo(capture.seconds + (event.key === "ArrowLeft" ? -.5 : .5)); }
+// On the document: rebuilding the reel removes the focused tile, which used to
+// drop focus to <body> and silence the arrows. Only while the panel is on screen.
+document.addEventListener("keydown", event => {
+  if (!$("capture").classList.contains("open") || !$("viewer").hidden || event.altKey || event.ctrlKey || event.metaKey) return;
+  const box = $("capture").getBoundingClientRect();
+  if (box.bottom < 0 || box.top > innerHeight || !capture.reel) return;
+  if (event.target === $("cap-time") && ["ArrowUp", "ArrowDown"].includes(event.key)) {
+    event.preventDefault(); captureGo(capture.seconds + (event.key === "ArrowUp" ? .5 : -.5)); return;
+  }
+  if (event.target.matches("input, select, textarea, [contenteditable]") || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+  event.preventDefault();
+  const step = capture.reel.step, dir = event.key === "ArrowLeft" ? -1 : 1, cell = capture.seconds / step;
+  // Off-grid times first snap to the neighbouring tile in that direction.
+  const next = Math.abs(cell - Math.round(cell)) > .01 ? (dir > 0 ? Math.ceil(cell) : Math.floor(cell)) * step : capture.seconds + dir * step;
+  captureGo(next); captureKeyToast(`${dir > 0 ? "→" : "←"} ${step} 秒`);
+  if (next >= capture.reel.hi - step) reelExtend("r");
+  if (next <= capture.reel.lo + step) reelExtend("l");
 });
+document.querySelectorAll("#cap-steps button").forEach(button => button.addEventListener("click", () => {
+  document.querySelectorAll("#cap-steps button").forEach(other => other.setAttribute("aria-pressed", String(other === button)));
+  capture.step = Number(button.dataset.step);
+  if (capture.source?.available && capture.reel) reelBuild(capture.seconds);
+}));
+// Grow only on the user's own scrolling; our centring scrolls must not load
+// batches nobody asked for. A swipe at the very edge produces no scroll event.
+function reelNearEdge(dir) {
+  const strip = $("cap-strip");
+  if (dir < 0 && strip.scrollLeft < 60) reelExtend("l");
+  if (dir > 0 && strip.scrollLeft + strip.clientWidth > strip.scrollWidth - 60) reelExtend("r");
+}
+for (const type of ["pointerdown", "touchstart"]) $("cap-strip").addEventListener(type, () => { capture.touchedAt = Date.now(); }, {passive: true});
+$("cap-strip").addEventListener("wheel", event => {
+  if (!event.deltaX) return;
+  capture.touchedAt = Date.now(); reelNearEdge(Math.sign(event.deltaX));
+}, {passive: true});
+$("cap-strip").addEventListener("scroll", () => {
+  const strip = $("cap-strip"), dir = Math.sign(strip.scrollLeft - capture.scrollLeft);
+  capture.scrollLeft = strip.scrollLeft;
+  if (Date.now() - capture.touchedAt < 1200) reelNearEdge(dir);
+}, {passive: true});
+for (const side of ["l", "r"]) $(`cap-page-${side}`).addEventListener("click", () => {
+  const strip = $("cap-strip"), dir = side === "l" ? -1 : 1;
+  if (side === "l" ? strip.scrollLeft < 60 : strip.scrollLeft + strip.clientWidth > strip.scrollWidth - 60) reelExtend(side);
+  strip.scrollBy({left: dir * strip.clientWidth * .9});
+});
+addEventListener("resize", () => reelPlace(false));
 $("cap-add").addEventListener("click", () => saveCapture(false));
 $("cap-use").addEventListener("click", event => { event.preventDefault(); saveCapture(true); });
 $("user-filter").addEventListener("click", () => { if (state.filter === "selected") state.filter = "all"; setSourceKind("user"); });

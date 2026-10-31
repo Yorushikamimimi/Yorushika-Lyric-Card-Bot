@@ -145,3 +145,95 @@ def test_capture_manifest_replace_failure_preserves_previous_files(capture_app):
     assert (manifest.parent / 'previews/U001.jpg').exists()
     assert not (manifest.parent / 'previews/U002.jpg').exists()
     assert not list(manifest.parent.glob('*.tmp'))
+
+
+@pytest.fixture
+def strip_app(tmp_path):
+    source = tmp_path / 'private-video.mkv'
+    source.write_bytes(b'video')
+    batch = tmp_path / 'output' / 'old'
+    batch.mkdir(parents=True)
+    Image.new('RGB', (20, 10)).save(batch / 'thumb.jpg')
+    manifest = {'videos': [{'id': 'v', 'label': 'Live', 'source': str(source)}], 'candidates': [{'id': 'a', 'video_id': 'v', 'source': str(source), 'timestamp': 1, 'preview': 'thumb.jpg'}]}
+    (batch / 'manifest.json').write_text(json.dumps(manifest))
+    metadata = {'duration': 60, 'chapters': [], 'source': str(source)}
+    calls = []
+
+    def strip(candidate, start, step, count, folder):
+        calls.append((start, step, count))
+        if step == 1:
+            from live_wallpaper import WallpaperError
+            raise WallpaperError(f'ffmpeg failed for {candidate["source"]}')
+        for index in range(count):
+            Image.new('RGB', (48, 27), 'blue').save(folder / f'{index + 1:02d}.jpg')
+
+    async def render(candidate, destination):
+        destination.mkdir(parents=True)
+        Image.new('RGB', (64, 36)).save(destination / 'original.png')
+
+    with patch('studio.probe_video', return_value=metadata):
+        app = create_app(tmp_path, preview_renderer=render, strip_renderer=strip)
+        with TestClient(app, base_url='http://127.0.0.1:8766') as client:
+            yield client, tmp_path, calls
+
+
+def test_capture_strip_renders_batches_and_reuses_cached_frames(strip_app):
+    client, root, calls = strip_app
+    source = source_id(client)
+    first = post(client, '/api/capture-strip', {'source_id': source, 'start': 8, 'step': 2, 'count': 9}).json()['frames']
+    assert [f['timestamp'] for f in first] == [8, 10, 12, 14, 16, 18, 20, 22, 24]
+    assert all(f['url'].startswith('/media/') for f in first)
+    assert calls == [(8, 2, 9)]
+    # Extending to the right reuses 24 and only decodes the new frames.
+    later = post(client, '/api/capture-strip', {'source_id': source, 'start': 24, 'step': 2, 'count': 9}).json()['frames']
+    assert calls[1:] == [(26, 2, 8)] and all(f['url'] for f in later)
+    # Frames are cached by time, so another step sharing a time reuses it.
+    post(client, '/api/capture-strip', {'source_id': source, 'start': 10, 'step': 5, 'count': 3})
+    assert calls[2:] == [(15, 5, 1)]
+    assert client.get(first[0]['url']).status_code == 200
+    assert not list((root / 'output/preview-cache/strips').rglob('.*'))
+
+
+def test_capture_strip_clips_to_video_and_hides_failures(strip_app):
+    client, root, calls = strip_app
+    source = source_id(client)
+    end = post(client, '/api/capture-strip', {'source_id': source, 'start': 40, 'step': 5, 'count': 9}).json()['frames']
+    assert [f['timestamp'] for f in end] == [40, 45, 50, 55]
+    failed = post(client, '/api/capture-strip', {'source_id': source, 'start': 30, 'step': 1, 'count': 3})
+    assert failed.status_code == 409 and str(root) not in failed.text
+    assert not list((root / 'output/preview-cache/strips').rglob('.*'))
+    assert not (root / 'output/user-captures').exists()
+
+
+@pytest.mark.parametrize('body', [{'start': 1, 'step': 3}, {'start': 1, 'count': 10}, {'start': 1, 'count': 0}, {'start': 1.25}, {'start': 60}, {'start': True}])
+def test_capture_strip_rejects_bad_requests(strip_app, body):
+    client, _, calls = strip_app
+    assert post(client, '/api/capture-strip', {'source_id': source_id(client), **body}).status_code == 422
+    assert calls == []
+
+
+@pytest.mark.skipif(subprocess.run(['which', 'ffmpeg'], capture_output=True).returncode, reason='ffmpeg missing')
+@pytest.mark.parametrize('start,step', [(1, 1), (0, 2)])
+def test_capture_strip_real_ffmpeg_matches_frame_times(tmp_path, start, step):
+    # A clock video: brightness grows with time, so each frame shows its time.
+    source = tmp_path / 'clock.mp4'
+    subprocess.run(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=black:s=320x180:r=10:d=6',
+                    '-vf', 'geq=lum=T*40:cb=128:cr=128', '-pix_fmt', 'yuv420p', str(source)], check=True)
+    batch = tmp_path / 'output' / 'old'
+    batch.mkdir(parents=True)
+    Image.new('RGB', (20, 10)).save(batch / 'x.jpg')
+    manifest = {'videos': [{'id': 'v', 'label': 'Clock', 'source': str(source)}], 'candidates': [{'id': 'a', 'video_id': 'v', 'source': str(source), 'timestamp': 1, 'preview': 'x.jpg'}]}
+    (batch / 'manifest.json').write_text(json.dumps(manifest))
+    from io import BytesIO
+    with TestClient(create_app(tmp_path), base_url='http://127.0.0.1:8766') as client:
+        frames = post(client, '/api/capture-strip', {'source_id': source_id(client), 'start': start, 'step': step, 'count': 9}).json()['frames']
+        times = [f['timestamp'] for f in frames]
+        assert times == [t for t in range(start, 6, step)]
+        levels = []
+        for frame in frames:
+            picture = Image.open(BytesIO(client.get(frame['url']).content)).convert('L')
+            assert picture.width == 480
+            levels.append(picture.getpixel((10, 10)))
+    # Limited-range luma T*40 in full-range JPEG; one 0.1 s frame is about 19 levels.
+    expected = [max(0, round((t * 40 - 16) * 255 / 219)) for t in times]
+    assert all(abs(a - b) <= 6 for a, b in zip(levels, expected)), (levels, expected)

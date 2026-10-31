@@ -4,12 +4,14 @@ from __future__ import annotations
 import argparse
 import asyncio
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 import hashlib
 from datetime import datetime, timezone
 import json
 import logging
 import math
+import os
 from pathlib import Path
 import re
 import sys
@@ -23,7 +25,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from PIL import Image, ImageOps
-from live_wallpaper import probe_video, timecode, WallpaperError
+from live_wallpaper import color_plan, probe_video, run, timecode, WallpaperError
 
 ROOT = Path(__file__).resolve().parent
 IMAGE_TYPES = {".png", ".jpg", ".jpeg", ".webp"}
@@ -69,6 +71,9 @@ class ExportRequest(BaseModel):
 
 Renderer = Callable[[dict, ExportRequest, Path], Awaitable[None]]
 PreviewRenderer = Callable[[dict, Path], Awaitable[None]]
+# (candidate, first timestamp, step, frame count, folder): writes 01.jpg, 02.jpg ...
+StripRenderer = Callable[[dict, float, float, int, Path], None]
+STRIP_WIDTH, STRIP_SEEK_STEP, STRIP_SEEK_WORKERS = 480, 2, 3
 
 
 def power_status() -> dict:
@@ -110,6 +115,28 @@ class CaptureRequest(BaseModel):
         return value
 
 
+class CaptureStripRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+    source_id: str = Field(min_length=1, max_length=64)
+    start: float = Field(ge=0)
+    step: Literal[1, 2, 5] = 2
+    count: int = Field(default=9, ge=1, le=9)
+
+    @field_validator("start", mode="before")
+    @classmethod
+    def numeric_start(cls, value):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError("时间必须是秒数")
+        return value
+
+    @field_validator("start")
+    @classmethod
+    def start_tenths(cls, value):
+        if value != round(value, 1):
+            raise ValueError("时间最多保留一位小数")
+        return value
+
+
 class CapturePreviewRequest(CaptureRequest):
     priority: Literal["current", "prefetch"] = "current"
     generation: int | None = Field(default=None, ge=0)
@@ -130,7 +157,8 @@ class AvatarExportRequest(BaseModel):
     focus_y: float = Field(default=.5, ge=0, le=1)
 
 
-def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, preview_renderer: PreviewRenderer | None = None) -> FastAPI:
+def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, preview_renderer: PreviewRenderer | None = None,
+               strip_renderer: StripRenderer | None = None) -> FastAPI:
     root = project_root.resolve()
     output = root / "output"
     candidates: dict[str, dict] = {}
@@ -147,6 +175,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
     artwork_slots = asyncio.Semaphore(2)
     favorite_lock = asyncio.Lock()
     capture_lock = asyncio.Lock()
+    strip_lock = asyncio.Lock()
     source_lock = asyncio.Lock()
     capture_sources: dict[str, dict] = {}
     probe_cache: dict[str, tuple[tuple, dict]] = {}
@@ -612,6 +641,92 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         if generation != current_revision:
             return {"status": "cancelled", "id": candidate["id"], "generation": generation}
         return await enqueue_preview(candidate, params.priority, generation)
+
+    def render_strip(candidate: dict, start: float, step: float, count: int, folder: Path) -> None:
+        # Small JPEG previews for choosing a moment; the main picture is still
+        # the native frame. Dense strips decode once; wide strips seek per frame.
+        metadata = candidate["source_metadata"]
+        luts = output / "preview-cache" / "strips"
+        luts.mkdir(parents=True, exist_ok=True)
+        color_filters, _ = color_plan(metadata, luts, "auto", 1000, 65)
+        ratio = metadata.get("display_aspect_ratio") or 16 / 9
+        filters = [f"scale={STRIP_WIDTH}:{max(2, 2 * round(STRIP_WIDTH / ratio / 2))}", *color_filters]
+
+        def ffmpeg(seconds: float, frames: int, vf: list[str], target: Path) -> None:
+            command = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-ss", f"{seconds:.6f}"]
+            if frames > 1:
+                command += ["-t", f"{(frames - 1 + .5) * step:.6f}"]
+            command += ["-i", candidate["source"], "-map", "0:v:0", "-an", "-sn", "-vf", ",".join(vf),
+                        "-frames:v", str(frames), "-q:v", "4", "-pix_fmt", "yuvj420p", str(target)]
+            if os.environ.get("YORUSHIKA_HWACCEL", "1") != "0":
+                hardware = command.copy()
+                hardware[hardware.index("-i"):hardware.index("-i")] = ["-hwaccel", "videotoolbox"]
+                try:
+                    run(hardware)
+                    if frames > 1 or target.is_file():
+                        return
+                except WallpaperError:
+                    pass
+                for partial in folder.glob(target.name.replace("%02d", "*")):
+                    partial.unlink()
+            run(command)
+
+        if step < STRIP_SEEK_STEP:
+            # round=up keeps the frame at each tick; the default (near) keeps
+            # the last frame before the next half tick, up to step/2 late.
+            ffmpeg(start, count, [f"fps={1 / step:g}:round=up", *filters], folder / "%02d.jpg")
+            return
+        with ThreadPoolExecutor(STRIP_SEEK_WORKERS) as pool:
+            jobs = [pool.submit(ffmpeg, start + index * step, 1, filters, folder / f"{index + 1:02d}.jpg") for index in range(count)]
+            errors = [job.exception() for job in jobs]
+        if all(errors):
+            raise errors[0]
+
+    def capture_strip_files(candidate: dict, times: list[float], step: float) -> dict[float, Path]:
+        source = Path(candidate["source"])
+        stat = source.stat()
+        key = opaque(json.dumps({"version": 2, "source": str(source.resolve()), "size": stat.st_size, "mtime_ns": stat.st_mtime_ns,
+                                 "source_metadata": candidate["source_metadata"], "width": STRIP_WIDTH}, sort_keys=True, ensure_ascii=False))
+        folder = output / "preview-cache" / "strips" / key
+        if not within(folder, output) or not within(output, root):
+            raise HTTPException(400, "预览缓存目录不在项目内。")
+        files = {t: folder / f"{round(t * 10)}.jpg" for t in times}
+        missing = [t for t in times if not files[t].is_file()]
+        if missing:
+            # Times share one grid, so one run from the first to the last
+            # missing frame also covers any missing frames in between.
+            start = min(missing)
+            count = round((max(missing) - start) / step) + 1
+            work = folder / f".{uuid.uuid4().hex}"
+            work.mkdir(parents=True)
+            try:
+                (strip_renderer or render_strip)(candidate, start, step, count, work)
+                for index in range(count):
+                    timestamp = round((start + index * step) * 10) / 10
+                    produced = work / f"{index + 1:02d}.jpg"
+                    if timestamp in files and produced.is_file():
+                        produced.replace(files[timestamp])
+            finally:
+                for leftover in work.glob("*"):
+                    leftover.unlink()
+                work.rmdir()
+        return {t: path for t, path in files.items() if path.is_file()}
+
+    @app.post("/api/capture-strip")
+    async def capture_strip(params: CaptureStripRequest):
+        candidate = await capture_candidate(CaptureRequest(source_id=params.source_id, timestamp=params.start))
+        duration = candidate["source_metadata"]["duration"]
+        times = [t for t in (round((params.start + i * params.step) * 10) / 10 for i in range(params.count)) if t < duration]
+        async with strip_lock:
+            try:
+                files = await asyncio.to_thread(capture_strip_files, candidate, times, params.step)
+            except OSError:
+                raise HTTPException(409, "源视频不可用或无法读取，请检查本地视频。") from None
+            except WallpaperError:
+                # ffmpeg diagnostics may contain private paths: log, do not return.
+                logging.exception("Capture strip failed")
+                raise HTTPException(409, "附近帧暂时没有生成，可以直接用主图。") from None
+        return {"frames": [{"timestamp": t, "url": register_image(files[t]) if t in files else None} for t in times]}
 
     def persist_capture(candidate: dict, image: Path) -> tuple[str, bool]:
         folder = output / "user-captures"

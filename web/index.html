@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ヨルシカ · 留住这一帧</title><link rel="stylesheet" href="/static/style.css?v=20261031e"><script src="/static/app.js?v=20261031e" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ヨルシカ · 留住这一帧</title><link rel="stylesheet" href="/static/style.css?v=20261031g"><script src="/static/app.js?v=20261031g" defer></script></head>
 <body>
   <header class="masthead"><a href="/" class="brand" aria-label="夜鹿工作室首页">ヨルシカ<span>FAN'S ATELIER / 私人收藏</span></a><div class="edition">PHOTO & DRAWING<br>01 — 留住这一帧</div></header>
   <main>
@@ -20,9 +20,11 @@
           <div class="cap-meta"><span id="cap-big-meta">请选择视频和时间</span><span id="cap-quality"></span></div>
           <p class="cap-missing" id="cap-missing" hidden>正在载入原帧…</p>
           <div class="cap-progress" id="cap-prog"></div>
+          <div class="cap-key" id="cap-key" aria-hidden="true"></div>
         </div>
-        <div class="strip" id="cap-strip"></div>
-        <div class="strip-caption"><span>前后 2 秒 · 每 0.5 秒一帧，点一下就换</span><span>← / → 键也能逐帧换</span></div>
+        <div class="strip-bar"><div class="step-chips" id="cap-steps" role="group" aria-label="缩略条间隔">间隔 <button type="button" data-step="1" aria-pressed="false">1 秒</button><button type="button" data-step="2" aria-pressed="true">2 秒</button><button type="button" data-step="5" aria-pressed="false">5 秒</button></div><span id="cap-loaded" aria-live="polite"></span></div>
+        <div class="reel-wrap"><button type="button" class="reel-page l" id="cap-page-l" aria-label="往前翻一屏">‹</button><div class="reel" id="cap-strip"><div class="playhead" id="cap-playhead" hidden></div></div><button type="button" class="reel-page r" id="cap-page-r" aria-label="往后翻一屏">›</button></div>
+        <div class="strip-caption"><span>点一格换主图 · 滑动看更多</span><span>← / → 换一格 · 微调用右边按钮</span></div>
       </div>
       <div class="cap-side">
         <label for="cap-src">视频</label>
@@ -33,7 +35,7 @@
         <div class="time-row"><input id="cap-time" value="0:00" maxlength="64" inputmode="decimal" autocomplete="off" aria-describedby="cap-chapter-line"></div>
         <div class="nudge"><button data-d="-1">−1 秒</button><button data-d="-0.5">−0.5</button><button data-d="0.5">+0.5</button><button data-d="1">+1 秒</button></div>
         <p class="chapter-line" id="cap-chapter-line" aria-live="polite"></p>
-        <p class="hint">截一帧需要几秒；附近 9 帧会在后台依次补上。</p>
+        <p class="hint">缩略条用来粗挑，右边按钮和时间框里的 ↑ ↓ 用来对准；加入图库的是原帧。</p>
         <label class="check"><input type="checkbox" id="cap-fav" checked> 同时加入收藏</label>
         <div class="cap-actions">
           <button class="primary-button" id="cap-add" disabled>加入图库「我截的」 <span>＋</span></button>
