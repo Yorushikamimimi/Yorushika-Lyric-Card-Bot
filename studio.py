@@ -16,6 +16,7 @@ from pathlib import Path
 import re
 import sys
 import subprocess
+import threading
 from typing import Any, Awaitable, Callable, Literal
 from urllib.parse import urlsplit
 import uuid
@@ -25,7 +26,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from PIL import Image, ImageOps
-from live_wallpaper import color_plan, probe_video, run, timecode, WallpaperError
+from live_wallpaper import color_plan, extract_frame, probe_video, run, timecode, WallpaperError
 
 ROOT = Path(__file__).resolve().parent
 IMAGE_TYPES = {".png", ".jpg", ".jpeg", ".webp"}
@@ -73,7 +74,7 @@ Renderer = Callable[[dict, ExportRequest, Path], Awaitable[None]]
 PreviewRenderer = Callable[[dict, Path], Awaitable[None]]
 # (candidate, first timestamp, step, frame count, folder): writes 01.jpg, 02.jpg ...
 StripRenderer = Callable[[dict, float, float, int, Path], None]
-STRIP_WIDTH, STRIP_SEEK_STEP, STRIP_SEEK_WORKERS = 480, 2, 3
+STRIP_WIDTH, STRIP_SEEK_STEP, STRIP_SEEK_WORKERS = 480, 5, 2
 
 
 def power_status() -> dict:
@@ -178,6 +179,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
     strip_lock = asyncio.Lock()
     source_lock = asyncio.Lock()
     capture_sources: dict[str, dict] = {}
+    lut_lock = threading.Lock()
     probe_cache: dict[str, tuple[tuple, dict]] = {}
 
     @asynccontextmanager
@@ -410,18 +412,26 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         name_media(image_url, download_name(candidate, "原帧"))
         return {"preview": image_url, "original": image_url, "download": image_url + "?download=true", "width": width, "height": height}
 
+    def color_filters(metadata: dict) -> list[str]:
+        # One shared LUT per HDR kind: building a 65³ table costs ~0.4 s of CPU.
+        luts = output / "preview-cache" / "luts"
+        with lut_lock:
+            luts.mkdir(parents=True, exist_ok=True)
+            return color_plan(metadata, luts, "auto", 1000, 65)[0]
+
+    def extract_native(candidate: dict, destination: Path) -> None:
+        # Same frame as `live_wallpaper.py render --native` (pixel-identical),
+        # without its second full-size PNG pass, LUT rebuild and Python start.
+        source = Path(candidate["source"])
+        destination.mkdir(parents=True)
+        extract_frame(source, candidate["timestamp"], destination / "original.png", color_filters(probe_video(source)))
+
     async def render_native(candidate: dict, destination: Path):
-        command = [sys.executable, str(root / "live_wallpaper.py"), "render", "--source", candidate["source"], "--timestamp", str(candidate["timestamp"]), "--output", str(destination), "--native", "--sharpen", "0"]
-        proc = await asyncio.create_subprocess_exec(*command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, cwd=root)
         try:
-            _, stderr = await asyncio.wait_for(proc.communicate(), timeout=180)
-        except (asyncio.TimeoutError, asyncio.CancelledError):
-            proc.kill()
-            await proc.wait()
-            raise
-        if proc.returncode:
-            logging.error("Native preview failed: %s", stderr.decode(errors="replace")[-2000:])
-            raise RuntimeError("原帧暂未载入，可重新选择这一帧再试。")
+            await asyncio.to_thread(extract_native, candidate, destination)
+        except (OSError, ValueError, WallpaperError):
+            logging.exception("Native preview failed")
+            raise RuntimeError("原帧暂未载入，可重新选择这一帧再试。") from None
 
     async def run_preview(job: dict, candidate: dict, signature: dict, cache_dir: Path):
         try:
@@ -646,38 +656,48 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         # Small JPEG previews for choosing a moment; the main picture is still
         # the native frame. Dense strips decode once; wide strips seek per frame.
         metadata = candidate["source_metadata"]
-        luts = output / "preview-cache" / "strips"
-        luts.mkdir(parents=True, exist_ok=True)
-        color_filters, _ = color_plan(metadata, luts, "auto", 1000, 65)
+        color = color_filters(metadata)
         ratio = metadata.get("display_aspect_ratio") or 16 / 9
-        filters = [f"scale={STRIP_WIDTH}:{max(2, 2 * round(STRIP_WIDTH / ratio / 2))}", *color_filters]
+        width, height = STRIP_WIDTH, max(2, 2 * round(STRIP_WIDTH / ratio / 2))
 
-        def ffmpeg(seconds: float, frames: int, vf: list[str], target: Path) -> None:
+        def ffmpeg(seconds: float, frames: int, target: Path) -> None:
+            # round=up keeps the frame at each tick; the default (near) keeps
+            # the last frame before the next half tick, up to step/2 late.
+            pick = [f"fps={1 / step:g}:round=up"] if frames > 1 else []
             command = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-ss", f"{seconds:.6f}"]
             if frames > 1:
                 command += ["-t", f"{(frames - 1 + .5) * step:.6f}"]
-            command += ["-i", candidate["source"], "-map", "0:v:0", "-an", "-sn", "-vf", ",".join(vf),
-                        "-frames:v", str(frames), "-q:v", "4", "-pix_fmt", "yuvj420p", str(target)]
+            tail = ["-i", candidate["source"], "-map", "0:v:0", "-an", "-sn", "-vf", None,
+                    "-frames:v", str(frames), "-q:v", "4", "-pix_fmt", "yuvj420p", str(target)]
+            cpu_scale = ",".join([*pick, f"scale={width}:{height}", *color])
+            attempts = []
             if os.environ.get("YORUSHIKA_HWACCEL", "1") != "0":
-                hardware = command.copy()
-                hardware[hardware.index("-i"):hardware.index("-i")] = ["-hwaccel", "videotoolbox"]
+                # Best: decode and shrink on the GPU, copy only small frames back.
+                # The download format must match the decoder's: a list fails on HDR.
+                deep = re.search(r"p1[0-6]", metadata.get("pixel_format") or "")
+                gpu_scale = ",".join([*pick, f"scale_vt=w={width}:h={height}", "hwdownload", "format=p010le" if deep else "format=nv12", *color])
+                attempts += [["-hwaccel", "videotoolbox", "-hwaccel_output_format", "videotoolbox_vld", gpu_scale],
+                             ["-hwaccel", "videotoolbox", cpu_scale]]
+            attempts.append([cpu_scale])
+            for index, attempt in enumerate(attempts):
+                *options, vf = attempt
                 try:
-                    run(hardware)
+                    run(command + options + [vf if part is None else part for part in tail])
                     if frames > 1 or target.is_file():
                         return
                 except WallpaperError:
-                    pass
+                    if index == len(attempts) - 1:
+                        raise
+                # Only this attempt's partial output can exist here (-n above).
                 for partial in folder.glob(target.name.replace("%02d", "*")):
                     partial.unlink()
-            run(command)
 
         if step < STRIP_SEEK_STEP:
-            # round=up keeps the frame at each tick; the default (near) keeps
-            # the last frame before the next half tick, up to step/2 late.
-            ffmpeg(start, count, [f"fps={1 / step:g}:round=up", *filters], folder / "%02d.jpg")
+            ffmpeg(start, count, folder / "%02d.jpg")
             return
+        # Wide steps seek per frame (a 5 s GOP makes one pass decode far more).
         with ThreadPoolExecutor(STRIP_SEEK_WORKERS) as pool:
-            jobs = [pool.submit(ffmpeg, start + index * step, 1, filters, folder / f"{index + 1:02d}.jpg") for index in range(count)]
+            jobs = [pool.submit(ffmpeg, start + index * step, 1, folder / f"{index + 1:02d}.jpg") for index in range(count)]
             errors = [job.exception() for job in jobs]
         if all(errors):
             raise errors[0]

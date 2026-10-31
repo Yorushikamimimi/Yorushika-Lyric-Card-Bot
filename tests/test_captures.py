@@ -237,3 +237,61 @@ def test_capture_strip_real_ffmpeg_matches_frame_times(tmp_path, start, step):
     # Limited-range luma T*40 in full-range JPEG; one 0.1 s frame is about 19 levels.
     expected = [max(0, round((t * 40 - 16) * 255 / 219)) for t in times]
     assert all(abs(a - b) <= 6 for a, b in zip(levels, expected)), (levels, expected)
+
+
+@pytest.fixture
+def clock_root(tmp_path):
+    if subprocess.run(['which', 'ffmpeg'], capture_output=True).returncode:
+        pytest.skip('ffmpeg missing')
+    source = tmp_path / 'clock.mp4'
+    subprocess.run(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=black:s=320x180:r=10:d=6',
+                    '-vf', 'geq=lum=T*40:cb=128:cr=128', '-pix_fmt', 'yuv420p', str(source)], check=True)
+    batch = tmp_path / 'output' / 'old'
+    batch.mkdir(parents=True)
+    Image.new('RGB', (20, 10)).save(batch / 'x.jpg')
+    manifest = {'videos': [{'id': 'v', 'label': 'Clock', 'source': str(source)}], 'candidates': [{'id': 'a', 'video_id': 'v', 'source': str(source), 'timestamp': 1, 'preview': 'x.jpg'}]}
+    (batch / 'manifest.json').write_text(json.dumps(manifest))
+    return tmp_path, source
+
+
+def test_native_preview_matches_render_cli_pixels(clock_root):
+    import sys
+    import time
+    from io import BytesIO
+    root, source = clock_root
+    cli = root / 'cli'
+    subprocess.run([sys.executable, str(Path(__file__).parents[1] / 'live_wallpaper.py'), 'render', '--source', str(source),
+                    '--timestamp', '2.3', '--output', str(cli), '--native', '--sharpen', '0'], check=True, capture_output=True)
+    with TestClient(create_app(root), base_url='http://127.0.0.1:8766') as client:
+        job = post(client, '/api/capture-previews', {'source_id': source_id(client), 'timestamp': 2.3}).json()
+        for _ in range(100):
+            if job['status'] not in {'queued', 'running'}:
+                break
+            time.sleep(.1)
+            job = client.get(f'/api/preview-jobs/{job["id"]}').json()
+        assert job['status'] == 'done', job
+        served = Image.open(BytesIO(client.get(job['original']).content)).convert('RGB')
+    expected = Image.open(cli / 'original.png').convert('RGB')
+    assert served.size == expected.size
+    from PIL import ImageChops
+    assert ImageChops.difference(served, expected).getbbox() is None
+
+
+def test_capture_strip_falls_back_when_gpu_scaling_fails(clock_root):
+    import studio
+    root, _ = clock_root
+    commands = []
+    real_run = studio.run
+
+    def run(command):
+        commands.append(command)
+        if '-hwaccel_output_format' in command:
+            raise studio.WallpaperError('scale_vt unavailable')
+        return real_run(command)
+
+    with patch('studio.run', run), TestClient(create_app(root), base_url='http://127.0.0.1:8766') as client:
+        frames = post(client, '/api/capture-strip', {'source_id': source_id(client), 'start': 1, 'step': 1, 'count': 3}).json()['frames']
+    assert all(f['url'] for f in frames)
+    assert '-hwaccel_output_format' in commands[0] and '-hwaccel_output_format' not in commands[1]
+    # An 8-bit source downloads as nv12; a format list would break 10-bit HDR.
+    assert any('format=nv12,' in part or part.endswith('format=nv12') for part in commands[0])
