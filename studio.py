@@ -6,6 +6,7 @@ import asyncio
 from collections import Counter
 from contextlib import asynccontextmanager
 import hashlib
+from datetime import datetime, timezone
 import json
 import logging
 import math
@@ -20,8 +21,9 @@ import uuid
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from PIL import Image, ImageOps
+from live_wallpaper import probe_video, timecode, WallpaperError
 
 ROOT = Path(__file__).resolve().parent
 IMAGE_TYPES = {".png", ".jpg", ".jpeg", ".webp"}
@@ -87,6 +89,32 @@ class PreviewRequest(BaseModel):
     priority: Literal["current", "prefetch"] = "current"
 
 
+class CaptureRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+    source_id: str = Field(min_length=1, max_length=64)
+    timestamp: float = Field(ge=0)
+    favorite: bool = False
+
+    @field_validator("timestamp", mode="before")
+    @classmethod
+    def numeric_time(cls, value):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError("时间必须是秒数")
+        return value
+
+    @field_validator("timestamp")
+    @classmethod
+    def tenths(cls, value):
+        if value != round(value, 1):
+            raise ValueError("时间最多保留一位小数")
+        return value
+
+
+class CapturePreviewRequest(CaptureRequest):
+    priority: Literal["current", "prefetch"] = "current"
+    generation: int | None = Field(default=None, ge=0)
+
+
 class FavoriteRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     candidate_id: str = Field(min_length=1, max_length=64)
@@ -118,6 +146,10 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
     preview_slot = asyncio.Semaphore(1)
     artwork_slots = asyncio.Semaphore(2)
     favorite_lock = asyncio.Lock()
+    capture_lock = asyncio.Lock()
+    source_lock = asyncio.Lock()
+    capture_sources: dict[str, dict] = {}
+    probe_cache: dict[str, tuple[tuple, dict]] = {}
 
     @asynccontextmanager
     async def lifespan(_app):
@@ -260,7 +292,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                     "source_available": source.is_file(),
                     "scores": row.get("scores", {}),
                 }
-                found[key] = {**public, "source": str(source), "source_metadata": video.get("metadata", {})}
+                found[key] = {**public, "source": str(source), "source_metadata": video.get("metadata", {}), "original_kind": video.get("kind", data.get("source_kind", "live"))}
                 if public["active"] or public["favorite"] or public["selected"]:
                     rows.append(public)
         candidates.clear()
@@ -400,13 +432,16 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
 
     @app.post("/api/previews")
     async def request_preview(params: PreviewRequest):
-        nonlocal preview_worker, current_revision
         candidate = candidates.get(params.candidate_id)
         if candidate is None:
             raise HTTPException(404, "候选画面不存在，请刷新选片。")
-        if params.priority == "current":
+        return await enqueue_preview(candidate, params.priority)
+
+    async def enqueue_preview(candidate: dict, priority: str, generation: int | None = None):
+        nonlocal preview_worker, current_revision
+        if priority == "current" and generation is None:
             current_revision += 1
-        revision = current_revision
+        revision = current_revision if generation is None else generation
         try:
             key, signature = await asyncio.to_thread(preview_signature, candidate)
         except OSError:
@@ -418,26 +453,26 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         # Disk checks can finish out of order. An obsolete request must not
         # invalidate newer work or reinsert itself after the user has moved on.
         if revision != current_revision:
-            return {"id": key, "candidate_id": params.candidate_id, "status": "cancelled"}
-        if params.priority == "current":
+            return {"id": key, "candidate_id": candidate["id"], "status": "cancelled", "generation": revision}
+        if priority == "current":
             for job_id in list(preview_pending):
                 if preview_jobs[job_id]["cache_key"] != key:
                     preview_jobs[job_id]["status"] = "cancelled"
                     del preview_pending[job_id]
         if result is not None:
-            return {"id": key, "candidate_id": params.candidate_id, "status": "done", "cached": True, **result}
+            return {"id": key, "candidate_id": candidate["id"], "status": "done", "cached": True, "generation": revision, **result}
         existing = next((job for job in preview_jobs.values()
                          if job["cache_key"] == key and job["status"] in {"queued", "running"}), None)
         if existing is not None:
-            if params.priority == "current":
+            if priority == "current":
                 existing["priority"] = "current"
-            return {**existing, "candidate_id": params.candidate_id}
+            return {**existing, "candidate_id": candidate["id"], "generation": revision}
         if sum(job["status"] in {"queued", "running"} for job in preview_jobs.values()) >= 8:
             raise HTTPException(429, "正在载入几张原帧，请稍后再选。")
         # A new attempt gets a new ID so cancelled pollers never follow a retry.
         job_id = key + "-" + uuid.uuid4().hex[:8]
-        job = {"id": job_id, "cache_key": key, "candidate_id": params.candidate_id,
-               "status": "queued", "priority": params.priority, "cached": False}
+        job = {"id": job_id, "cache_key": key, "candidate_id": candidate["id"],
+               "status": "queued", "priority": priority, "cached": False, "generation": revision}
         preview_jobs[job_id] = job
         preview_pending[job_id] = (candidate.copy(), signature, cache_dir)
         for old in list(preview_jobs):
@@ -488,12 +523,16 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         if candidate is None:
             raise HTTPException(404, "候选画面不存在，请刷新选片。")
         key = (str(candidate["manifest"]), str(candidate["candidate_id"]))
+        await set_favorite(key, params.favorite)
+        return {"candidate_id": params.candidate_id, "favorite": params.favorite}
+
+    async def set_favorite(key: tuple[str, str], favorite: bool):
         async with favorite_lock:
             try:
                 items = await asyncio.to_thread(favorite_set)
             except ValueError as exc:
                 raise HTTPException(409, str(exc))
-            if params.favorite:
+            if favorite:
                 items.add(key)
             else:
                 items.discard(key)
@@ -501,7 +540,156 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                 await asyncio.to_thread(write_favorites, items)
             except OSError:
                 raise HTTPException(500, "收藏保存失败，请检查本地图库目录权限。")
-        return {"candidate_id": params.candidate_id, "favorite": params.favorite}
+
+    async def source_metadata(source: dict) -> dict:
+        path = Path(source["source"])
+        try:
+            stat = path.stat()
+            stamp = (stat.st_size, stat.st_mtime_ns)
+            cached = probe_cache.get(str(path))
+            if cached and cached[0] == stamp:
+                return cached[1]
+            metadata = await asyncio.to_thread(probe_video, path)
+            probe_cache[str(path)] = (stamp, metadata)
+            return metadata
+        except (OSError, ValueError, WallpaperError):
+            # Probe diagnostics may contain private paths: do not return them.
+            raise HTTPException(409, "源视频不可用或无法读取，请检查本地视频。") from None
+
+    @app.get("/api/capture-sources")
+    async def get_capture_sources():
+        async with source_lock:
+            await asyncio.to_thread(library)
+            sources = {}
+            for candidate in list(candidates.values()):
+                key = opaque(candidate["source"])
+                kind = candidate["original_kind"]
+                if kind not in {"live", "mv"}:
+                    continue
+                sources.setdefault(key, {"id": key, "label": candidate["source_label"],
+                                         "kind": kind, "source": candidate["source"]})
+            capture_sources.clear()
+            capture_sources.update(sources)
+            public = []
+            for source in sources.values():
+                item = {k: source[k] for k in ("id", "label", "kind")}
+                try:
+                    metadata = await source_metadata(source)
+                    item.update(available=True, duration=metadata["duration"], chapters=metadata.get("chapters", []))
+                except HTTPException:
+                    item.update(available=False, duration=None, chapters=[])
+                public.append(item)
+            return {"sources": sorted(public, key=lambda item: (item["kind"], item["label"]))}
+
+    async def capture_candidate(params: CaptureRequest) -> dict:
+        source = capture_sources.get(params.source_id)
+        if source is None:
+            await get_capture_sources()
+            source = capture_sources.get(params.source_id)
+        if source is None:
+            raise HTTPException(404, "视频不存在，请刷新视频列表。")
+        async with source_lock:
+            metadata = await source_metadata(source)
+        if params.timestamp >= metadata["duration"]:
+            raise HTTPException(422, "时间超出视频长度。")
+        chapter = next((c["title"] for c in metadata.get("chapters", [])
+                        if c["start"] <= params.timestamp < c["end"]), "")
+        return {"id": opaque(f"capture|{source['id']}|{params.timestamp:.1f}"),
+                "source": source["source"], "source_label": source["label"],
+                "original_kind": source["kind"], "source_metadata": metadata,
+                "timestamp": params.timestamp, "timecode": timecode(params.timestamp),
+                "chapter": chapter, "title": chapter or "我截的画面"}
+
+    @app.post("/api/capture-previews")
+    async def capture_preview(params: CapturePreviewRequest):
+        # Reserve the current revision before probing: slow old probes cannot
+        # replace a more recent request. Prefetch carries its parent's revision.
+        nonlocal current_revision
+        if params.priority == "current":
+            current_revision += 1
+        generation = current_revision if params.priority == "current" or params.generation is None else params.generation
+        candidate = await capture_candidate(params)
+        if generation != current_revision:
+            return {"status": "cancelled", "id": candidate["id"], "generation": generation}
+        return await enqueue_preview(candidate, params.priority, generation)
+
+    def persist_capture(candidate: dict, image: Path) -> tuple[str, bool]:
+        folder = output / "user-captures"
+        manifest = folder / "manifest.json"
+        previews = folder / "previews"
+        if not all(within(path, output) for path in (folder, manifest, previews)) or not within(output, root):
+            raise HTTPException(400, "截帧目录不在项目内。")
+        data = {"version": 1, "source_kind": "user", "videos": [], "candidates": []}
+        if manifest.exists():
+            try:
+                data = json.loads(manifest.read_text(encoding="utf-8"))
+                if data.get("source_kind") != "user" or not isinstance(data["videos"], list) or not isinstance(data["candidates"], list):
+                    raise ValueError()
+            except (ValueError, KeyError, TypeError, AttributeError):
+                raise HTTPException(409, "我截的清单无法读取，已保留原文件。") from None
+        for row in data["candidates"]:
+            if row["source"] == candidate["source"] and row["timestamp"] == candidate["timestamp"]:
+                return row["id"], True
+        number = max((int(row["id"][1:]) for row in data["candidates"]), default=0) + 1
+        short_id = f"U{number:03d}"
+        video_id = opaque(candidate["source"])
+        if not any(video["id"] == video_id for video in data["videos"]):
+            data["videos"].append({"id": video_id, "source": candidate["source"],
+                                   "label": candidate["source_label"], "kind": candidate["original_kind"],
+                                   "metadata": candidate["source_metadata"]})
+        previews.mkdir(parents=True, exist_ok=True)
+        thumbnail = previews / f"{short_id}.jpg"
+        if thumbnail.exists():
+            raise HTTPException(409, "截帧缩略图已存在但未入库，请保留现场后检查。")
+        temporary = previews / f".{uuid.uuid4().hex}.jpg"
+        with Image.open(image) as picture:
+            picture = picture.convert("RGB")
+            picture.resize((640, max(1, round(640 * picture.height / picture.width))), Image.Resampling.LANCZOS).save(temporary, quality=90)
+        temporary.replace(thumbnail)
+        data["candidates"].append({"id": short_id, "video_id": video_id, "source": candidate["source"],
+                                   "timestamp": candidate["timestamp"], "timecode": candidate["timecode"],
+                                   "chapter": candidate["chapter"], "created_at": datetime.now(timezone.utc).isoformat(),
+                                   "preview": f"previews/{short_id}.jpg"})
+        temporary_manifest = folder / f".{uuid.uuid4().hex}.json.tmp"
+        try:
+            temporary_manifest.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            temporary_manifest.replace(manifest)
+        except OSError:
+            # Roll back only files created by this attempt, never old captures.
+            thumbnail.unlink(missing_ok=True)
+            temporary_manifest.unlink(missing_ok=True)
+            raise
+        return short_id, False
+
+    @app.post("/api/captures")
+    async def save_capture(params: CaptureRequest):
+        # Serialize the full save operation, including duplicate cache checks.
+        async with capture_lock:
+            return await complete_capture(params)
+
+    async def complete_capture(params: CaptureRequest):
+        candidate = await capture_candidate(params)
+        job = await enqueue_preview(candidate, "current")
+        deadline = asyncio.get_running_loop().time() + 210
+        while job["status"] in {"queued", "running"}:
+            if asyncio.get_running_loop().time() > deadline:
+                raise HTTPException(504, "截帧等待超时，请重试。")
+            await asyncio.sleep(.05)
+            job = preview_jobs.get(job["id"], job)
+        if job["status"] != "done":
+            raise HTTPException(409, "这一帧尚未完成，请停在所选时间后重试。")
+        key, signature = await asyncio.to_thread(preview_signature, candidate)
+        result = await asyncio.to_thread(cached_preview, output / "preview-cache" / key, signature, candidate)
+        if not result:
+            raise HTTPException(409, "源视频或原帧刚刚变化，请重新截取。")
+        try:
+            short_id, duplicate = await asyncio.to_thread(persist_capture, candidate, media[result["original"].removeprefix("/media/")])
+        except OSError:
+            raise HTTPException(500, "加入图库失败，请检查本地目录权限。") from None
+        if params.favorite:
+            await set_favorite(("user-captures/manifest.json", short_id), True)
+        public_id = opaque(str(output / "user-captures" / "manifest.json") + "|" + short_id)
+        return {"candidate_id": public_id, "capture_id": short_id, "duplicate": duplicate}
 
     @app.post("/api/exports", status_code=202)
     async def export_image(params: ExportRequest):
