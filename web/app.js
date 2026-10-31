@@ -1,11 +1,11 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
 const state = {candidates: [], avatars: [], visible: [], selected: null, filter: "selected", renderLimit: 120, exporting: false, avatarExporting: false, previewSerial: 0, previewTimer: null, favoriteSaving: new Set(), native: new Map(), nativePending: new Map(), viewerIndex: -1, viewerSerial: 0};
-const defaultSettings = {"size-preset": "2560x1440", fit: "contain", "focus-x": ".5", "focus-y": ".5", exposure: "0", contrast: "1", sharpen: ".25"};
+const defaultSettings = {"size-preset": "3456x2234", fit: "cover", "focus-x": ".5", "focus-y": ".5", exposure: "0", contrast: "1", sharpen: ".25"};
 const PAGE_SIZE = 120;
 const SCOPE_NAMES = {selected: "精选", all: "全部候选", favorites: "收藏"};
-// Temporary compositions share one source, output size and tone settings.
-const cropComparison = {schemes: [], group: null, nextId: 1};
+const RANGE_DEFAULTS = {"focus-x": .5, "focus-y": .5, exposure: 0, contrast: 1, sharpen: .25};
+const TUNE_IDS = ["exposure", "contrast", "sharpen"];
 const galleryScope = {kind: null, value: ""};
 function displayTitle(candidate) {
   // Drop the pick number and leading parts already shown in the source line.
@@ -48,88 +48,9 @@ function scopeText() { return `${sourceText()} · ${SCOPE_NAMES[state.filter]} $
 function validSize(p) {
   return Number.isInteger(p.width) && Number.isInteger(p.height) && Math.min(p.width, p.height) >= 256 && Math.max(p.width, p.height) <= 8192 && p.width * p.height <= 34000000;
 }
-function sameCrop(a, b) {
-  if (a.fit !== b.fit) return false;
-  const image = $("main-preview"), p = params();
-  const sourceRatio = image.naturalWidth / image.naturalHeight, targetRatio = p.width / p.height;
-  // Ignore an axis when this fit leaves no room to move in that direction.
-  const movableX = a.fit === "cover" ? sourceRatio > targetRatio : sourceRatio < targetRatio;
-  const movableY = a.fit === "cover" ? sourceRatio < targetRatio : sourceRatio > targetRatio;
-  return (!movableX || a.focus_x === b.focus_x) && (!movableY || a.focus_y === b.focus_y);
-}
 function nativeReady() {
   const image = $("main-preview");
   return !!state.selected?.source_available && image.dataset.quality === "native" && image.dataset.candidateId === state.selected.id;
-}
-function clearCropComparison() {
-  cropComparison.schemes = []; cropComparison.group = null; cropComparison.nextId = 1;
-  $("crop-scheme-name").value = "";
-  renderCropComparison();
-}
-function saveCropScheme() {
-  const p = params();
-  if (!nativeReady() || !validSize(p) || cropComparison.schemes.length >= 3 || cropComparison.schemes.some(s => sameCrop(s, p))) return;
-  cropComparison.group = {candidate_id: p.candidate_id, width: p.width, height: p.height};
-  const id = cropComparison.nextId++;
-  cropComparison.schemes.push({id, name: $("crop-scheme-name").value.trim() || `方案 ${id}`, fit: p.fit, focus_x: p.focus_x, focus_y: p.focus_y});
-  $("crop-scheme-name").value = "";
-  renderCropComparison();
-}
-function renderCropComparison() {
-  const grid = $("crop-comparison-grid");
-  grid.replaceChildren();
-  for (const scheme of cropComparison.schemes) {
-    const card = document.createElement("article"); card.className = "crop-option";
-    const chooseButton = document.createElement("button"); chooseButton.type = "button"; chooseButton.className = "crop-option-select";
-    chooseButton.id = `crop-scheme-${scheme.id}`; chooseButton.setAttribute("aria-label", `使用 ${scheme.name}`);
-    const stage = document.createElement("span"); stage.className = "crop-option-stage";
-    const frame = document.createElement("span"); frame.className = "crop-option-frame";
-    const image = document.createElement("img"); image.src = $("main-preview").src; image.alt = `${scheme.name}的原帧取景`;
-    frame.append(image); stage.append(frame);
-    const caption = document.createElement("span"); caption.className = "crop-option-caption";
-    const title = document.createElement("span"); title.className = "crop-option-title"; title.textContent = scheme.name;
-    const badge = document.createElement("span"); badge.className = "crop-option-state";
-    caption.append(title, badge); chooseButton.append(stage, caption);
-    chooseButton.addEventListener("click", () => {
-      $("fit").value = scheme.fit; $("focus-x").value = scheme.focus_x; $("focus-y").value = scheme.focus_y;
-      $("export-result").hidden = true;
-      updatePreview();
-    });
-    const remove = document.createElement("button"); remove.type = "button"; remove.className = "text-button crop-option-remove";
-    remove.textContent = "移除"; remove.setAttribute("aria-label", `移除 ${scheme.name}`);
-    remove.addEventListener("click", () => {
-      cropComparison.schemes = cropComparison.schemes.filter(s => s.id !== scheme.id);
-      renderCropComparison();
-      (grid.querySelector("button") || $("save-crop-scheme")).focus({preventScroll: true});
-    });
-    card.append(chooseButton, remove); grid.append(card);
-  }
-  updateCropComparison();
-}
-function updateCropComparison() {
-  const p = params();
-  const count = cropComparison.schemes.length;
-  const duplicate = cropComparison.schemes.some(s => sameCrop(s, p));
-  $("save-crop-scheme").disabled = !nativeReady() || !validSize(p) || count >= 3 || duplicate;
-  $("crop-scheme-name").disabled = !nativeReady() || count >= 3;
-  $("crop-comparison").hidden = count === 0;
-  $("crop-save-hint").textContent = !state.selected ? "先选择一帧，再调整取景。" : !nativeReady() ? "原帧载入后，可留下最多 3 个取景方案。" : !validSize(p) ? "请先填写有效的导出尺寸。" : count >= 3 ? "已有 3 个方案；移除一个后可加入新的取景。" : duplicate ? "当前取景已在比较中；移动焦点后可加入另一个方案。" : "调好取景后留作比较，最多 3 个。";
-  if (!count) return;
-  $("crop-comparison-size").textContent = `${p.width} × ${p.height}`;
-  for (const scheme of cropComparison.schemes) {
-    const button = $(`crop-scheme-${scheme.id}`);
-    const active = sameCrop(scheme, p);
-    button.setAttribute("aria-pressed", String(active));
-    button.querySelector(".crop-option-state").textContent = active ? "使用中" : "选用";
-    const stage = button.querySelector(".crop-option-stage");
-    const frame = button.querySelector(".crop-option-frame");
-    frame.style.width = `${Math.min(Math.max(0, stage.clientWidth - 16), Math.max(0, stage.clientHeight - 16) * p.width / p.height)}px`;
-    frame.style.aspectRatio = `${p.width}/${p.height}`;
-    const image = frame.querySelector("img");
-    image.style.objectFit = scheme.fit;
-    image.style.objectPosition = `${scheme.focus_x * 100}% ${scheme.focus_y * 100}%`;
-    image.style.filter = $("main-preview").style.filter;
-  }
 }
 function status(message, error = false) { $("export-status").textContent = message; $("export-status").classList.toggle("error", error); }
 function params() {
@@ -142,8 +63,11 @@ function updatePreview() {
   const height = Number.isFinite(p.height) && p.height > 0 ? p.height : 1440;
   const stage = $("preview-stage");
   const stageStyle = getComputedStyle(stage);
-  const usableHeight = stage.clientHeight - parseFloat(stageStyle.paddingTop) - parseFloat(stageStyle.paddingBottom);
+  const paddingY = parseFloat(stageStyle.paddingTop) + parseFloat(stageStyle.paddingBottom);
   const usableWidth = stage.clientWidth - parseFloat(stageStyle.paddingLeft) - parseFloat(stageStyle.paddingRight);
+  // On wide screens the stage grows to the target ratio, up to about one screen high.
+  stage.style.height = innerWidth > 760 ? `${Math.round(Math.max(370, Math.min(usableWidth * height / width + paddingY, innerHeight * .8)))}px` : "";
+  const usableHeight = stage.clientHeight - paddingY;
   $("preview-frame").style.width = `${Math.min(usableWidth, usableHeight * width / height)}px`;
   $("preview-frame").style.aspectRatio = `${width}/${height}`;
   const image = $("main-preview");
@@ -160,24 +84,53 @@ function updatePreview() {
   $("focus-x").disabled = $("focus-y").disabled = p.fit === "contain";
   $("crop-hint").textContent = p.fit === "contain" ? "完整保留原画面；屏幕比例不同时会补边。" : "拖动焦点取景；画框之外的内容会被裁掉。";
   for (const [id, active] of [["desktop-preset", width > height], ["phone-preset", width < height]]) { $(id).classList.toggle("active", active); $(id).setAttribute("aria-pressed", String(active)); }
-  if (cropComparison.group && (cropComparison.group.candidate_id !== p.candidate_id || cropComparison.group.width !== p.width || cropComparison.group.height !== p.height)) clearCropComparison();
-  updateCropComparison();
+  for (const id of Object.keys(RANGE_DEFAULTS)) {
+    const changed = rangeChanged(id);
+    $(`${id}-value`).classList.toggle("changed", changed);
+    document.querySelector(`.reset-one[data-for="${id}"]`).classList.toggle("show", changed && !$(id).disabled);
+  }
+  const tuned = TUNE_IDS.filter(rangeChanged).length;
+  $("tune-count").textContent = tuned ? `已调整 ${tuned} 项` : "保持原样";
+  $("tune-reset").classList.toggle("show", tuned > 0);
+}
+function rangeChanged(id) { return Math.abs(Number($(id).value) - RANGE_DEFAULTS[id]) > 1e-6; }
+// Slide back to the default so the change stays visible on the preview.
+function resetRange(id) {
+  const input = $(id), from = Number(input.value), to = RANGE_DEFAULTS[id], start = performance.now();
+  if (from === to) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) { input.value = to; updatePreview(); return; }
+  let done = false;
+  const finish = () => { if (done) return; done = true; input.value = to; updatePreview(); };
+  requestAnimationFrame(function step(now) {
+    if (done) return;
+    const k = Math.min(1, (now - start) / 260);
+    if (k >= 1) return finish();
+    input.value = from + (to - from) * (1 - (1 - k) ** 3);
+    updatePreview();
+    requestAnimationFrame(step);
+  });
+  // Background tabs may pause animation frames; still land on the default.
+  setTimeout(finish, 320);
 }
 function sizeChanged() {
   const p = params();
-  $("fit").value = p.height >= p.width ? "cover" : "contain";
+  $("fit").value = "cover";
   updatePreview();
 }
-// One shared request per frame, so the viewer, workspace and prefetch reuse each other's work.
-function nativeFor(candidate) {
-  if (state.native.has(candidate.id)) return Promise.resolve(state.native.get(candidate.id));
-  if (state.nativePending.has(candidate.id)) return state.nativePending.get(candidate.id);
-  const pending = (async () => {
-    let response = await fetch("/api/previews", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({candidate_id: candidate.id})});
+// Reuse each frame's polling; a current request promotes an in-flight prefetch.
+function nativeFor(candidate, priority = "current") {
+  const existing = state.nativePending.get(candidate.id);
+  if (existing && (priority === "prefetch" || existing.priority === "current")) return existing.promise;
+  if (priority === "prefetch" && state.native.has(candidate.id)) return Promise.resolve(state.native.get(candidate.id));
+  const entry = {priority};
+  entry.promise = (async () => {
+    // Even a memory-cached current frame tells the server to discard old work.
+    let response = await fetch("/api/previews", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({candidate_id: candidate.id, priority})});
     let job = await response.json();
     if (!response.ok) throw new Error(typeof job.detail === "string" ? job.detail : "原帧暂未载入。");
     const deadline = Date.now() + 210000;
     while (job.status !== "done") {
+      if (job.status === "cancelled") return null;
       if (job.status === "failed") throw new Error(job.error);
       if (Date.now() > deadline) throw new Error("原帧载入超时，可重新选择这一帧。");
       await new Promise(resolve => setTimeout(resolve, 550));
@@ -191,21 +144,32 @@ function nativeFor(candidate) {
     state.native.set(candidate.id, job);
     return job;
   })();
-  state.nativePending.set(candidate.id, pending);
-  pending.finally(() => state.nativePending.delete(candidate.id)).catch(() => {});
-  return pending;
+  state.nativePending.set(candidate.id, entry);
+  entry.promise.finally(() => {
+    if (state.nativePending.get(candidate.id) === entry) state.nativePending.delete(candidate.id);
+  }).catch(() => {});
+  return entry.promise;
 }
-// Warm the next frames one at a time; the server keeps a single decoder.
+// Refresh power state for each new warmup, including unplugging mid-session.
 async function prefetchAfter(list, index, isCurrent) {
-  for (const candidate of list.slice(index + 1, index + 3)) {
+  let count = 2;
+  try {
+    const response = await fetch("/api/power");
+    if (response.ok && (await response.json()).on_battery) count = 1;
+  } catch (_) { /* Unreadable power state defaults to AC. */ }
+  for (const candidate of list.slice(index + 1, index + 1 + count)) {
     if (!isCurrent()) return;
     if (!candidate.source_available || state.native.has(candidate.id)) continue;
-    try { await nativeFor(candidate); } catch (_) { return; }
+    try { if (!await nativeFor(candidate, "prefetch")) return; } catch (_) { return; }
   }
 }
 async function loadNativePreview(candidate, serial) {
+  if (serial !== state.previewSerial || !$("viewer").hidden) return;
   try {
-    const job = await nativeFor(candidate);
+    let job = await nativeFor(candidate);
+    // A rapid A -> B -> A can encounter A's cancelled shared poller.
+    while (!job && serial === state.previewSerial && $("viewer").hidden && state.selected?.id === candidate.id) job = await nativeFor(candidate);
+    if (!job) return;
     if (serial !== state.previewSerial || state.selected?.id !== candidate.id) return;
     $("main-preview").src = job.preview;
     $("main-preview").dataset.quality = "native";
@@ -215,12 +179,10 @@ async function loadNativePreview(candidate, serial) {
     $("native-preview-link").href = job.original;
     $("native-download-link").href = job.download;
     $("native-preview-link").hidden = $("native-download-link").hidden = false;
-    updateCropComparison();
     if ($("viewer").hidden) prefetchAfter(state.visible, state.visible.indexOf(candidate), () => serial === state.previewSerial);
   } catch (error) {
     if (serial !== state.previewSerial) return;
     $("preview-quality").textContent = `${error.message} 当前为选片缩略图。`;
-    updateCropComparison();
   }
 }
 function choose(candidate) {
@@ -228,7 +190,6 @@ function choose(candidate) {
   clearTimeout(state.previewTimer);
   const serial = state.previewSerial;
   state.selected = candidate;
-  clearCropComparison();
   const image = $("main-preview");
   const cached = state.native.get(candidate.id);
   image.src = candidate.thumbnail || candidate.preview;
@@ -360,6 +321,7 @@ function renderViewerStrip() {
 function showViewer(index) {
   const list = state.viewerList;
   if (!list?.length) return;
+  disarmViewerEdge();
   state.viewerIndex = (index + list.length) % list.length;
   const serial = ++state.viewerSerial, candidate = list[state.viewerIndex];
   const cached = state.native.get(candidate.id), image = $("viewer-image"), quality = $("viewer-quality"), download = $("viewer-download");
@@ -376,14 +338,47 @@ function showViewer(index) {
   renderViewerFavorite(); renderViewerStrip();
   const current = () => serial === state.viewerSerial && !$("viewer").hidden;
   if (!candidate.source_available) return;
-  (cached ? Promise.resolve(cached) : nativeFor(candidate)).then(job => {
-    if (!current()) return;
+  nativeFor(candidate).then(async job => {
+    while (!job && current()) job = await nativeFor(candidate);
+    if (!job || !current()) return;
     image.src = job.preview; download.href = job.download; download.hidden = false;
     quality.classList.add("native"); quality.textContent = `原帧 ${job.width} × ${job.height}`;
     prefetchAfter(list, state.viewerIndex, current);
   }).catch(error => { if (current()) quality.textContent = `${error.message} 当前为缩略图。`; });
 }
+// At either end, the first press only warns; a second press within 3.5s wraps.
+const viewerEdge = {armed: 0, timer: null, toastTimer: null};
+function disarmViewerEdge() {
+  viewerEdge.armed = 0; clearTimeout(viewerEdge.timer);
+  for (const [id, text] of [["viewer-prev", "‹"], ["viewer-next", "›"]]) { $(id).classList.remove("wrap"); $(id).textContent = text; }
+}
+function viewerToast(html, counting) {
+  const toast = $("viewer-edge");
+  $("viewer-edge-text").innerHTML = html;
+  toast.classList.remove("show", "counting"); void toast.offsetWidth; toast.classList.add("show");
+  toast.classList.toggle("counting", counting);
+  clearTimeout(viewerEdge.toastTimer); viewerEdge.toastTimer = setTimeout(() => toast.classList.remove("show", "counting"), counting ? 3500 : 1600);
+}
+function stepViewer(direction) {
+  const length = state.viewerList?.length || 0;
+  if (!length) return;
+  const atEdge = direction > 0 ? state.viewerIndex === length - 1 : state.viewerIndex === 0;
+  if (!atEdge) { showViewer(state.viewerIndex + direction); return; }
+  if (viewerEdge.armed === direction) {
+    showViewer(state.viewerIndex + direction);
+    viewerToast(direction > 0 ? "回到第 1 张" : `跳到最后一张 · 第 ${length} 张`, false);
+    return;
+  }
+  disarmViewerEdge(); viewerEdge.armed = direction;
+  const image = $("viewer-image");
+  image.classList.remove("bump-next", "bump-prev"); void image.offsetWidth; image.classList.add(direction > 0 ? "bump-next" : "bump-prev");
+  const arrow = $(direction > 0 ? "viewer-next" : "viewer-prev"); arrow.classList.add("wrap"); arrow.textContent = "↺";
+  viewerToast(direction > 0 ? "已是最后一张 · 再按 <kbd>→</kbd> 回到第 1 张" : "已是第一张 · 再按 <kbd>←</kbd> 跳到最后一张", true);
+  viewerEdge.timer = setTimeout(disarmViewerEdge, 3500);
+}
 function openViewer(index, list = state.visible) {
+  clearTimeout(state.previewTimer);
+  state.previewSerial += 1;
   state.viewerList = list; state.viewerScopeText = scopeText(); state.viewerReturn = document.activeElement;
   $("viewer").hidden = false; $("viewer").classList.remove("pure"); document.body.classList.add("viewer-open");
   showViewer(index); $("viewer").focus({preventScroll: true});
@@ -391,7 +386,9 @@ function openViewer(index, list = state.visible) {
 function closeViewer(revealCurrent = true) {
   const candidate = viewerCandidate();
   $("viewer").hidden = true; document.body.classList.remove("viewer-open"); state.viewerSerial += 1;
+  disarmViewerEdge(); $("viewer-edge").classList.remove("show", "counting");
   if (revealCurrent && candidate) revealInGallery(candidate);
+  if (revealCurrent && state.selected?.source_available && !nativeReady()) loadNativePreview(state.selected, state.previewSerial);
 }
 function useViewerCandidate() {
   const candidate = viewerCandidate();
@@ -403,7 +400,7 @@ function useViewerCandidate() {
 function viewerKeydown(event) {
   if ($("viewer").hidden || event.altKey || event.ctrlKey || event.metaKey) return;
   const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
-  const actions = {ArrowLeft: () => showViewer(state.viewerIndex - 1), ArrowRight: () => showViewer(state.viewerIndex + 1), Escape: () => closeViewer(), Enter: useViewerCandidate, f: () => { const c = viewerCandidate(); if (c) toggleFavorite(c); }, h: () => $("viewer").classList.toggle("pure"), " ": () => $("viewer").classList.toggle("pure")};
+  const actions = {ArrowLeft: () => stepViewer(-1), ArrowRight: () => stepViewer(1), Escape: () => closeViewer(), Enter: useViewerCandidate, f: () => { const c = viewerCandidate(); if (c) toggleFavorite(c); }, h: () => $("viewer").classList.toggle("pure"), " ": () => $("viewer").classList.toggle("pure")};
   if (!actions[key]) return;
   // Space always toggles the picture-only view, even when a viewer button has focus.
   // Enter on a focused control keeps its own meaning; on the picture it picks the frame.
@@ -476,7 +473,7 @@ async function loadLibrary() {
     renderSourceFilters(); renderGallery();
     const selected = state.candidates.find(c => c.id === state.selected?.id) || state.candidates[0];
     if (selected) choose(selected);
-    else {state.selected = null; clearCropComparison(); $("main-preview").hidden = true; $("preview-empty").hidden = false; $("preview-empty").textContent = "等待第一组视频选片"; $("export-button").disabled = true;}
+    else {state.selected = null; $("main-preview").hidden = true; $("preview-empty").hidden = false; $("preview-empty").textContent = "等待第一组视频选片"; $("export-button").disabled = true;}
     renderAvatars();
   } catch (error) { status(error.message, true); $("preview-empty").textContent = "画廊暂时无法打开"; }
   finally { $("refresh-library").disabled = false; }
@@ -520,7 +517,7 @@ function avatarPrompt() {
 }
 for (const id of ["size-preset", "width", "height"]) $(id).addEventListener("input", sizeChanged);
 for (const id of ["fit", "focus-x", "focus-y", "exposure", "contrast", "sharpen"]) $(id).addEventListener("input", updatePreview);
-$("desktop-preset").addEventListener("click", () => {$("size-preset").value = "2560x1440"; sizeChanged();});
+$("desktop-preset").addEventListener("click", () => {$("size-preset").value = "3456x2234"; sizeChanged();});
 $("phone-preset").addEventListener("click", () => {$("size-preset").value = "1284x2778"; sizeChanged();});
 $("reset-settings").addEventListener("click", () => {for (const [id, value] of Object.entries(defaultSettings)) if (id !== "size-preset") $(id).value = value; sizeChanged();});
 $("selected-filter").addEventListener("click", () => setScope("selected"));
@@ -533,8 +530,8 @@ $("gallery-more").addEventListener("click", () => {state.renderLimit += PAGE_SIZ
 $("workspace-prev").addEventListener("click", () => stepWorkspace(-1));
 $("workspace-next").addEventListener("click", () => stepWorkspace(1));
 $("back-to-gallery").addEventListener("click", () => {if (state.selected) revealInGallery(state.selected);});
-$("viewer-prev").addEventListener("click", () => showViewer(state.viewerIndex - 1));
-$("viewer-next").addEventListener("click", () => showViewer(state.viewerIndex + 1));
+$("viewer-prev").addEventListener("click", () => stepViewer(-1));
+$("viewer-next").addEventListener("click", () => stepViewer(1));
 $("viewer-close").addEventListener("click", () => closeViewer());
 $("viewer-pure").addEventListener("click", () => $("viewer").classList.toggle("pure"));
 $("viewer-image").addEventListener("click", () => $("viewer").classList.toggle("pure"));
@@ -547,11 +544,12 @@ document.addEventListener("keydown", viewerKeydown);
 document.addEventListener("focusin", event => {if (!$("viewer").hidden && !$("viewer").contains(event.target)) $("viewer").focus({preventScroll: true});});
 let swipeStart = null;
 $("viewer-image").addEventListener("touchstart", event => {swipeStart = event.touches[0].clientX;}, {passive: true});
-$("viewer-image").addEventListener("touchend", event => {if (swipeStart === null) return; const dx = event.changedTouches[0].clientX - swipeStart; swipeStart = null; if (Math.abs(dx) > 50) showViewer(state.viewerIndex + (dx < 0 ? 1 : -1));});
+$("viewer-image").addEventListener("touchend", event => {if (swipeStart === null) return; const dx = event.changedTouches[0].clientX - swipeStart; swipeStart = null; if (Math.abs(dx) > 50) stepViewer(dx < 0 ? 1 : -1);});
 $("refresh-library").addEventListener("click", loadLibrary);
 $("export-button").addEventListener("click", exportImage);
-$("save-crop-scheme").addEventListener("click", saveCropScheme);
-$("clear-crop-schemes").addEventListener("click", () => {clearCropComparison(); $("save-crop-scheme").focus({preventScroll: true});});
+for (const id of Object.keys(RANGE_DEFAULTS)) $(id).addEventListener("dblclick", () => resetRange(id));
+for (const button of document.querySelectorAll(".reset-one")) button.addEventListener("click", () => resetRange(button.dataset.for));
+$("tune-reset").addEventListener("click", () => TUNE_IDS.forEach(resetRange));
 for (const type of ["wallpaper", "avatar"]) $(`${type}-tab`).addEventListener("click", () => {for (const t of ["wallpaper", "avatar"]) {$(`${t}-panel`).hidden = t !== type; $(`${t}-tab`).classList.toggle("active", t === type); $(`${t}-tab`).setAttribute("aria-pressed", String(t === type));} if (type === "wallpaper") updatePreview();});
 for (const id of ["avatar-direction", "avatar-shape", "avatar-notes"]) $(id).addEventListener("input", avatarPrompt);
 $("copy-avatar-request").addEventListener("click", async () => {const prompt = avatarPrompt(); try {await navigator.clipboard.writeText(prompt); $("avatar-status").textContent = "已复制。粘贴到 Codex 即可生成；完成后回到这里刷新。";} catch (_) {$("avatar-prompt").closest("details").open = true; $("avatar-prompt").focus(); $("avatar-prompt").select(); $("avatar-status").textContent = "浏览器未允许自动复制，请复制下方已选中的需求。";}});

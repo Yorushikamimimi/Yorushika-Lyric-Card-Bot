@@ -10,6 +10,7 @@ import datetime as dt
 import html
 import json
 import math
+import os
 import re
 import shutil
 import subprocess
@@ -323,6 +324,9 @@ def color_plan(metadata: dict[str, Any], output: Path, mode: str, peak: float,
 
 def extract_frame(source: Path, seconds: float, target: Path, filters: list[str],
                   jpeg: bool = False) -> None:
+    # Never remove or overwrite an existing user file during fallback.
+    if target.exists():
+        raise WallpaperError(f"输出文件已存在：{target}")
     command = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-n",
                "-ss", f"{seconds:.6f}", "-i", str(source), "-map", "0:v:0", "-frames:v", "1", "-an", "-sn"]
     if filters:
@@ -333,6 +337,17 @@ def extract_frame(source: Path, seconds: float, target: Path, filters: list[str]
     else:
         command += ["-pix_fmt", "rgb24"]
     command += [str(target)]
+    if os.environ.get("YORUSHIKA_HWACCEL", "1") != "0":
+        hardware = command.copy()
+        hardware[hardware.index("-i"):hardware.index("-i")] = ["-hwaccel", "videotoolbox"]
+        try:
+            run(hardware)
+            if target.is_file() and target.stat().st_size > 0:
+                return
+        except WallpaperError:
+            pass
+        # Only this attempt's partial output can exist here (-n above).
+        target.unlink(missing_ok=True)
     run(command)
     if not target.is_file() or target.stat().st_size == 0:
         raise WallpaperError(f"该时间未提取到视频帧：{timecode(seconds)}")

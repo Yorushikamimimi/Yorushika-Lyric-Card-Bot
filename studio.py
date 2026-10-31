@@ -12,6 +12,7 @@ import math
 from pathlib import Path
 import re
 import sys
+import subprocess
 from typing import Any, Awaitable, Callable, Literal
 from urllib.parse import urlsplit
 import uuid
@@ -68,9 +69,22 @@ Renderer = Callable[[dict, ExportRequest, Path], Awaitable[None]]
 PreviewRenderer = Callable[[dict, Path], Awaitable[None]]
 
 
+def power_status() -> dict:
+    """Fail open to AC on unsupported platforms or unreadable power state."""
+    battery = False
+    if sys.platform == "darwin":
+        try:
+            result = subprocess.run(["pmset", "-g", "ps"], capture_output=True, text=True, timeout=2)
+            battery = result.returncode == 0 and "Now drawing from 'Battery Power'" in result.stdout
+        except (OSError, subprocess.SubprocessError):
+            pass
+    return {"on_battery": battery, "prefetch_count": 1 if battery else 2}
+
+
 class PreviewRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     candidate_id: str = Field(min_length=1, max_length=64)
+    priority: Literal["current", "prefetch"] = "current"
 
 
 class FavoriteRequest(BaseModel):
@@ -97,6 +111,9 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
     avatars: dict[str, dict] = {}
     jobs: dict[str, dict] = {}
     preview_jobs: dict[str, dict] = {}
+    preview_pending: dict[str, tuple] = {}
+    preview_worker: asyncio.Task | None = None
+    current_revision = 0
     tasks: set[asyncio.Task] = set()
     preview_slot = asyncio.Semaphore(1)
     artwork_slots = asyncio.Semaphore(2)
@@ -345,8 +362,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
             logging.error("Native preview failed: %s", stderr.decode(errors="replace")[-2000:])
             raise RuntimeError("原帧暂未载入，可重新选择这一帧再试。")
 
-    async def run_preview(key: str, candidate: dict, signature: dict, cache_dir: Path):
-        job = preview_jobs[key]
+    async def run_preview(job: dict, candidate: dict, signature: dict, cache_dir: Path):
         try:
             async with preview_slot:
                 job["status"] = "running"
@@ -371,11 +387,26 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         except Exception as exc:
             job.update(status="failed", error=str(exc)[:500])
 
+    async def drain_previews():
+        # A single dispatcher chooses after each render, not semaphore FIFO order.
+        while preview_pending:
+            job_id = min(preview_pending, key=lambda key: preview_jobs[key]["priority"] != "current")
+            candidate, signature, cache_dir = preview_pending.pop(job_id)
+            await run_preview(preview_jobs[job_id], candidate, signature, cache_dir)
+
+    @app.get("/api/power")
+    async def get_power():
+        return await asyncio.to_thread(power_status)
+
     @app.post("/api/previews")
     async def request_preview(params: PreviewRequest):
+        nonlocal preview_worker, current_revision
         candidate = candidates.get(params.candidate_id)
         if candidate is None:
             raise HTTPException(404, "候选画面不存在，请刷新选片。")
+        if params.priority == "current":
+            current_revision += 1
+        revision = current_revision
         try:
             key, signature = await asyncio.to_thread(preview_signature, candidate)
         except OSError:
@@ -384,23 +415,40 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         if not within(cache_dir, output) or not within(output, root):
             raise HTTPException(400, "预览缓存目录不在项目内。")
         result = await asyncio.to_thread(cached_preview, cache_dir, signature, candidate)
+        # Disk checks can finish out of order. An obsolete request must not
+        # invalidate newer work or reinsert itself after the user has moved on.
+        if revision != current_revision:
+            return {"id": key, "candidate_id": params.candidate_id, "status": "cancelled"}
+        if params.priority == "current":
+            for job_id in list(preview_pending):
+                if preview_jobs[job_id]["cache_key"] != key:
+                    preview_jobs[job_id]["status"] = "cancelled"
+                    del preview_pending[job_id]
         if result is not None:
             return {"id": key, "candidate_id": params.candidate_id, "status": "done", "cached": True, **result}
-        existing = preview_jobs.get(key)
-        if existing is not None and existing["status"] in {"queued", "running"}:
+        existing = next((job for job in preview_jobs.values()
+                         if job["cache_key"] == key and job["status"] in {"queued", "running"}), None)
+        if existing is not None:
+            if params.priority == "current":
+                existing["priority"] = "current"
             return {**existing, "candidate_id": params.candidate_id}
         if sum(job["status"] in {"queued", "running"} for job in preview_jobs.values()) >= 8:
             raise HTTPException(429, "正在载入几张原帧，请稍后再选。")
-        job = {"id": key, "candidate_id": params.candidate_id, "status": "queued", "cached": False}
-        preview_jobs[key] = job
+        # A new attempt gets a new ID so cancelled pollers never follow a retry.
+        job_id = key + "-" + uuid.uuid4().hex[:8]
+        job = {"id": job_id, "cache_key": key, "candidate_id": params.candidate_id,
+               "status": "queued", "priority": params.priority, "cached": False}
+        preview_jobs[job_id] = job
+        preview_pending[job_id] = (candidate.copy(), signature, cache_dir)
         for old in list(preview_jobs):
             if len(preview_jobs) <= 100:
                 break
-            if preview_jobs[old]["status"] in {"done", "failed"}:
+            if preview_jobs[old]["status"] in {"done", "failed", "cancelled"}:
                 del preview_jobs[old]
-        task = asyncio.create_task(run_preview(key, candidate.copy(), signature, cache_dir))
-        tasks.add(task)
-        task.add_done_callback(tasks.discard)
+        if preview_worker is None or preview_worker.done():
+            preview_worker = asyncio.create_task(drain_previews())
+            tasks.add(preview_worker)
+            preview_worker.add_done_callback(tasks.discard)
         return job
 
     @app.get("/api/preview-jobs/{job_id}")
