@@ -43,6 +43,31 @@ function visibleCandidates() {
   const scoped = scopePool().filter(matchesSourceFilter);
   return state.filter === "selected" ? scoped : [...scoped].sort((a, b) => a.source_label.localeCompare(b.source_label, "zh-CN") || a.timestamp - b.timestamp);
 }
+// Where the page was, kept in the address hash so a reload lands on the same frame.
+// replaceState only: filters and flips never pile up in the back button.
+function locationHash(view) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(view)) if (value) params.set(key, value);
+  const text = params.toString();
+  return text ? `#${text}` : "";
+}
+function parseLocation(hash) {
+  const params = new URLSearchParams(String(hash || "").replace(/^#/, "")), view = {};
+  for (const key of ["tab", "kind", "src", "scope", "c", "v"]) { const value = params.get(key); if (value) view[key] = value; }
+  return view;
+}
+function applyLocationFilters(view) {
+  if (Object.hasOwn(SCOPE_NAMES, view.scope || "")) state.filter = view.scope;
+  if (["live", "mv", "user"].includes(view.kind)) { galleryScope.kind = view.kind; galleryScope.value = view.kind !== "user" && sourceOptions(view.kind).includes(view.src) ? view.src : ""; }
+}
+// Rendered cards come in pages; a restored frame deep in "all" must be on the page.
+function limitFor(index) { return Math.max(PAGE_SIZE, Math.ceil((index + 1) / PAGE_SIZE) * PAGE_SIZE); }
+function saveLocation() {
+  if (!state.locationReady) return;
+  const viewing = !$("viewer").hidden && viewerCandidate();
+  const hash = locationHash({tab: $("avatar-tab").classList.contains("active") ? "avatar" : "", kind: galleryScope.kind || "", src: galleryScope.value, scope: state.filter === "selected" ? "" : state.filter, c: state.selected?.id || "", v: viewing ? viewing.id : ""});
+  if (hash !== location.hash) history.replaceState(history.state, "", hash || location.pathname + location.search);
+}
 function sourceText() { return !galleryScope.kind ? "全部来源" : galleryScope.value || (galleryScope.kind === "user" ? "我截的" : galleryScope.kind === "live" ? "全部 Live 场次" : "全部 MV 曲目"); }
 function scopeText() { return `${sourceText()} · ${SCOPE_NAMES[state.filter]} ${state.visible.length} 张`; }
 function validSize(p) {
@@ -259,7 +284,7 @@ function stepWorkspace(delta) {
 function revealInGallery(candidate, focus = true) {
   const index = state.visible.findIndex(c => c.id === candidate.id);
   if (index < 0) return;
-  if (index >= state.renderLimit) { state.renderLimit = Math.ceil((index + 1) / PAGE_SIZE) * PAGE_SIZE; renderGallery(); }
+  if (index >= state.renderLimit) { state.renderLimit = limitFor(index); renderGallery(); }
   const target = $(`candidate-surface-${candidate.id}`);
   target?.scrollIntoView({block: "center"});
   if (focus) target?.focus({preventScroll: true});
@@ -328,7 +353,7 @@ function renderGallery() {
   for (const [id, active] of [["selected-filter", state.filter === "selected"], ["all-filter", state.filter === "all"], ["favorite-filter", state.filter === "favorites"], ["all-kind-filter", !galleryScope.kind], ["live-filter", galleryScope.kind === "live"], ["mv-filter", galleryScope.kind === "mv"], ["user-filter", galleryScope.kind === "user"]]) $(id).setAttribute("aria-pressed", String(active));
   $("live-source-filter").hidden = galleryScope.kind !== "live";
   $("mv-source-filter").hidden = galleryScope.kind !== "mv";
-  renderWorkspaceNav();
+  renderWorkspaceNav(); saveLocation();
   if (focusedId) {
     const target = $(focusedId) || grid.querySelector("button") || $("selected-filter");
     if (!target.disabled) target.focus({preventScroll: true});
@@ -386,7 +411,7 @@ function showViewer(index) {
   quality.classList.toggle("native", Boolean(cached));
   quality.textContent = cached ? `原帧 ${cached.width} × ${cached.height}` : candidate.source_available ? "缩略图 · 正在载入原帧…" : "源视频不可用 · 缩略图";
   $("viewer-use").disabled = !candidate.source_available;
-  renderViewerFavorite(); renderViewerStrip();
+  renderViewerFavorite(); renderViewerStrip(); saveLocation();
   const current = () => serial === state.viewerSerial && !$("viewer").hidden;
   if (!candidate.source_available) { stopLoader("viewer"); return; }
   if (cached) stopLoader("viewer"); else startLoader("viewer", $("viewer"), $("viewer-load"), quality, candidate.id, "缩略图 · ");
@@ -443,6 +468,7 @@ function closeViewer(revealCurrent = true) {
   disarmViewerEdge(); $("viewer-edge").classList.remove("show", "counting"); stopLoader("viewer");
   if (revealCurrent && candidate) revealInGallery(candidate);
   if (revealCurrent && state.selected?.source_available && !nativeReady()) loadNativePreview(state.selected, state.previewSerial);
+  saveLocation();
 }
 function useViewerCandidate() {
   const candidate = viewerCandidate();
@@ -523,12 +549,24 @@ async function loadLibrary(options = {}) {
   try {
     const response = await fetch("/api/library"); if (!response.ok) throw new Error("视频画廊暂时无法打开，请确认本地服务仍在运行。");
     const data = await response.json(); state.candidates = data.candidates; state.avatars = data.avatars;
+    // The first load after a reload puts back what the address hash remembers.
+    const restore = state.locationReady ? null : parseLocation(location.hash);
+    if (restore) applyLocationFilters(restore);
     if (!state.candidates.some(c => c.selected) && state.filter === "selected") state.filter = "all";
     state.animateGallery = true; renderSourceFilters(); renderGallery();
-    const selected = state.candidates.find(c => c.id === state.selected?.id) || state.candidates[0];
+    const wanted = restore?.c && state.candidates.find(c => c.id === restore.c);
+    const selected = wanted || state.candidates.find(c => c.id === state.selected?.id) || state.candidates[0];
     if (selected) { if (options.chooseFrame !== false) choose(selected); }
     else {state.selected = null; $("main-preview").hidden = true; $("preview-empty").hidden = false; $("preview-empty").textContent = "等待第一组视频选片"; $("export-button").disabled = true;}
     renderAvatars();
+    if (restore) {
+      const index = wanted ? state.visible.findIndex(c => c.id === wanted.id) : -1;
+      if (index >= state.renderLimit) { state.renderLimit = limitFor(index); renderGallery(); }
+      const viewing = restore.v && state.candidates.find(c => c.id === restore.v);
+      if (viewing) { const at = state.visible.findIndex(c => c.id === viewing.id); if (at >= 0) openViewer(at); else openViewer(0, [viewing]); }
+      if (restore.tab === "avatar") $("avatar-tab").click();
+      state.locationReady = true; saveLocation();
+    }
   } catch (error) { status(error.message, true); $("preview-empty").textContent = "画廊暂时无法打开"; }
   finally { $("refresh-library").disabled = false; }
 }
@@ -916,7 +954,7 @@ $("export-button").addEventListener("click", exportImage);
 for (const id of Object.keys(RANGE_DEFAULTS)) $(id).addEventListener("dblclick", () => resetRange(id));
 for (const button of document.querySelectorAll(".reset-one")) button.addEventListener("click", () => resetRange(button.dataset.for));
 $("tune-reset").addEventListener("click", () => TUNE_IDS.forEach(resetRange));
-for (const type of ["wallpaper", "avatar"]) $(`${type}-tab`).addEventListener("click", () => {for (const t of ["wallpaper", "avatar"]) {$(`${t}-panel`).hidden = t !== type; $(`${t}-tab`).classList.toggle("active", t === type); $(`${t}-tab`).setAttribute("aria-pressed", String(t === type));} moveTabInk(); if (type === "wallpaper") updatePreview();});
+for (const type of ["wallpaper", "avatar"]) $(`${type}-tab`).addEventListener("click", () => {for (const t of ["wallpaper", "avatar"]) {$(`${t}-panel`).hidden = t !== type; $(`${t}-tab`).classList.toggle("active", t === type); $(`${t}-tab`).setAttribute("aria-pressed", String(t === type));} moveTabInk(); if (type === "wallpaper") updatePreview(); saveLocation();});
 function moveTabInk() { const tab = document.querySelector(".tabs button.active"); if (!tab) return; $("tab-ink").style.left = `${tab.offsetLeft}px`; $("tab-ink").style.width = `${tab.offsetWidth}px`; }
 window.addEventListener("resize", moveTabInk); moveTabInk();
 for (const id of ["avatar-direction", "avatar-shape", "avatar-notes"]) $(id).addEventListener("input", avatarPrompt);
