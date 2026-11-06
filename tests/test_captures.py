@@ -295,3 +295,64 @@ def test_capture_strip_falls_back_when_gpu_scaling_fails(clock_root):
     assert '-hwaccel_output_format' in commands[0] and '-hwaccel_output_format' not in commands[1]
     # An 8-bit source downloads as nv12; a format list would break 10-bit HDR.
     assert any('format=nv12,' in part or part.endswith('format=nv12') for part in commands[0])
+
+
+def library_card(client, candidate_id):
+    return next(c for c in client.get('/api/library').json()['candidates'] if c['id'] == candidate_id)
+
+
+def test_capture_name_replaces_title_keeps_chapter_and_names_the_file(capture_app):
+    client, root, _ = capture_app
+    source = source_id(client)
+    plain = post(client, '/api/captures', {'source_id': source, 'timestamp': 5})
+    named = post(client, '/api/captures', {'source_id': source, 'timestamp': 6, 'name': '  舞台上的\n绿灯  '})
+    assert plain.status_code == named.status_code == 200, named.text
+    rows = json.loads((root / 'output/user-captures/manifest.json').read_text())['candidates']
+    assert 'name' not in rows[0] and rows[1]['name'] == '舞台上的 绿灯' and rows[1]['chapter'] == '山の草原'
+    card = library_card(client, named.json()['candidate_id'])
+    assert card['title'] == card['name'] == '舞台上的 绿灯' and card['chapter'] == '山の草原'
+    assert library_card(client, plain.json()['candidate_id'])['title'] == '山の草原'
+    # Export file names follow the user's name.
+    from studio import download_name
+    assert '舞台上的绿灯' in download_name({**card, 'source_label': 'Live'}, '原帧')
+
+
+def test_capture_rename_and_clear_back_to_song(capture_app):
+    client, root, _ = capture_app
+    capture = post(client, '/api/captures', {'source_id': source_id(client), 'timestamp': 7}).json()
+    client.get('/api/library')
+    renamed = post(client, '/api/capture-names', {'candidate_id': capture['candidate_id'], 'name': '逆光'})
+    assert renamed.status_code == 200 and renamed.json()['title'] == '逆光'
+    assert library_card(client, capture['candidate_id'])['title'] == '逆光'
+    cleared = post(client, '/api/capture-names', {'candidate_id': capture['candidate_id'], 'name': '   '})
+    assert cleared.json() == {'candidate_id': capture['candidate_id'], 'name': '', 'title': '山の草原'}
+    row = json.loads((root / 'output/user-captures/manifest.json').read_text())['candidates'][0]
+    assert 'name' not in row and row['id'] == capture['capture_id']
+    assert not list((root / 'output/user-captures').glob('*.tmp'))
+
+
+def test_capture_duplicate_with_name_updates_but_blank_keeps(capture_app):
+    client, root, _ = capture_app
+    body = {'source_id': source_id(client), 'timestamp': 8, 'name': '第一次'}
+    assert post(client, '/api/captures', body).status_code == 200
+    body['name'] = ''
+    assert post(client, '/api/captures', body).json()['duplicate']
+    manifest = root / 'output/user-captures/manifest.json'
+    assert json.loads(manifest.read_text())['candidates'][0]['name'] == '第一次'
+    body['name'] = '第二次'
+    post(client, '/api/captures', body)
+    assert json.loads(manifest.read_text())['candidates'][0]['name'] == '第二次'
+
+
+def test_capture_rename_rejects_live_candidates_and_bad_names(capture_app):
+    client, root, _ = capture_app
+    live = next(c for c in client.get('/api/library').json()['candidates'] if c['candidate_id'] == 'a')
+    old = (root / 'output/old/manifest.json').read_bytes()
+    assert post(client, '/api/capture-names', {'candidate_id': live['id'], 'name': 'x'}).status_code == 404
+    assert (root / 'output/old/manifest.json').read_bytes() == old
+    capture = post(client, '/api/captures', {'source_id': source_id(client), 'timestamp': 9}).json()
+    client.get('/api/library')
+    for name in ['长' * 41, 'a\x00b', 12]:
+        assert post(client, '/api/capture-names', {'candidate_id': capture['candidate_id'], 'name': name}).status_code == 422
+    assert post(client, '/api/captures', {'source_id': source_id(client), 'timestamp': 10, 'name': '长' * 41}).status_code == 422
+    assert 'name' not in json.loads((root / 'output/user-captures/manifest.json').read_text())['candidates'][0]

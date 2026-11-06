@@ -95,11 +95,32 @@ class PreviewRequest(BaseModel):
     priority: Literal["current", "prefetch"] = "current"
 
 
+def clean_capture_name(value):
+    """A user's own name for a capture: one line, no control characters; blank means the song name."""
+    if not isinstance(value, str):
+        raise ValueError("名字必须是文字")
+    value = " ".join(value.split())
+    if any(ord(ch) < 32 or ord(ch) == 127 for ch in value):
+        raise ValueError("名字里有不能用的字符")
+    if len(value) > CAPTURE_NAME_MAX:
+        raise ValueError(f"名字最多 {CAPTURE_NAME_MAX} 个字")
+    return value
+
+
+CAPTURE_NAME_MAX = 40
+
+
 class CaptureRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
     source_id: str = Field(min_length=1, max_length=64)
     timestamp: float = Field(ge=0)
     favorite: bool = False
+    name: str = Field(default="", max_length=200)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def tidy_name(cls, value):
+        return clean_capture_name(value)
 
     @field_validator("timestamp", mode="before")
     @classmethod
@@ -141,6 +162,17 @@ class CaptureStripRequest(BaseModel):
 class CapturePreviewRequest(CaptureRequest):
     priority: Literal["current", "prefetch"] = "current"
     generation: int | None = Field(default=None, ge=0)
+
+
+class CaptureNameRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    candidate_id: str = Field(min_length=1, max_length=64)
+    name: str = Field(max_length=200)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def tidy_name(cls, value):
+        return clean_capture_name(value)
 
 
 class FavoriteRequest(BaseModel):
@@ -305,12 +337,15 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                 if pick is None and short_id_counts[original_id] == 1:
                     pick = picks.get(("", original_id))
                 pick = pick or {}
+                # Only the user's own captures carry a name; it replaces the song title, never the chapter.
+                name = str(row.get("name") or "").strip() if data.get("source_kind") == "user" else ""
                 public = {
                     "id": key, "candidate_id": original_id, "preview": preview,
                     "thumbnail": preview,
                     "manifest": manifest_scope,
                     "source_kind": data.get("source_kind", "live"),
-                    "title": str(pick.get("title") or row.get("title") or row.get("chapter") or "视频片刻"),
+                    "title": name or str(pick.get("title") or row.get("title") or row.get("chapter") or "视频片刻"),
+                    "name": name,
                     "source_label": str(video.get("label") or source.stem),
                     "timecode": str(row.get("timecode") or f"{int(timestamp)//60:02d}:{int(timestamp)%60:02d}"),
                     "timestamp": timestamp, "chapter": row.get("chapter"),
@@ -748,11 +783,10 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                 raise HTTPException(409, "附近帧暂时没有生成，可以直接用主图。") from None
         return {"frames": [{"timestamp": t, "url": register_image(files[t]) if t in files else None} for t in times]}
 
-    def persist_capture(candidate: dict, image: Path) -> tuple[str, bool]:
+    def capture_manifest() -> tuple[Path, dict]:
         folder = output / "user-captures"
         manifest = folder / "manifest.json"
-        previews = folder / "previews"
-        if not all(within(path, output) for path in (folder, manifest, previews)) or not within(output, root):
+        if not all(within(path, output) for path in (folder, manifest, folder / "previews")) or not within(output, root):
             raise HTTPException(400, "截帧目录不在项目内。")
         data = {"version": 1, "source_kind": "user", "videos": [], "candidates": []}
         if manifest.exists():
@@ -762,8 +796,40 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                     raise ValueError()
             except (ValueError, KeyError, TypeError, AttributeError):
                 raise HTTPException(409, "我截的清单无法读取，已保留原文件。") from None
+        return manifest, data
+
+    def write_capture_manifest(manifest: Path, data: dict) -> None:
+        temporary = manifest.parent / f".{uuid.uuid4().hex}.json.tmp"
+        try:
+            temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            temporary.replace(manifest)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    def set_capture_name(row: dict, name: str) -> None:
+        if name:
+            row["name"] = name
+        else:
+            row.pop("name", None)
+
+    def rename_capture(capture_id: str, name: str) -> None:
+        manifest, data = capture_manifest()
+        row = next((row for row in data["candidates"] if isinstance(row, dict) and row.get("id") == capture_id), None)
+        if row is None:
+            raise HTTPException(404, "这张截图不在「我截的」清单里，请刷新图库。")
+        set_capture_name(row, name)
+        write_capture_manifest(manifest, data)
+
+    def persist_capture(candidate: dict, image: Path, name: str = "") -> tuple[str, bool]:
+        manifest, data = capture_manifest()
+        folder = manifest.parent
+        previews = folder / "previews"
         for row in data["candidates"]:
             if row["source"] == candidate["source"] and row["timestamp"] == candidate["timestamp"]:
+                # Same frame again: a newly typed name still lands; a blank one keeps the old name.
+                if name and row.get("name") != name:
+                    set_capture_name(row, name)
+                    write_capture_manifest(manifest, data)
                 return row["id"], True
         number = max((int(row["id"][1:]) for row in data["candidates"]), default=0) + 1
         short_id = f"U{number:03d}"
@@ -781,18 +847,17 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
             picture = picture.convert("RGB")
             picture.resize((640, max(1, round(640 * picture.height / picture.width))), Image.Resampling.LANCZOS).save(temporary, quality=90)
         temporary.replace(thumbnail)
-        data["candidates"].append({"id": short_id, "video_id": video_id, "source": candidate["source"],
-                                   "timestamp": candidate["timestamp"], "timecode": candidate["timecode"],
-                                   "chapter": candidate["chapter"], "created_at": datetime.now(timezone.utc).isoformat(),
-                                   "preview": f"previews/{short_id}.jpg"})
-        temporary_manifest = folder / f".{uuid.uuid4().hex}.json.tmp"
+        row = {"id": short_id, "video_id": video_id, "source": candidate["source"],
+               "timestamp": candidate["timestamp"], "timecode": candidate["timecode"],
+               "chapter": candidate["chapter"], "created_at": datetime.now(timezone.utc).isoformat(),
+               "preview": f"previews/{short_id}.jpg"}
+        set_capture_name(row, name)
+        data["candidates"].append(row)
         try:
-            temporary_manifest.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-            temporary_manifest.replace(manifest)
+            write_capture_manifest(manifest, data)
         except OSError:
             # Roll back only files created by this attempt, never old captures.
             thumbnail.unlink(missing_ok=True)
-            temporary_manifest.unlink(missing_ok=True)
             raise
         return short_id, False
 
@@ -818,13 +883,32 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         if not result:
             raise HTTPException(409, "源视频或原帧刚刚变化，请重新截取。")
         try:
-            short_id, duplicate = await asyncio.to_thread(persist_capture, candidate, media[result["original"].removeprefix("/media/")])
+            short_id, duplicate = await asyncio.to_thread(persist_capture, candidate, media[result["original"].removeprefix("/media/")], params.name)
         except OSError:
             raise HTTPException(500, "加入图库失败，请检查本地目录权限。") from None
         if params.favorite:
             await set_favorite(("user-captures/manifest.json", short_id), True)
         public_id = opaque(str(output / "user-captures" / "manifest.json") + "|" + short_id)
         return {"candidate_id": public_id, "capture_id": short_id, "duplicate": duplicate}
+
+    @app.post("/api/capture-names")
+    async def update_capture_name(params: CaptureNameRequest):
+        candidate = candidates.get(params.candidate_id)
+        if candidate is None or candidate.get("manifest") != "user-captures/manifest.json":
+            raise HTTPException(404, "只有「我截的」可以改名，请刷新图库。")
+        async with capture_lock:
+            try:
+                await asyncio.to_thread(rename_capture, candidate["candidate_id"], params.name)
+            except OSError:
+                raise HTTPException(500, "名字没有保存，请检查本地目录权限。") from None
+        title = params.name or str(candidate.get("chapter") or "视频片刻")
+        previous = download_name(candidate, "原帧")
+        candidate.update(name=params.name, title=title)
+        # An original frame already on screen downloads under the new name too.
+        for path, existing in list(media_names.items()):
+            if existing == previous:
+                media_names[path] = download_name(candidate, "原帧")
+        return {"candidate_id": params.candidate_id, "name": params.name, "title": title}
 
     @app.post("/api/exports", status_code=202)
     async def export_image(params: ExportRequest):

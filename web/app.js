@@ -8,12 +8,59 @@ const RANGE_DEFAULTS = {"focus-x": .5, "focus-y": .5, exposure: 0, contrast: 1, 
 const TUNE_IDS = ["exposure", "contrast", "sharpen"];
 const galleryScope = {kind: null, value: ""};
 function displayTitle(candidate) {
+  if (candidate.name) return candidate.name;
   // Drop the pick number and leading parts already shown in the source line.
   const parts = candidate.title.replace(/^\s*\d+\s*·\s*/, "").split(/\s*·\s*/);
   while (parts.length > 1 && (parts[0] === "MV" || candidate.source_label.includes(parts[0]))) parts.shift();
   return parts.join(" · ");
 }
 function shortTime(candidate) { return candidate.timecode.replace(/\.\d+$/, ""); }
+// Only the user's own captures can be renamed; a name moves the song title into the small line.
+const CAPTURE_NAME_MAX = 40;
+function isOwnCapture(candidate) { return candidate?.manifest === "user-captures/manifest.json"; }
+function sourceLine(candidate, time) { return [candidate.name && candidate.chapter, candidate.source_label, time].filter(Boolean).join(" · "); }
+const PEN_PATH = "M4 20h4L19 9l-4-4L4 16z M14 6l4 4";
+function penButton(label) {
+  const button = document.createElement("button"); button.type = "button"; button.className = "rename-toggle"; button.title = label; button.setAttribute("aria-label", label);
+  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg"); icon.setAttribute("viewBox", "0 0 24 24"); icon.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); path.setAttribute("d", PEN_PATH); icon.append(path); button.append(icon);
+  return button;
+}
+// Swap a title for a one-line field. Enter or leaving the field saves, Esc cancels.
+function editName(host, candidate, done) {
+  const input = document.createElement("input"); input.className = "rename-input"; input.maxLength = CAPTURE_NAME_MAX;
+  input.value = candidate.name || ""; input.placeholder = candidate.chapter || "我截的画面"; input.setAttribute("aria-label", "给这张截图起名，清空就用歌名");
+  host.replaceChildren(input); input.focus(); input.select();
+  let closed = false;
+  const finish = save => { if (closed) return; closed = true; done(save ? input.value : null); };
+  input.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === "Escape") { event.preventDefault(); event.stopPropagation(); finish(event.key === "Enter"); }
+  });
+  input.addEventListener("blur", () => finish(true));
+}
+async function renameCapture(candidate, value) {
+  const name = (value ?? "").trim().replace(/\s+/g, " ");
+  if (value === null || name === (candidate.name || "")) return false;
+  const previous = {name: candidate.name, title: candidate.title};
+  Object.assign(candidate, {name, title: name || candidate.chapter || "我截的画面"}); state.renamedFlash = candidate.id;
+  try {
+    const response = await fetch("/api/capture-names", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({candidate_id: candidate.id, name})});
+    const result = await response.json();
+    if (!response.ok) throw new Error(typeof result.detail === "string" ? result.detail : Array.isArray(result.detail) ? "名字太长或有不能用的字符。" : "名字暂时无法保存。");
+    Object.assign(candidate, {name: result.name, title: result.title});
+    return true;
+  } catch (error) {
+    Object.assign(candidate, previous); state.renamedFlash = null; status(error.message, true);
+    if (!$("viewer").hidden) $("viewer-quality").textContent = error.message;
+    return false;
+  }
+}
+function afterRename(candidate) {
+  renderGallery();
+  if (!$("viewer").hidden && viewerCandidate()?.id === candidate.id) renderViewerTitle(candidate);
+  if (state.selected?.id === candidate.id) { $("image-title").textContent = displayTitle(candidate); $("image-source").textContent = sourceLine(candidate, candidate.timecode); }
+  setTimeout(() => { if (state.renamedFlash === candidate.id) state.renamedFlash = null; }, 900);
+}
 function sourceOptions(kind) {
   return [...new Set(state.candidates.filter(c => c.source_kind === kind).map(c => c.source_label))].sort((a, b) => a.localeCompare(b, "zh-CN", {numeric: true}));
 }
@@ -254,7 +301,7 @@ function choose(candidate) {
   image.hidden = false;
   $("preview-empty").hidden = true;
   $("image-title").textContent = displayTitle(candidate);
-  $("image-source").textContent = `${candidate.source_label} · ${candidate.timecode}`;
+  $("image-source").textContent = sourceLine(candidate, candidate.timecode);
   $("image-note").textContent = candidate.note;
   $("preview-label").textContent = "选片缩略图";
   $("preview-quality").textContent = candidate.source_available ? "正在载入视频原帧…" : "源视频不可用，当前为选片缩略图。";
@@ -323,14 +370,25 @@ function renderGallery() {
     const text = document.createElement("div"); text.style.cssText = "flex:1;min-width:0";
     const title = document.createElement("h3"); title.className = "candidate-title";
     const titleButton = document.createElement("button"); titleButton.type = "button"; titleButton.className = "candidate-title-select"; titleButton.id = `candidate-title-${c.id}`; titleButton.textContent = displayTitle(c); titleButton.addEventListener("click", () => openViewer(index)); title.append(titleButton);
-    const meta = document.createElement("p"); meta.className = "candidate-meta"; meta.textContent = `${c.source_label} · ${shortTime(c)}`;
+    const meta = document.createElement("p"); meta.className = "candidate-meta"; meta.textContent = sourceLine(c, shortTime(c));
     const favorite = document.createElement("button"); favorite.type = "button"; favorite.className = "favorite-toggle" + (c.favorite ? " is-favorite" : ""); favorite.setAttribute("aria-label", c.favorite ? "取消收藏" : "收藏画面"); favorite.setAttribute("aria-pressed", String(Boolean(c.favorite))); favorite.title = c.favorite ? "取消收藏" : "收藏画面"; favorite.disabled = state.favoriteSaving.has(c.id);
     favorite.id = `candidate-favorite-${c.id}`;
     if (state.popFavorite === c.id) favorite.classList.add("pop");
     const heart = document.createElementNS("http://www.w3.org/2000/svg", "svg"); heart.setAttribute("viewBox", "0 0 24 24"); heart.setAttribute("aria-hidden", "true"); heart.classList.add("favorite-icon");
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); path.setAttribute("d", "M12 20.2 4.8 13A4.8 4.8 0 0 1 11.6 6.2L12 6.7l.4-.5A4.8 4.8 0 0 1 19.2 13L12 20.2Z"); heart.append(path); favorite.append(heart);
     favorite.addEventListener("click", () => toggleFavorite(c));
-    wrap.append(image, time); surface.append(wrap); text.append(title, meta); titleRow.append(text, favorite); card.append(surface, titleRow); grid.append(card);
+    wrap.append(image, time); surface.append(wrap); text.append(title, meta); titleRow.append(text);
+    if (isOwnCapture(c)) {
+      const rename = penButton("给这张截图改名"); rename.id = `candidate-rename-${c.id}`;
+      rename.addEventListener("click", () => {
+        card.classList.add("renaming");
+        const hint = Object.assign(document.createElement("p"), {className: "rename-hint", textContent: "回车保存 · Esc 取消 · 清空就变回歌名"}); text.append(hint);
+        editName(title, c, async value => { const saved = await renameCapture(c, value); afterRename(c); if (!saved) $(`candidate-rename-${c.id}`)?.focus({preventScroll: true}); });
+      });
+      titleRow.append(rename);
+      if (state.renamedFlash === c.id) titleRow.classList.add("renamed");
+    }
+    titleRow.append(favorite); card.append(surface, titleRow); grid.append(card);
   });
   const remaining = visible.length - shown.length;
   $("gallery-more").hidden = remaining <= 0;
@@ -394,6 +452,16 @@ function renderViewerStrip() {
   }
   strip.querySelector(".current")?.scrollIntoView({block: "nearest", inline: "center"});
 }
+function renderViewerTitle(candidate) {
+  const title = $("viewer-title"); title.textContent = displayTitle(candidate);
+  $("viewer-source").textContent = sourceLine(candidate, candidate.timecode);
+  const rename = $("viewer-rename"); rename.hidden = !isOwnCapture(candidate);
+}
+function renameInViewer() {
+  const candidate = viewerCandidate();
+  if (!isOwnCapture(candidate) || $("viewer-title").querySelector("input")) return;
+  editName($("viewer-title"), candidate, async value => { await renameCapture(candidate, value); afterRename(candidate); renderViewerTitle(candidate); $("viewer-rename").focus({preventScroll: true}); });
+}
 function showViewer(index) {
   const list = state.viewerList;
   if (!list?.length) return;
@@ -403,8 +471,7 @@ function showViewer(index) {
   const cached = state.native.get(candidate.id), image = $("viewer-image"), quality = $("viewer-quality"), download = $("viewer-download");
   image.src = cached?.preview || candidate.thumbnail || candidate.preview;
   image.alt = `${displayTitle(candidate)}，${candidate.source_label}，${candidate.timecode}`;
-  $("viewer-title").textContent = displayTitle(candidate);
-  $("viewer-source").textContent = `${candidate.source_label} · ${candidate.timecode}`;
+  renderViewerTitle(candidate);
   $("viewer-note").textContent = candidate.note; $("viewer-note").title = candidate.note;
   $("viewer-position").replaceChildren(`${state.viewerScopeText} · `, Object.assign(document.createElement("strong"), {textContent: `第 ${state.viewerIndex + 1} 张`}));
   download.hidden = !cached; if (cached) download.href = cached.download;
@@ -478,9 +545,9 @@ function useViewerCandidate() {
   $("export-button").focus({preventScroll: true});
 }
 function viewerKeydown(event) {
-  if ($("viewer").hidden || event.altKey || event.ctrlKey || event.metaKey) return;
+  if ($("viewer").hidden || event.altKey || event.ctrlKey || event.metaKey || event.target.matches?.("input, textarea, select")) return;
   const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
-  const actions = {ArrowLeft: () => stepViewer(-1), ArrowRight: () => stepViewer(1), Escape: () => closeViewer(), Enter: useViewerCandidate, f: () => { const c = viewerCandidate(); if (c) toggleFavorite(c); }, h: () => $("viewer").classList.toggle("pure"), " ": () => $("viewer").classList.toggle("pure")};
+  const actions = {ArrowLeft: () => stepViewer(-1), ArrowRight: () => stepViewer(1), Escape: () => closeViewer(), Enter: useViewerCandidate, f: () => { const c = viewerCandidate(); if (c) toggleFavorite(c); }, n: renameInViewer, h: () => $("viewer").classList.toggle("pure"), " ": () => $("viewer").classList.toggle("pure")};
   if (!actions[key]) return;
   // Space always toggles the picture-only view, even when a viewer button has focus.
   // Enter on a focused control keeps its own meaning; on the picture it picks the frame.
@@ -659,6 +726,7 @@ function captureMessage(message, bad = false) {
 function captureChapter(seconds) { return capture.source?.chapters.find(c => c.start <= seconds && seconds < c.end); }
 function captureFeedback(seconds) {
   const chapter = captureChapter(seconds);
+  captureNamePreview();
   captureMessage(chapter ? `落在第 ${capture.source.chapters.indexOf(chapter) + 1} 章 ${chapter.title} · 章节内 ${captureTime(seconds - chapter.start)}` : "这段视频没有对应章节，按整场时间截取");
 }
 async function captureJSON(url, body) {
@@ -861,12 +929,13 @@ async function toggleCapture() {
 async function saveCapture(use) {
   if (!capture.ready || capture.saving) return;
   capture.saving = true; $("cap-add").disabled = true;
-  const source_id = capture.source.id, timestamp = capture.seconds, favorite = $("cap-fav").checked;
+  const source_id = capture.source.id, timestamp = capture.seconds, favorite = $("cap-fav").checked, name = $("cap-name").value.trim().replace(/\s+/g, " ");
   stopCapture();
   try {
-    const result = await captureJSON("/api/captures", {source_id, timestamp, favorite});
+    const result = await captureJSON("/api/captures", {source_id, timestamp, favorite, name});
+    $("cap-name").value = ""; captureNamePreview();
     await loadLibrary({chooseFrame: false}); state.filter = "all"; setSourceKind("user");
-    $("cap-added").textContent = `${result.duplicate ? "已在" : "已加入"}「我截的」· ${result.capture_id}${favorite ? "，也放进了收藏" : ""}`;
+    $("cap-added").textContent = `${result.duplicate ? "已在" : "已加入"}「我截的」· ${result.capture_id}${name ? `「${name}」` : ""}${favorite ? "，也放进了收藏" : ""}`;
     $("cap-added").classList.add("show");
     if (use) {
       const candidate = state.candidates.find(c => c.id === result.candidate_id);
@@ -876,6 +945,18 @@ async function saveCapture(use) {
   } catch (error) { captureMessage(error.message, true); }
   finally { capture.saving = false; $("cap-add").disabled = !capture.ready; }
 }
+// Mirrors download_name() in studio.py so the name field shows the file it will become.
+function captureNamePreview() {
+  const field = $("cap-name"), line = $("cap-filename"), chapter = capture.source ? captureChapter(capture.seconds) : null;
+  field.placeholder = chapter?.title || "不填就用歌名";
+  const clean = text => String(text || "").replace(/[\\/:*?"<>|\s·・]+/g, "");
+  const name = field.value.trim(), time = capture.source ? captureTime(capture.seconds).split(".")[0] : "";
+  const hms = time ? time.split(":").map(n => n.padStart(2, "0")) : [];
+  while (hms.length && hms.length < 3) hms.unshift("00");
+  line.textContent = capture.source ? `导出文件名：${[clean(capture.source.label), clean(name || chapter?.title || "我截的画面"), hms.join("-")].filter(Boolean).join("_")}_….png` : "";
+  line.classList.toggle("named", Boolean(name));
+}
+$("cap-name").addEventListener("input", captureNamePreview);
 $("capture-toggle").addEventListener("click", toggleCapture);
 $("cap-src").addEventListener("change", captureSourceChanged);
 $("cap-time").addEventListener("input", captureInput);
@@ -937,6 +1018,7 @@ $("back-to-gallery").addEventListener("click", () => {if (state.selected) reveal
 $("viewer-prev").addEventListener("click", () => stepViewer(-1));
 $("viewer-next").addEventListener("click", () => stepViewer(1));
 $("viewer-close").addEventListener("click", () => closeViewer());
+$("viewer-rename").addEventListener("click", renameInViewer);
 $("viewer-pure").addEventListener("click", () => $("viewer").classList.toggle("pure"));
 $("viewer-image").addEventListener("click", () => $("viewer").classList.toggle("pure"));
 // The workspace preview opens the viewer too, within the current gallery list when it holds this frame.
