@@ -11,7 +11,7 @@ description: 为ヨルシカ / Yorushika / 夜鹿粉丝从本地 Live、MV 视�
 
 先读项目根目录 [AGENTS.md](../../../AGENTS.md)、[CURRENT_PROGRESS.md](../../../CURRENT_PROGRESS.md) 与 [VISUAL_GUIDE.md](../../../VISUAL_GUIDE.md)，实际打开相关校准图后再选片。选图标准、正反例和增量闭环以VISUAL_GUIDE为准，当前暂停项以进度为准。
 
-用户已确认使用方式：向本机当前GPT主控提新增要求，GPT会话配合本机工具负责提取、制作、入库和验证，用户刷新现有网页即可；不建设外置Agent服务。保持本地网页，不做App、其他客户端或后台自动任务；不让用户自己编辑manifest。旧1080p MV不继续批量放大；用户提供的新源须实测并重新选帧，是否恢复制作以CURRENT_PROGRESS及最新用户要求为准。用户整体喜欢非MV作品，但没有逐张确认所有文件。
+用户已确认使用方式：向本机当前主控Agent（Claude、Codex等）提新增要求，主控会话配合本机工具负责提取、制作、入库和验证，用户刷新现有网页即可；不建设外置Agent服务。保持本地网页，不做App、其他客户端或后台自动任务；不让用户自己编辑manifest。旧1080p MV不继续批量放大；用户提供的新源须实测并重新选帧，是否恢复制作以CURRENT_PROGRESS及最新用户要求为准。用户整体喜欢非MV作品，但没有逐张确认所有文件。
 
 ## 先选工作流
 
