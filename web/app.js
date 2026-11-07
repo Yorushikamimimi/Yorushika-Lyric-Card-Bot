@@ -112,7 +112,7 @@ function limitFor(index) { return Math.max(PAGE_SIZE, Math.ceil((index + 1) / PA
 function saveLocation() {
   if (!state.locationReady) return;
   const viewing = !$("viewer").hidden && viewerCandidate();
-  const hash = locationHash({tab: $("avatar-tab").classList.contains("active") ? "avatar" : "", kind: galleryScope.kind || "", src: galleryScope.value, scope: state.filter === "selected" ? "" : state.filter, c: state.selected?.id || "", v: viewing ? viewing.id : ""});
+  const hash = locationHash({tab: $("avatar-tab").classList.contains("active") ? "avatar" : $("review-tab").classList.contains("active") ? "review" : "", kind: galleryScope.kind || "", src: galleryScope.value, scope: state.filter === "selected" ? "" : state.filter, c: state.selected?.id || "", v: viewing ? viewing.id : ""});
   if (hash !== location.hash) history.replaceState(history.state, "", hash || location.pathname + location.search);
 }
 function sourceText() { return !galleryScope.kind ? "全部来源" : galleryScope.value || (galleryScope.kind === "user" ? "我截的" : galleryScope.kind === "live" ? "全部 Live 场次" : "全部 MV 曲目"); }
@@ -631,7 +631,7 @@ async function loadLibrary(options = {}) {
       if (index >= state.renderLimit) { state.renderLimit = limitFor(index); renderGallery(); }
       const viewing = restore.v && state.candidates.find(c => c.id === restore.v);
       if (viewing) { const at = state.visible.findIndex(c => c.id === viewing.id); if (at >= 0) openViewer(at); else openViewer(0, [viewing]); }
-      if (restore.tab === "avatar") $("avatar-tab").click();
+      if (restore.tab === "avatar") $("avatar-tab").click(); else if (restore.tab === "review") $("review-tab").click();
       state.locationReady = true; saveLocation();
     }
   } catch (error) { status(error.message, true); $("preview-empty").textContent = "画廊暂时无法打开"; }
@@ -965,7 +965,7 @@ document.querySelectorAll(".capture .nudge button").forEach(button => button.add
 // On the document: rebuilding the reel removes the focused tile, which used to
 // drop focus to <body> and silence the arrows. Only while the panel is on screen.
 document.addEventListener("keydown", event => {
-  if (!$("capture").classList.contains("open") || !$("viewer").hidden || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (!$("capture").classList.contains("open") || $("wallpaper-panel").hidden || !$("viewer").hidden || event.altKey || event.ctrlKey || event.metaKey) return;
   const box = $("capture").getBoundingClientRect();
   if (box.bottom < 0 || box.top > innerHeight || !capture.reel) return;
   if (event.target === $("cap-time") && ["ArrowUp", "ArrowDown"].includes(event.key)) {
@@ -1036,7 +1036,7 @@ $("export-button").addEventListener("click", exportImage);
 for (const id of Object.keys(RANGE_DEFAULTS)) $(id).addEventListener("dblclick", () => resetRange(id));
 for (const button of document.querySelectorAll(".reset-one")) button.addEventListener("click", () => resetRange(button.dataset.for));
 $("tune-reset").addEventListener("click", () => TUNE_IDS.forEach(resetRange));
-for (const type of ["wallpaper", "avatar"]) $(`${type}-tab`).addEventListener("click", () => {for (const t of ["wallpaper", "avatar"]) {$(`${t}-panel`).hidden = t !== type; $(`${t}-tab`).classList.toggle("active", t === type); $(`${t}-tab`).setAttribute("aria-pressed", String(t === type));} moveTabInk(); if (type === "wallpaper") updatePreview(); saveLocation();});
+for (const type of ["wallpaper", "avatar", "review"]) $(`${type}-tab`).addEventListener("click", () => {for (const t of ["wallpaper", "avatar", "review"]) {$(`${t}-panel`).hidden = t !== type; $(`${t}-tab`).classList.toggle("active", t === type); $(`${t}-tab`).setAttribute("aria-pressed", String(t === type));} moveTabInk(); if (type === "review") window.reviewOpen?.(); if (type !== "review" && window.reviewDirty) { window.reviewDirty = false; loadLibrary({chooseFrame: false}); } else if (type === "wallpaper") updatePreview(); saveLocation();});
 function moveTabInk() { const tab = document.querySelector(".tabs button.active"); if (!tab) return; $("tab-ink").style.left = `${tab.offsetLeft}px`; $("tab-ink").style.width = `${tab.offsetWidth}px`; }
 window.addEventListener("resize", moveTabInk); moveTabInk();
 for (const id of ["avatar-direction", "avatar-shape", "avatar-notes"]) $(id).addEventListener("input", avatarPrompt);

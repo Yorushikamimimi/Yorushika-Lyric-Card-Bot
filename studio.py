@@ -175,6 +175,30 @@ class CaptureNameRequest(BaseModel):
         return clean_capture_name(value)
 
 
+REVIEW_REASON_MAX = 60
+
+
+class ReviewDecisionRequest(BaseModel):
+    """One explicit per-image choice in the 待挑 queue; null decision undoes it."""
+    model_config = ConfigDict(extra="forbid")
+    candidate_id: str = Field(min_length=1, max_length=64)
+    decision: Literal["keep", "drop", "moment", "skip"] | None
+    moment: int | None = Field(default=None, ge=0, le=40)
+    reason: str = Field(default="", max_length=200)
+
+    @field_validator("reason", mode="before")
+    @classmethod
+    def tidy_reason(cls, value):
+        if value is None:
+            return ""
+        if not isinstance(value, str):
+            raise ValueError("原因必须是文字")
+        value = " ".join(value.split())
+        if any(ord(c) < 32 or ord(c) == 127 for c in value) or len(value) > REVIEW_REASON_MAX:
+            raise ValueError(f"原因最多 {REVIEW_REASON_MAX} 个字")
+        return value
+
+
 class FavoriteRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     candidate_id: str = Field(min_length=1, max_length=64)
@@ -208,6 +232,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
     artwork_slots = asyncio.Semaphore(2)
     favorite_lock = asyncio.Lock()
     capture_lock = asyncio.Lock()
+    review_lock = asyncio.Lock()
     strip_lock = asyncio.Lock()
     source_lock = asyncio.Lock()
     capture_sources: dict[str, dict] = {}
@@ -281,6 +306,51 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
             items.add((item["manifest"], item["candidate_id"]))
         return items, None
 
+    def read_decisions() -> dict[tuple[str, str], dict]:
+        data = read_json(output / "review-decisions.json")
+        items = data.get("items") if isinstance(data, dict) else None
+        if not isinstance(items, list):
+            return {}
+        return {(item["manifest"], item["candidate_id"]): item for item in items
+                if isinstance(item, dict) and isinstance(item.get("manifest"), str) and isinstance(item.get("candidate_id"), str)}
+
+    def write_decisions(items: dict[tuple[str, str], dict]) -> None:
+        path = output / "review-decisions.json"
+        temporary = output / f".{uuid.uuid4().hex}.review.tmp"
+        payload = {"version": 1, "note": "待挑逐张决定；keep 即本人逐张确认（user_accepted），原 manifest 不改",
+                   "items": [items[key] for key in sorted(items)]}
+        try:
+            temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            temporary.replace(path)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    def review_entry(manifest: Path, row: dict, decision: dict | None) -> dict | None:
+        moments = []
+        for moment in row.get("moments", []):
+            if not isinstance(moment, dict) or not isinstance(moment.get("preview"), str):
+                return None
+            url = register_image(manifest.parent / moment["preview"])
+            try:
+                seconds = float(moment["seconds"])
+            except (KeyError, TypeError, ValueError):
+                return None
+            if not url or not math.isfinite(seconds) or seconds < 0:
+                return None
+            moments.append({"seconds": seconds, "timecode": timecode(seconds), "url": url,
+                            "offset": round(seconds - float(row["timestamp"]), 2),
+                            "cut_before": moment.get("cut_before") is True, "label": str(moment.get("label") or "")})
+        system = row.get("system_moment")
+        if not moments or not isinstance(system, int) or not 0 <= system < len(moments):
+            return None
+        state = decision.get("decision") if decision else None
+        kept = decision.get("moment") if decision and state == "keep" else None
+        if kept is not None and not (isinstance(kept, int) and 0 <= kept < len(moments)):
+            kept = None
+        reasons = row.get("reasons") if isinstance(row.get("reasons"), list) else []
+        return {"moments": moments, "system_moment": system, "reasons": [str(r) for r in reasons][:5],
+                "decision": state, "kept_moment": kept, "drop_reason": str(decision.get("reason") or "") if decision else ""}
+
     def library() -> dict:
         found: dict[str, dict] = {}
         rows = []
@@ -296,6 +366,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                     and isinstance(item.get("manifest"), str)
                     and isinstance(item.get("candidate_id"), str)} if isinstance(status_items, list) else set()
         selection_order = {id(item): index for index, item in enumerate(selection_items) if isinstance(item, dict)}
+        decisions = read_decisions()
         manifests = sorted(output.glob("*/manifest.json")) if output.exists() and within(output, root) else []
         if within(output, root) and (output / "manifest.json").exists():
             manifests.insert(0, output / "manifest.json")
@@ -309,6 +380,8 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
             short_id_counts.update(str(row.get("id", row.get("timestamp"))) for row in data.get("candidates", []) if isinstance(row, dict))
         for manifest, data in batches:
             manifest_scope = manifest.relative_to(output).as_posix()
+            # 待挑 batches stay out of the gallery until the user keeps a picture.
+            queue = data.get("review_queue") is True
             videos = {v.get("id"): v for v in data.get("videos", []) if isinstance(v, dict)}
             for row in data.get("candidates", []):
                 if not isinstance(row, dict):
@@ -333,6 +406,16 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                     continue
                 original_id = str(row.get("id", row["timestamp"]))
                 key = opaque(str(manifest) + "|" + original_id)
+                review = None
+                if queue:
+                    review = review_entry(manifest, row, decisions.get((manifest_scope, original_id)))
+                    if review is None:
+                        continue
+                    kept = review["decision"] == "keep"
+                    if kept and review["kept_moment"] is not None:
+                        # The kept moment replaces the system time: its frame, export and preview.
+                        chosen = review["moments"][review["kept_moment"]]
+                        timestamp, preview = chosen["seconds"], chosen["url"]
                 pick = picks.get((manifest_scope, original_id))
                 if pick is None and short_id_counts[original_id] == 1:
                     pick = picks.get(("", original_id))
@@ -347,11 +430,11 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                     "title": name or str(pick.get("title") or row.get("title") or row.get("chapter") or "视频片刻"),
                     "name": name,
                     "source_label": str(video.get("label") or source.stem),
-                    "timecode": str(row.get("timecode") or f"{int(timestamp)//60:02d}:{int(timestamp)%60:02d}"),
+                    "timecode": timecode(timestamp) if queue else str(row.get("timecode") or f"{int(timestamp)//60:02d}:{int(timestamp)%60:02d}"),
                     "timestamp": timestamp, "chapter": row.get("chapter"),
                     "selected": bool(pick), "reviewed": pick.get("reviewed", row.get("reviewed")) is True,
                     "favorite": (manifest_scope, original_id) in favorite_keys,
-                    "active": (manifest_scope, original_id) not in inactive,
+                    "active": (manifest_scope, original_id) not in inactive and (not queue or kept),
                     "selection_order": selection_order.get(id(pick)),
                     "note": str(pick.get("note") or row.get("note") or ""),
                     "recommended_for": pick.get("recommended_for", row.get("recommended_for", [])),
@@ -359,6 +442,8 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                     "scores": row.get("scores", {}),
                 }
                 found[key] = {**public, "source": str(source), "source_metadata": video.get("metadata", {}), "original_kind": video.get("kind", data.get("source_kind", "live"))}
+                if review is not None:
+                    found[key]["review"] = {**review, "batch": str(data.get("label") or manifest_scope), "order": len(found)}
                 if public["active"] or public["favorite"] or public["selected"]:
                     rows.append(public)
         candidates.clear()
@@ -599,6 +684,64 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         key = (str(candidate["manifest"]), str(candidate["candidate_id"]))
         await set_favorite(key, params.favorite)
         return {"candidate_id": params.candidate_id, "favorite": params.favorite}
+
+    def review_items() -> list[dict]:
+        rows = []
+        for key, candidate in candidates.items():
+            review = candidate.get("review")
+            if not review:
+                continue
+            rows.append({"id": key, "candidate_id": candidate["candidate_id"], "manifest": candidate["manifest"],
+                         "batch": review["batch"], "title": candidate["title"], "chapter": candidate["chapter"],
+                         "source_label": candidate["source_label"], "reasons": review["reasons"],
+                         "moments": review["moments"], "system_moment": review["system_moment"],
+                         "decision": review["decision"], "kept_moment": review["kept_moment"],
+                         "drop_reason": review["drop_reason"], "order": review["order"]})
+        rows.sort(key=lambda row: row["order"])
+        for row in rows:
+            row.pop("order")
+        return rows
+
+    @app.get("/api/review-queue")
+    async def get_review_queue():
+        async with review_lock:
+            await asyncio.to_thread(library)
+            return {"items": review_items()}
+
+    @app.post("/api/review-decisions")
+    async def update_review_decision(params: ReviewDecisionRequest):
+        async with review_lock:
+            await asyncio.to_thread(library)
+            candidate = candidates.get(params.candidate_id)
+            if candidate is None or not candidate.get("review"):
+                raise HTTPException(404, "这张不在待挑队列里，请刷新。")
+            moments = candidate["review"]["moments"]
+            if params.decision == "keep" and (params.moment is None or params.moment >= len(moments)):
+                raise HTTPException(422, "请选一个时刻再留。")
+            key = (str(candidate["manifest"]), str(candidate["candidate_id"]))
+            decisions = await asyncio.to_thread(read_decisions)
+            previous = decisions.get(key, {}).get("decision")
+            if params.decision is None:
+                decisions.pop(key, None)
+            else:
+                entry = {"manifest": key[0], "candidate_id": key[1], "decision": params.decision,
+                         "decided_at": datetime.now(timezone.utc).isoformat()}
+                if params.decision == "keep":
+                    entry.update(moment=params.moment, seconds=moments[params.moment]["seconds"],
+                                 system_moment=candidate["review"]["system_moment"], user_accepted=True)
+                if params.decision in {"drop", "moment"} and params.reason:
+                    entry["reason"] = params.reason
+                decisions[key] = entry
+            try:
+                await asyncio.to_thread(write_decisions, decisions)
+            except OSError:
+                raise HTTPException(500, "保存失败，请检查本地图库目录权限。") from None
+        # 留 = 收藏; undoing or changing a keep takes the favorite back off.
+        if params.decision == "keep":
+            await set_favorite(key, True)
+        elif previous == "keep":
+            await set_favorite(key, False)
+        return {"candidate_id": params.candidate_id, "decision": params.decision}
 
     async def set_favorite(key: tuple[str, str], favorite: bool):
         async with favorite_lock:
