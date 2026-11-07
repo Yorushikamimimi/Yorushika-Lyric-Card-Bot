@@ -1,4 +1,5 @@
 """主页放映接口：只读、只放收藏、只用已缓存的原帧。"""
+import json
 import unittest
 
 from PIL import Image
@@ -49,6 +50,40 @@ class ShowcaseTests(unittest.TestCase):
         with Image.open(target) as picture:
             self.assertEqual(picture.size, (2560, 1183))
         self.assertEqual(len(self.preview_calls), 1)
+
+    def test_lyric_comes_from_local_file_when_present(self):
+        candidate = self.candidate()
+        self.favorite(candidate["id"])
+        self.assertIsNone(self.client.get("/api/showcase").json()["items"][0]["lyric"])
+        folder = self.output / "lyrics"
+        folder.mkdir()
+        (folder / "favorite-lyrics.json").write_text('{"%s": {"song": "一场雨", "line": " 雨の匂い "}}' % candidate["id"], encoding="utf-8")
+        self.assertEqual(self.client.get("/api/showcase").json()["items"][0]["lyric"], "雨の匂い")
+        (folder / "favorite-lyrics.json").write_text("not json", encoding="utf-8")
+        self.assertIsNone(self.client.get("/api/showcase").json()["items"][0]["lyric"])
+
+    def test_frames_without_a_line_fall_back_to_the_songs_chorus(self):
+        candidate = self.candidate()
+        self.favorite(candidate["id"])
+        folder = self.output / "lyrics"
+        folder.mkdir()
+        song = "A1\nA2\n\nサビの一行目です\nサビ二行目\n\nB1\nB2\n\nサビの一行目です\nサビ二行目\n"
+        (folder / "full-lyrics.json").write_text(json.dumps({"songs": {"一场雨": song}}, ensure_ascii=False), encoding="utf-8")
+        self.assertEqual(self.client.get("/api/showcase").json()["items"][0]["lyric"], "サビの一行目です")
+        # 画面原词优先于副歌
+        (folder / "favorite-lyrics.json").write_text(json.dumps({candidate["id"]: {"line": "画面里那句"}}, ensure_ascii=False), encoding="utf-8")
+        self.assertEqual(self.client.get("/api/showcase").json()["items"][0]["lyric"], "画面里那句")
+
+    def test_chorus_falls_back_to_most_repeated_line_or_nothing(self):
+        candidate = self.candidate()
+        self.favorite(candidate["id"])
+        folder = self.output / "lyrics"
+        folder.mkdir()
+        target = folder / "full-lyrics.json"
+        target.write_text(json.dumps({"songs": {"一场雨": "短\n繰り返す言葉\nX\n\n短\n繰り返す言葉\nY\n"}}, ensure_ascii=False), encoding="utf-8")
+        self.assertEqual(self.client.get("/api/showcase").json()["items"][0]["lyric"], "繰り返す言葉\u3000X")
+        target.write_text(json.dumps({"songs": {"一场雨": "一回だけの歌詞\n"}}, ensure_ascii=False), encoding="utf-8")
+        self.assertIsNone(self.client.get("/api/showcase").json()["items"][0]["lyric"])
 
     def test_rejects_unknown_and_non_favorite_names(self):
         candidate = self.candidate()

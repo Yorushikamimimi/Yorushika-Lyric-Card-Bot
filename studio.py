@@ -672,8 +672,71 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         brightness_cache[str(path)] = (mtime, value)
         return value
 
+    # 原词（本机、不进仓库）：output/lyrics/favorite-lyrics.json，键是收藏 id；没有就不带词。
+    lyric_cache: dict = {}
+
+    def favorite_lyrics() -> dict:
+        path = output / "lyrics" / "favorite-lyrics.json"
+        try:
+            mtime = path.stat().st_mtime_ns
+        except OSError:
+            return {}
+        if lyric_cache.get("mtime") != mtime:
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                data = {}
+            lyric_cache.update(mtime=mtime, data=data if isinstance(data, dict) else {})
+        return lyric_cache["data"]
+
+    # 没有画面原词的收藏：按歌名在整首文字稿（output/lyrics/full-lyrics.json）里取副歌一句。
+    chorus_cache: dict = {}
+
+    def chorus_of(text: str) -> str | None:
+        squash = lambda line: re.sub(r"[\s\u3000]", "", line)
+        stanzas = [tuple(line.strip() for line in block.split("\n") if line.strip()) for block in re.split(r"\n\s*\n", text)]
+        stanzas = [stanza for stanza in stanzas if stanza]
+        repeats = Counter(tuple(map(squash, stanza)) for stanza in stanzas)
+        best = None  # 重复次数最多的段落，同次数取更长的
+        for stanza in stanzas:
+            count = repeats[tuple(map(squash, stanza))]
+            if count >= 2 and (best is None or (count, len(stanza)) > (best[0], len(best[1]))):
+                best = (count, stanza)
+        if best is None:  # 段落有变化时退到最常重复的一行
+            lines = [line for stanza in stanzas for line in stanza if len(squash(line)) >= 4]
+            top = Counter(map(squash, lines)).most_common(1)
+            if not top or top[0][1] < 2:
+                return None
+            stanza = next(st for st in stanzas if any(squash(line) == top[0][0] for line in st))
+            start = next(k for k, line in enumerate(stanza) if squash(line) == top[0][0])
+            best = (top[0][1], stanza[start:])
+        stanza = best[1]
+        line = stanza[0]
+        if len(squash(line)) < 8 and len(stanza) > 1:
+            line = f"{line}\u3000{stanza[1]}"
+        return line[:60]
+
+    def song_choruses() -> dict:
+        path = output / "lyrics" / "full-lyrics.json"
+        try:
+            mtime = path.stat().st_mtime_ns
+        except OSError:
+            return {}
+        if chorus_cache.get("mtime") != mtime:
+            songs = {}
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+                songs = data.get("songs", {}) if isinstance(data, dict) else {}
+            except (OSError, ValueError):
+                pass
+            picked = {name: chorus_of(text) for name, text in songs.items() if isinstance(name, str) and isinstance(text, str)}
+            chorus_cache.update(mtime=mtime, data={name: line for name, line in picked.items() if line})
+        return chorus_cache["data"]
+
     def showcase_items() -> list[dict]:
         library()
+        lyrics = favorite_lyrics()
+        choruses = song_choruses()
         rows = []
         for key, candidate in candidates.items():
             if not candidate["favorite"]:
@@ -687,8 +750,13 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
             rows.append({"id": key, "title": candidate["title"], "source_label": candidate["source_label"],
                          "timecode": str(candidate["timecode"]).split(".")[0], "thumbnail": candidate["thumbnail"],
                          "wide": f"/showcase/{key}.jpg" if ready else None,
-                         "brightness": thumbnail_brightness(candidate["thumbnail"])})
+                         "brightness": thumbnail_brightness(candidate["thumbnail"]),
+                         "lyric": lyric_line(lyrics.get(key)) or choruses.get(str(candidate["title"]).split(" · ")[0].strip())})
         return rows
+
+    def lyric_line(entry) -> str | None:
+        line = entry.get("line") if isinstance(entry, dict) else None
+        return line.strip() or None if isinstance(line, str) else None
 
     def showcase_image(key: str) -> Path | None:
         candidate = candidates.get(key)
