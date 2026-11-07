@@ -25,7 +25,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageStat
 from live_wallpaper import color_plan, extract_frame, probe_video, run, timecode, WallpaperError
 
 ROOT = Path(__file__).resolve().parent
@@ -650,6 +650,93 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         if job_id not in preview_jobs:
             raise HTTPException(404, "原帧载入任务不存在。")
         return preview_jobs[job_id]
+
+    # 主页放映（控制台读）：只读，不截新原帧、不写收藏；只把已缓存的原帧缩成 2560 宽 JPG。
+    SHOWCASE_WIDTH = 2560
+    showcase_lock = threading.Lock()
+    brightness_cache: dict[str, tuple[int, float]] = {}
+
+    def thumbnail_brightness(url: str) -> float | None:
+        path = media.get(url.removeprefix("/media/"))
+        if path is None:
+            return None
+        try:
+            mtime = path.stat().st_mtime_ns
+            hit = brightness_cache.get(str(path))
+            if hit and hit[0] == mtime:
+                return hit[1]
+            with Image.open(path) as picture:
+                value = round(ImageStat.Stat(picture.convert("L").resize((64, 30))).mean[0] / 255, 3)
+        except (OSError, ValueError):
+            return None
+        brightness_cache[str(path)] = (mtime, value)
+        return value
+
+    def showcase_items() -> list[dict]:
+        library()
+        rows = []
+        for key, candidate in candidates.items():
+            if not candidate["favorite"]:
+                continue
+            ready = False
+            try:
+                cache_key, signature = preview_signature(candidate)
+                ready = cached_preview(output / "preview-cache" / cache_key, signature, candidate) is not None
+            except OSError:
+                pass
+            rows.append({"id": key, "title": candidate["title"], "source_label": candidate["source_label"],
+                         "timecode": str(candidate["timecode"]).split(".")[0], "thumbnail": candidate["thumbnail"],
+                         "wide": f"/showcase/{key}.jpg" if ready else None,
+                         "brightness": thumbnail_brightness(candidate["thumbnail"])})
+        return rows
+
+    def showcase_image(key: str) -> Path | None:
+        candidate = candidates.get(key)
+        if candidate is None or not candidate["favorite"]:
+            return None
+        try:
+            cache_key, signature = preview_signature(candidate)
+        except OSError:
+            return None
+        cached = cached_preview(output / "preview-cache" / cache_key, signature, candidate)
+        if cached is None:
+            return None
+        original = media.get(cached["original"].removeprefix("/media/"))
+        target = output / "preview-cache" / "showcase" / f"{cache_key}-{SHOWCASE_WIDTH}.jpg"
+        if not within(target, output) or original is None:
+            return None
+        with showcase_lock:
+            if not target.is_file() or target.stat().st_mtime_ns < original.stat().st_mtime_ns:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with Image.open(original) as picture:
+                    picture = picture.convert("RGB")
+                    if picture.width > SHOWCASE_WIDTH:
+                        picture = picture.resize((SHOWCASE_WIDTH, round(picture.height * SHOWCASE_WIDTH / picture.width)), Image.LANCZOS)
+                    temp = target.with_suffix(".tmp")
+                    picture.save(temp, "JPEG", quality=88, optimize=True, progressive=True)
+                    os.replace(temp, target)
+        return target
+
+    @app.get("/api/showcase")
+    async def get_showcase():
+        items = await asyncio.to_thread(showcase_items)
+        return {"items": items, "total": len(items), "ready": sum(item["wide"] is not None for item in items)}
+
+    @app.get("/showcase/{name}")
+    async def get_showcase_image(name: str):
+        key = name.removesuffix(".jpg")
+        if not name.endswith(".jpg") or not re.fullmatch(r"[0-9a-f]{24}", key):
+            raise HTTPException(404, "图片不存在。")
+        if key not in candidates:
+            await asyncio.to_thread(library)
+        try:
+            path = await asyncio.to_thread(showcase_image, key)
+        except (OSError, ValueError):
+            logging.exception("Showcase image failed")
+            path = None
+        if path is None:
+            raise HTTPException(404, "这张还没有原帧缓存。")
+        return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "private, max-age=86400"})
 
     async def run_job(job_id: str, candidate: dict, params: ExportRequest, destination: Path):
         job = jobs[job_id]
