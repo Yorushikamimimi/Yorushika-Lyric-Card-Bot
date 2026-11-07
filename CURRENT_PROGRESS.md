@@ -5,7 +5,7 @@
 ## 给控制台主页的只读大图接口（11-07 已上线，控制台主页本人验收通过）
 
 2026-11-07｜Claude 桌面版 Code／控制台负责人（跨项目，本人同意走「工房加只读接口」）｜控制台新主页要轮播本人收藏的清晰画面。
-- **代码**：`studio.py` 新增 `GET /api/showcase`（只列收藏：id、标题、场次、时间点、缩略图、亮度、有原帧缓存时的 `wide` 地址）和 `GET /showcase/<id>.jpg`（把已缓存原帧缩成 2560 宽 JPG，存 `output/preview-cache/showcase/`，原帧更新后重做）。不截新帧、不写收藏、不放宽 Origin 检查；非收藏或没缓存返回 404。测试 `tests/test_showcase.py`，全量 107 passed。11-08 每项加 `lyric`（读本机 `output/lyrics/favorite-lyrics.json`，按 mtime 重读，没有就是 null），没有画面原词时按歌名从 `full-lyrics.json` 取副歌一句（重复最多的段落首行），全量 110 passed，已 launchd 重启 8765；未提交。
+- **代码**：`studio.py` 新增 `GET /api/showcase`（只列收藏：id、标题、场次、时间点、缩略图、亮度、有原帧缓存时的 `wide` 地址）和 `GET /showcase/<id>.jpg`（把已缓存原帧缩成 2560 宽 JPG，存 `output/preview-cache/showcase/`，原帧更新后重做）。不截新帧、不写收藏、不放宽 Origin 检查；非收藏或没缓存返回 404。测试 `tests/test_showcase.py`，全量 107 passed。11-08 每项加 `lyric`（读本机 `output/lyrics/favorite-lyrics.json`，按 mtime 重读，没有就是 null），没有画面原词时按歌名从 `full-lyrics.json` 取副歌一句（重复最多的段落首行），全量 110 passed，已 launchd 重启 8765；已提交推送 `617c3bb`。
 - **原帧补齐**：151 张收藏原缺 111 张原帧，在隔离实例 8766 用工房自己的 `POST /api/previews`（prefetch）逐张补齐，约 1.5 秒／张，写入的是工房平时就用的 `output/preview-cache/`；现 151／151 就绪。以后新收藏只要在工房点开过一次就有原帧，否则主页先放缩略图。
 - **上线**：经本人同意 `launchctl kickstart -k gui/$UID/cn.yoruming.qiye.studio` 重启 8765（新 PID 82416），首页 200，`/api/showcase` 151／151 就绪，控制台主页实测载入清晰图；8766 测试实例已关。本人验收后授权提交推送。
 
