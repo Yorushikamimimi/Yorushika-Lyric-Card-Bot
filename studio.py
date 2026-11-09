@@ -7,11 +7,12 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 import hashlib
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import json
 import logging
 import math
 import os
+import random
 from pathlib import Path
 import re
 import sys
@@ -203,6 +204,12 @@ class FavoriteRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     candidate_id: str = Field(min_length=1, max_length=64)
     favorite: bool
+
+
+class ShowcaseHideRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    id: str = Field(pattern=r"^[0-9a-f]{24}$")
+    hidden: bool = True
 
 
 class AvatarExportRequest(BaseModel):
@@ -651,7 +658,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
             raise HTTPException(404, "原帧载入任务不存在。")
         return preview_jobs[job_id]
 
-    # 主页放映（控制台读）：只读，不截新原帧、不写收藏；只把已缓存的原帧缩成 2560 宽 JPG。
+    # 主页放映（控制台读）：不截新原帧、不写收藏；把已缓存的原帧缩成 2560 宽 JPG。唯一写口是下面的「别再放」。
     SHOWCASE_WIDTH = 2560
     showcase_lock = threading.Lock()
     brightness_cache: dict[str, tuple[int, float]] = {}
@@ -733,13 +740,66 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
             chorus_cache.update(mtime=mtime, data={name: line for name, line in picked.items() if line})
         return chorus_cache["data"]
 
-    def showcase_items() -> list[dict]:
+    # 系统挑的（auto_pool.py 离线生成，本机）：output/auto-pool/pool.json＋frames/＋thumbs/；
+    # 主页「别再放」记在 hidden.json，收藏只是不上主页、不取消收藏。
+    pool_dir = output / "auto-pool"
+    pool_cache: dict = {}
+    hidden_lock = threading.Lock()
+    DAILY_PICKS, PER_SONG = 80, 3
+
+    def auto_pool() -> dict[str, dict]:
+        path = pool_dir / "pool.json"
+        try:
+            mtime = path.stat().st_mtime_ns
+        except OSError:
+            return {}
+        if pool_cache.get("mtime") != mtime:
+            data = read_json(path)
+            items = data.get("items", []) if isinstance(data, dict) else []
+            pool_cache.update(mtime=mtime, data={str(p["id"]): p for p in items
+                                                 if isinstance(p, dict) and re.fullmatch(r"[0-9a-f]{24}", str(p.get("id", "")))})
+        return pool_cache["data"]
+
+    def hidden_ids() -> set[str]:
+        data = read_json(pool_dir / "hidden.json")
+        items = data.get("items", []) if isinstance(data, dict) else []
+        return {str(h.get("id")) for h in items if isinstance(h, dict)}
+
+    def daily_picks(today: str) -> list[dict]:
+        """今天这一批：按日期定种子（同一天刷新不变），五场轮流抽，每首歌最多 3 张。"""
+        hidden = hidden_ids()
+        shows: dict[str, list] = {}
+        for p in sorted(auto_pool().values(), key=lambda p: p["id"]):
+            if p["id"] not in hidden and (pool_dir / "frames" / f"{p['id']}.jpg").is_file():
+                shows.setdefault(str(p.get("show")), []).append(p)
+        rng = random.Random(today)
+        for rows in shows.values():
+            rng.shuffle(rows)
+        chosen, per_song = [], Counter()
+        order = sorted(shows)
+        while len(chosen) < DAILY_PICKS and any(shows.values()):
+            for show in order:
+                rows = shows[show]
+                while rows:
+                    p = rows.pop()
+                    song = (show, p.get("song"))
+                    if p.get("song") is None or per_song[song] < PER_SONG:
+                        per_song[song] += 1
+                        chosen.append(p)
+                        break
+                if len(chosen) >= DAILY_PICKS:
+                    break
+        return chosen
+
+    def showcase_items(today: str | None = None) -> list[dict]:
         library()
         lyrics = favorite_lyrics()
         choruses = song_choruses()
+        hidden = hidden_ids()
         rows = []
         for key, candidate in candidates.items():
-            if not candidate["favorite"]:
+            # 主页只放 Live：MV 收藏照旧留在工房，不上主页。
+            if not candidate["favorite"] or candidate.get("source_kind") == "mv" or key in hidden:
                 continue
             ready = False
             try:
@@ -751,14 +811,45 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                          "timecode": str(candidate["timecode"]).split(".")[0], "thumbnail": candidate["thumbnail"],
                          "wide": f"/showcase/{key}.jpg" if ready else None,
                          "brightness": thumbnail_brightness(candidate["thumbnail"]),
-                         "lyric": lyric_line(lyrics.get(key)) or choruses.get(str(candidate["title"]).split(" · ")[0].strip())})
+                         "lyric": lyric_line(lyrics.get(key)) or choruses.get(str(candidate["title"]).split(" · ")[0].strip()),
+                         "pick": False})
+        for p in daily_picks(today or date.today().isoformat()):
+            thumb = register_image(pool_dir / "thumbs" / f"{p['id']}.jpg")
+            if not thumb:
+                continue
+            song = p.get("song")
+            rows.append({"id": p["id"], "title": song or p.get("show") or "Live", "source_label": p.get("show"),
+                         "timecode": timecode(float(p["seconds"])).split(".")[0], "thumbnail": thumb,
+                         "wide": f"/showcase/{p['id']}.jpg", "brightness": thumbnail_brightness(thumb),
+                         "lyric": choruses.get(str(song)) if song else None,
+                         "pick": True, "score": p.get("score"), "film": bool(p.get("film"))})
         return rows
+
+    def set_hidden(key: str, hidden: bool) -> bool:
+        known = key in auto_pool() or (key in candidates and candidates[key]["favorite"])
+        if not known:
+            return False
+        path = pool_dir / "hidden.json"
+        with hidden_lock:
+            data = read_json(path)
+            items = [h for h in (data.get("items", []) if isinstance(data, dict) else []) if isinstance(h, dict) and h.get("id") != key]
+            if hidden:
+                items.append({"id": key, "kind": "pick" if key in auto_pool() else "favorite",
+                              "at": datetime.now(timezone.utc).isoformat(timespec="seconds")})
+            pool_dir.mkdir(parents=True, exist_ok=True)
+            temp = path.with_suffix(".json.tmp")
+            temp.write_text(json.dumps({"version": 1, "items": items}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+            temp.replace(path)
+        return True
 
     def lyric_line(entry) -> str | None:
         line = entry.get("line") if isinstance(entry, dict) else None
         return line.strip() or None if isinstance(line, str) else None
 
     def showcase_image(key: str) -> Path | None:
+        if key in auto_pool():
+            frame = pool_dir / "frames" / f"{key}.jpg"
+            return frame if frame.is_file() and within(frame, output) else None
         candidate = candidates.get(key)
         if candidate is None or not candidate["favorite"]:
             return None
@@ -790,12 +881,21 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         items = await asyncio.to_thread(showcase_items)
         return {"items": items, "total": len(items), "ready": sum(item["wide"] is not None for item in items)}
 
+    # 主页「别再放」：唯一的写口，只收 id；跨站请求已被上面的 Origin 检查挡住。
+    @app.post("/api/showcase/hide")
+    async def hide_showcase(params: ShowcaseHideRequest):
+        if params.id not in candidates and params.id not in auto_pool():
+            await asyncio.to_thread(library)
+        if not await asyncio.to_thread(set_hidden, params.id, params.hidden):
+            raise HTTPException(404, "这张不在主页图池里。")
+        return {"id": params.id, "hidden": params.hidden}
+
     @app.get("/showcase/{name}")
     async def get_showcase_image(name: str):
         key = name.removesuffix(".jpg")
         if not name.endswith(".jpg") or not re.fullmatch(r"[0-9a-f]{24}", key):
             raise HTTPException(404, "图片不存在。")
-        if key not in candidates:
+        if key not in candidates and key not in auto_pool():
             await asyncio.to_thread(library)
         try:
             path = await asyncio.to_thread(showcase_image, key)

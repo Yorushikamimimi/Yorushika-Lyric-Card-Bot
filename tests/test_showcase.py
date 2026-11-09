@@ -91,6 +91,60 @@ class ShowcaseTests(unittest.TestCase):
             self.assertEqual(self.client.get(f"/showcase/{name}").status_code, 404, name)
         self.assertEqual(self.client.post("/api/showcase", headers=self.headers, json={}).status_code, 405)
 
+    def write_pool(self, rows):
+        pool = self.output / "auto-pool"
+        (pool / "frames").mkdir(parents=True, exist_ok=True)
+        (pool / "thumbs").mkdir(exist_ok=True)
+        for row in rows:
+            Image.new("RGB", (64, 30), "white").save(pool / "frames" / f"{row['id']}.jpg")
+            Image.new("RGB", (64, 30), "white").save(pool / "thumbs" / f"{row['id']}.jpg")
+        (pool / "pool.json").write_text(json.dumps({"version": 1, "items": rows}, ensure_ascii=False), encoding="utf-8")
+
+    def pool_rows(self, songs):
+        return [{"id": f"{n:024x}", "source": "/x.mp4", "show": show, "seconds": 10.0 + n, "song": song, "score": .9, "film": False}
+                for n, (show, song) in enumerate(songs, 1)]
+
+    def test_daily_picks_cap_each_song_and_rotate_shows(self):
+        rows = self.pool_rows([("A场", "歌1")] * 6 + [("B场", "歌2")] * 2 + [("B场", None)] * 2)
+        self.write_pool(rows)
+        items = self.client.get("/api/showcase").json()["items"]
+        picks = [i for i in items if i["pick"]]
+        self.assertEqual(sum(i["title"] == "歌1" for i in picks), 3)
+        self.assertEqual(sum(i["source_label"] == "B场" for i in picks), 4)
+        self.assertTrue(all(i["wide"] == f"/showcase/{i['id']}.jpg" and i["thumbnail"].startswith("/media/") for i in picks))
+        self.assertNotIn("source", picks[0])
+        response = self.client.get(picks[0]["wide"])
+        self.assertEqual((response.status_code, response.headers["content-type"]), (200, "image/jpeg"))
+        # 同一天结果不变
+        self.assertEqual([i["id"] for i in self.client.get("/api/showcase").json()["items"]], [i["id"] for i in items])
+
+    def test_hide_removes_pick_and_favourite_from_home_only(self):
+        rows = self.pool_rows([("A场", "歌1")])
+        self.write_pool(rows)
+        candidate = self.candidate()
+        self.favorite(candidate["id"])
+        self.assertEqual(len(self.client.get("/api/showcase").json()["items"]), 2)
+        for key in (rows[0]["id"], candidate["id"]):
+            self.assertEqual(self.client.post("/api/showcase/hide", json={"id": key}, headers=self.headers).status_code, 200)
+        self.assertEqual(self.client.get("/api/showcase").json()["items"], [])
+        self.assertTrue(self.client.get("/api/library").json()["candidates"][0]["favorite"])
+        self.client.post("/api/showcase/hide", json={"id": candidate["id"], "hidden": False}, headers=self.headers)
+        self.assertEqual([i["id"] for i in self.client.get("/api/showcase").json()["items"]], [candidate["id"]])
+
+    def test_hide_rejects_unknown_ids_and_cross_site_requests(self):
+        self.assertEqual(self.client.post("/api/showcase/hide", json={"id": "f" * 24}, headers=self.headers).status_code, 404)
+        self.assertEqual(self.client.post("/api/showcase/hide", json={"id": "../x"}, headers=self.headers).status_code, 422)
+        self.assertEqual(self.client.post("/api/showcase/hide", json={"id": "f" * 24, "extra": 1}, headers=self.headers).status_code, 422)
+        evil = {**self.headers, "Origin": "http://evil.example"}
+        self.assertEqual(self.client.post("/api/showcase/hide", json={"id": "f" * 24}, headers=evil).status_code, 403)
+
+    def test_mv_favourites_stay_off_the_home_page(self):
+        self.manifest["source_kind"] = "mv"
+        self.write_manifest()
+        candidate = self.candidate()
+        self.favorite(candidate["id"])
+        self.assertEqual(self.client.get("/api/showcase").json()["items"], [])
+
 
 if __name__ == "__main__":
     unittest.main()
