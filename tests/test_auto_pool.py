@@ -49,5 +49,24 @@ class ShotCandidateTests(unittest.TestCase):
         self.assertFalse(auto_pool.is_film(str(folder / "full.png")))
 
 
+    def test_hidden_picks_stay_negative_even_after_leaving_pool(self):
+        out = Path(self.temp.name)
+        pool = out / "auto-pool"
+        (pool / "thumbs").mkdir(parents=True)
+        (out / "favorites.json").write_text(json.dumps({"items": []}))
+        gone, missing = "a" * 24, "b" * 24
+        Image.new("RGB", (4, 4)).save(pool / "thumbs" / f"{gone}.jpg")
+        (pool / "hidden.json").write_text(json.dumps({"version": 1, "items": [{"id": gone, "kind": "pick"}, {"id": missing, "kind": "favorite"}]}))
+        # pool.json 里已经没有它了，仍要作反例
+        (pool / "pool.json").write_text(json.dumps({"items": []}))
+        old = auto_pool.OUTPUT, auto_pool.POOL
+        auto_pool.OUTPUT, auto_pool.POOL = out, pool
+        try:
+            rows, _ = auto_pool.labels()
+            self.assertEqual(rows, [{"img": str(pool / "thumbs" / f"{gone}.jpg"), "y": 0}])
+            self.assertEqual(auto_pool.hidden_ids(), {gone, missing})
+        finally:
+            auto_pool.OUTPUT, auto_pool.POOL = old
+
 if __name__ == "__main__":
     unittest.main()

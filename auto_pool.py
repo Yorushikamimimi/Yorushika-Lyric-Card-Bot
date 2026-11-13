@@ -95,13 +95,16 @@ def labels() -> tuple[list[dict], dict[str, list[tuple[float, float]]]]:
             taken.setdefault(source, []).append((seconds, 1.0 if y else 0.0))
             if img.is_file():
                 rows.append({"img": str(img), "y": y})
-    hidden = load(POOL / "hidden.json").get("items", []) if (POOL / "hidden.json").exists() else []
-    old = {p["id"]: p for p in load(POOL / "pool.json").get("items", [])} if (POOL / "pool.json").exists() else {}
-    for h in hidden:
-        p = old.get(h.get("id"))
-        if p and (POOL / "thumbs" / f"{p['id']}.jpg").is_file():
-            rows.append({"img": str(POOL / "thumbs" / f"{p['id']}.jpg"), "y": 0})
+    # 主页按过「别再放」的系统图：按 hidden.json 直接读缩略图作反例，不依赖它还在不在当前图池（11-14）
+    for key in sorted(hidden_ids()):
+        if (POOL / "thumbs" / f"{key}.jpg").is_file():
+            rows.append({"img": str(POOL / "thumbs" / f"{key}.jpg"), "y": 0})
     return rows, taken
+
+
+def hidden_ids() -> set[str]:
+    data = load(POOL / "hidden.json") if (POOL / "hidden.json").exists() else {}
+    return {str(h.get("id")) for h in data.get("items", []) if isinstance(h, dict)}
 
 
 # ---------- 候选 ----------
@@ -253,6 +256,8 @@ def build(dry_run: bool) -> dict:
     X = emb([r["img"] for r in rows])
     y = np.array([r["y"] for r in rows])
     clf = make_pipeline(StandardScaler(), LogisticRegression(C=.01, max_iter=5000, class_weight="balanced")).fit(X, y)
+    hidden = hidden_ids()
+    cands = [c for c in cands if c["id"] not in hidden]  # 按过「别再放」的不占图池位置（11-14）
     C = emb([c["img"] for c in cands])
     score = clf.predict_proba(C)[:, 1]
     for c, s in zip(cands, score):
