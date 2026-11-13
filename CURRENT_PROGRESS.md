@@ -52,7 +52,7 @@
 2026-11-09｜Claude 桌面版 Code／控制台负责人｜本人「都点头」后按上节方案实现并上线。
 - **图池**：新增 `auto_pool.py`（`build` 收标签→CLIP 特征→逻辑回归→给五场整场镜头打分→每场取前 120 共 600 张→出 2560 宽图；`overview` 写一览）。补扫 2021 前世（`output/auto-expand-2021zense-v1`，3306 帧，12 分钟）；盗作原来已扫好。规则：收藏所在镜头跳过、离「不要」/已有图 4 秒内×0.8 降分、每场最后 2 分钟（片尾字幕）不进、影片段落照放。产物在 `output/auto-pool/`（pool.json、frames、thumbs、features 缓存、overview.html），出图 600/600 无失败，约 15 分钟。
 - **工房**：`/api/showcase` 只放 Live 收藏（MV 两张不上主页、仍是收藏）＋当天 80 张系统图（按日期定种子，五场各 16，同一首歌一天最多 3 张），带 `pick/score/film`；`/showcase/<id>.jpg` 同时服务系统图；唯一新写口 `POST /api/showcase/hide {id, hidden}` 写 `output/auto-pool/hidden.json`（收藏只是不上主页，不取消收藏），仍过原有 Origin＋JSON 检查。测试 116 passed（新增 `tests/test_auto_pool.py` 和 showcase 4 条）。已经本人同意 kickstart 重启 8765。
-- **重训**：`python3 auto_pool.py build`；主页按过「别再放」的系统图会作反例进训练。2021 前世没有任何收藏，整场分数偏低（最高 0.44），靠每场配额保底进池。
+- **重训**：`python3 auto_pool.py build`；主页按过「别再放」的系统图会作反例进训练。11-14 本人觉得主页质量变差、要求按已 X 的重训：改 `auto_pool.py`（反例按 hidden.json 直接读缩略图，不再依赖当前 pool.json；选池前跳过已 X 的，600 个位置全给可轮换的），加 1 条测试（117 passed）；重训后训练 1090 行／正例 142，池内已 X 的 0 张，相比 11-09 版换了 222 张。旧池备份 `output/auto-pool/pool.before-20261114.json`（原版）、`pool.round1-20261114.json`（改代码前第一次重训）。代码未提交（Claude 桌面版 Code／夜灯对话代改）。2021 前世没有任何收藏，整场分数偏低（最高 0.44），靠每场配额保底进池。
 - **验收**：11-09 本人看过表示都还可以、没见多少要按「别再放」的，验收通过，按现方案走；手机本人一般不看，不再专门处理，有问题再说。
 - **未证明**：同一首歌标题对不上全文歌词时没有配词（80 张里 71 张有词）。
 
