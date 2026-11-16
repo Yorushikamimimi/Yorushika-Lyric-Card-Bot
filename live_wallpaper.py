@@ -23,6 +23,10 @@ from PIL import Image, ImageDraw, ImageFont, ImageStat
 VIDEO_EXTENSIONS = {".mp4", ".mkv", ".mov", ".m4v", ".webm", ".avi", ".ts"}
 HDR_TRANSFERS = {"arib-std-b67": "hlg", "smpte2084": "pq"}
 SCHEMA_VERSION = 1
+# 原帧画面版本：只有抽出来的画面真的会变（抽帧命令、HDR 色调映射、LUT）时才加一，
+# 工房的原帧缓存随之整批作废。改本文件其他部分不影响缓存；tests/test_video_identity.py
+# 钉住了相关函数的源码，改到它们时测试会提醒来这里决定要不要加一。
+FRAME_PIPELINE_VERSION = 1
 
 
 class WallpaperError(Exception):

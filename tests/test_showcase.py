@@ -1,5 +1,7 @@
 """主页放映接口：只读、只放收藏、只用已缓存的原帧。"""
 import json
+import shutil
+import time
 import unittest
 
 from PIL import Image
@@ -30,7 +32,31 @@ class ShowcaseTests(unittest.TestCase):
         self.assertNotIn("source", item)
         self.assertAlmostEqual(item["brightness"], 0.2, delta=0.05)
         self.assertEqual(self.client.get(f"/showcase/{candidate['id']}.jpg").status_code, 404)
-        self.assertEqual(self.preview_calls, [])
+
+    def wait_wide(self, attempts=150):
+        for _ in range(attempts):
+            body = self.client.get("/api/showcase").json()
+            if body["items"] and body["items"][0]["wide"]:
+                return body
+            time.sleep(.02)
+        self.fail("后台补帧没有补上")
+
+    def test_missing_original_is_backfilled_in_background(self):
+        candidate = self.candidate()
+        self.favorite(candidate["id"])
+        job = self.client.post("/api/previews", json={"candidate_id": candidate["id"]}, headers=self.headers).json()
+        self.wait_preview(job["id"])
+        self.assertEqual(self.client.get("/api/showcase").json()["ready"], 1)
+        # 删掉原帧缓存：接口照常立刻返回（wide 为空），后台一张张补，补完 wide 自然出现。
+        shutil.rmtree(self.output / "preview-cache")
+        self.assertIsNone(self.client.get("/api/showcase").json()["items"][0]["wide"])
+        body = self.wait_wide()
+        self.assertEqual(body["ready"], 1)
+        self.assertEqual(len(self.preview_calls), 2)
+        self.assertEqual(self.client.get(body["items"][0]["wide"]).status_code, 200)
+        self.client.get("/api/showcase")
+        self.assertEqual(len(self.preview_calls), 2)
+        self.assertEqual(self.max_active_previews, 1)
 
     def test_cached_original_is_served_as_2560_jpeg(self):
         candidate = self.candidate()

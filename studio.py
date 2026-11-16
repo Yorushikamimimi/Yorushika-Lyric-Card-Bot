@@ -18,6 +18,7 @@ import re
 import sys
 import subprocess
 import threading
+import time
 from typing import Any, Awaitable, Callable, Literal
 from urllib.parse import urlsplit
 import uuid
@@ -26,10 +27,15 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-from PIL import Image, ImageOps, ImageStat
-from live_wallpaper import color_plan, extract_frame, probe_video, run, timecode, WallpaperError
+from PIL import Image, ImageChops, ImageOps, ImageStat
+from live_wallpaper import FRAME_PIPELINE_VERSION, color_plan, extract_frame, probe_video, run, timecode, WallpaperError
+from video_identity import IdentityIndex, scan_videos, search_root
 
 ROOT = Path(__file__).resolve().parent
+# 补帧：两张之间歇一下，让工房自己的原帧请求先走；失败的过一阵再试。
+BACKFILL_PAUSE, BACKFILL_RETRY = .5, 600
+# 找回挪走的视频时，新旧原帧缩成 160×90 灰度后的平均差（0–255）低于这个算同一画面。
+RELINK_MAX_DIFF = 4
 IMAGE_TYPES = {".png", ".jpg", ".jpeg", ".webp"}
 VIDEO_TYPES = {".mp4", ".mkv", ".mov", ".webm", ".m4v", ".ts", ".flv"}
 
@@ -222,7 +228,7 @@ class AvatarExportRequest(BaseModel):
 
 
 def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, preview_renderer: PreviewRenderer | None = None,
-               strip_renderer: StripRenderer | None = None) -> FastAPI:
+               strip_renderer: StripRenderer | None = None, backfill: bool = True) -> FastAPI:
     root = project_root.resolve()
     output = root / "output"
     candidates: dict[str, dict] = {}
@@ -248,6 +254,9 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
 
     @asynccontextmanager
     async def lifespan(_app):
+        if backfill:
+            # 先把旧格式的原帧缓存迁到新签名（只改名和记录，不重抽），再处理补帧请求。
+            want_backfill([])
         yield
         for task in tuple(tasks):
             task.cancel()
@@ -401,7 +410,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                 source = Path(source_value).expanduser()
                 if not source.is_absolute():
                     source = manifest.parent / source
-                source = source.resolve()
+                source = relocated(source.resolve())
                 if source.suffix.lower() not in VIDEO_TYPES:
                     continue
                 preview = register_image(manifest.parent / preview_value)
@@ -512,14 +521,156 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
             logging.error("Render failed: %s", stderr.decode(errors="replace")[-2000:])
             raise RuntimeError("导出失败，请确认源视频仍在原位置，且视频工具可用。")
 
+    # 原帧缓存认视频本身（video_identity.fingerprint）而不是路径和 mtime：
+    # 挪文件夹、改名、重新封装都继续命中；画面版本见 live_wallpaper.FRAME_PIPELINE_VERSION。
+    cache_root = output / "preview-cache"
+    identities = IdentityIndex(cache_root / "identities.json")
+    moves_path = cache_root / "source-moves.json"
+    moves_cache: dict = {}
+    moves_lock = threading.Lock()
+
+    def source_moves() -> dict[str, str]:
+        try:
+            mtime = moves_path.stat().st_mtime_ns
+        except OSError:
+            return {}
+        if moves_cache.get("mtime") != mtime:
+            data = read_json(moves_path)
+            items = data.get("items") if isinstance(data, dict) else None
+            moves_cache.update(mtime=mtime, data={old: row["path"] for old, row in (items or {}).items()
+                                                  if isinstance(row, dict) and isinstance(row.get("path"), str)})
+        return moves_cache["data"]
+
+    def relocated(source: Path) -> Path:
+        """清单里的视频不在原处时，换成已确认的新位置（source-moves.json）；清单本身不改。"""
+        if source.is_file():
+            return source
+        moved = source_moves().get(str(source))
+        return Path(moved) if moved and Path(moved).is_file() else source
+
+    def record_move(old: str, new: Path, how: str) -> None:
+        with moves_lock:
+            data = read_json(moves_path)
+            items = data.get("items") if isinstance(data, dict) and isinstance(data.get("items"), dict) else {}
+            items[old] = {"path": str(new), "how": how, "at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+            cache_root.mkdir(parents=True, exist_ok=True)
+            temp = moves_path.with_suffix(".tmp")
+            temp.write_text(json.dumps({"version": 1, "items": items}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+            os.replace(temp, moves_path)
+
+    def video_signature(source: Path, timestamp: float) -> dict:
+        return {"version": 2, "video": identities.of(source), "timestamp": timestamp, "frame": FRAME_PIPELINE_VERSION}
+
     def preview_signature(candidate: dict) -> tuple[str, dict]:
-        source = Path(candidate["source"])
-        stat = source.stat()
-        pipeline = root / "live_wallpaper.py"
-        pipeline_hash = hashlib.sha256(pipeline.read_bytes()).hexdigest() if pipeline.is_file() else "test-renderer"
-        signature = {"version": 1, "source": str(source.resolve()), "size": stat.st_size, "mtime_ns": stat.st_mtime_ns, "timestamp": candidate["timestamp"], "source_metadata": candidate["source_metadata"], "pipeline_sha256": pipeline_hash}
+        signature = video_signature(Path(candidate["source"]), candidate["timestamp"])
         key = opaque(json.dumps(signature, sort_keys=True, ensure_ascii=False))
         return key, signature
+
+    def cache_records() -> list[tuple[Path, dict]]:
+        rows = []
+        for path in sorted(cache_root.glob("*/cache.json")) if within(cache_root, output) else []:
+            record = read_json(path)
+            if isinstance(record, dict) and isinstance(record.get("signature"), dict) and isinstance(record.get("image"), str):
+                rows.append((path.parent, record))
+        return rows
+
+    def record_source(record: dict) -> str | None:
+        value = record.get("source") or record["signature"].get("source")
+        return value if isinstance(value, str) else None
+
+    def migrate_caches() -> int:
+        """旧签名（路径+大小+mtime）的原帧：视频没变或已确认挪到新处的，改名到新签名目录继续用。"""
+        moved = 0
+        moves = source_moves()
+        for folder, record in cache_records():
+            old = record["signature"]
+            if old.get("version") != 1 or not isinstance(old.get("timestamp"), (int, float)):
+                continue
+            source = record_source(record)
+            if not source:
+                continue
+            path = Path(source)
+            try:
+                if path.is_file():
+                    stat = path.stat()
+                    if (stat.st_size, stat.st_mtime_ns) != (old.get("size"), old.get("mtime_ns")):
+                        continue  # 同一路径上的视频已经变了：旧帧作废
+                elif moves.get(source) and Path(moves[source]).is_file():
+                    path = Path(moves[source])
+                else:
+                    continue
+                signature = video_signature(path, old["timestamp"])
+            except OSError:
+                continue
+            target = cache_root / opaque(json.dumps(signature, sort_keys=True, ensure_ascii=False))
+            image = folder / record["image"]
+            if target.exists() or not image.is_file() or not within(image, folder):
+                continue
+            os.rename(folder, target)
+            (target / "cache.json").write_text(json.dumps({
+                "signature": signature, "image": record["image"], "source": str(path),
+                "migrated_from": {"key": folder.name, "source": source}}, ensure_ascii=False, indent=2), encoding="utf-8")
+            moved += 1
+        if moved:
+            logging.info("Migrated %d native-frame caches to video identity", moved)
+        return moved
+
+    def frames_match(first: Path, second: Path) -> bool:
+        with Image.open(first) as a, Image.open(second) as b:
+            a = a.convert("L").resize((160, 90))
+            b = b.convert("L").resize((160, 90))
+            return ImageStat.Stat(ImageChops.difference(a, b)).mean[0] < RELINK_MAX_DIFF
+
+    def relink_source(old: str) -> Path | None:
+        """找回挪走的视频：先按记下的指纹在原位置附近找；没记过指纹（旧缓存）就拿旧原帧逐个比画面。"""
+        root_dir = search_root(Path(old))
+        if root_dir is None:
+            return None
+        videos = scan_videos(root_dir)
+        known = identities.known(old)
+        if known:
+            for video in videos:
+                try:
+                    if identities.of(video) == known:
+                        record_move(old, video, "identity")
+                        return video
+                except OSError:
+                    continue
+        evidence = sorted({float(r["signature"]["timestamp"]): folder / r["image"] for folder, r in cache_records()
+                           if record_source(r) == old and isinstance(r["signature"].get("timestamp"), (int, float))
+                           and (folder / r["image"]).is_file()}.items())
+        if not evidence:
+            return None
+        samples = [evidence[0], evidence[-1]] if len(evidence) > 1 else evidence
+        scratch = cache_root / "relink-tmp" / uuid.uuid4().hex
+        try:
+            for video in videos:
+                try:
+                    metadata = probe_video(video)
+                    with Image.open(samples[0][1]) as picture:
+                        old_size = picture.size
+                    # 同一首 MV 的不同画质版本画面也像：分辨率不同就不算同一个视频。
+                    if metadata["duration"] <= samples[-1][0] or old_size != (metadata["width"], metadata["height"]):
+                        continue
+                    filters = color_filters(metadata)
+                    for index, (seconds, image) in enumerate(samples):
+                        frame = scratch / f"{index}.png"
+                        scratch.mkdir(parents=True, exist_ok=True)
+                        frame.unlink(missing_ok=True)
+                        extract_frame(video, seconds, frame, filters)
+                        if not frames_match(image, frame):
+                            break
+                    else:
+                        record_move(old, video, "frames")
+                        return video
+                except (OSError, ValueError, WallpaperError):
+                    continue
+        finally:
+            for leftover in scratch.glob("*.png") if scratch.is_dir() else []:
+                leftover.unlink(missing_ok=True)
+            if scratch.is_dir():
+                scratch.rmdir()
+        return None
 
     def cached_preview(cache_dir: Path, signature: dict, candidate: dict) -> dict | None:
         record = read_json(cache_dir / "cache.json")
@@ -570,7 +721,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                 _, current_signature = preview_signature(candidate)
                 if current_signature != signature:
                     raise RuntimeError("源视频刚刚变化，请刷新后重新选片。")
-                record = {"signature": signature, "image": str((destination / "original.png").relative_to(cache_dir))}
+                record = {"signature": signature, "image": str((destination / "original.png").relative_to(cache_dir)), "source": candidate["source"]}
                 record_path = cache_dir / "cache.json"
                 record_path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
                 result = cached_preview(cache_dir, signature, candidate)
@@ -611,6 +762,8 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
         try:
             key, signature = await asyncio.to_thread(preview_signature, candidate)
         except OSError:
+            if backfill:
+                want_backfill([("relink", candidate["source"])])
             raise HTTPException(409, "源视频已移动，暂时只能查看缩略图。")
         cache_dir = output / "preview-cache" / key
         if not within(cache_dir, output) or not within(output, root):
@@ -658,7 +811,72 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
             raise HTTPException(404, "原帧载入任务不存在。")
         return preview_jobs[job_id]
 
-    # 主页放映（控制台读）：不截新原帧、不写收藏；把已缓存的原帧缩成 2560 宽 JPG。唯一写口是下面的「别再放」。
+    # 后台补帧：主页发现收藏没有可用原帧时排进来，一次一张，和工房自己的原帧共用一个解码位，
+    # 工房里点开的画面（current）总是先走。("relink", 旧路径) 先找回挪走的视频，("fill", 收藏 id) 出原帧。
+    backfill_order: dict[tuple[str, str], None] = {}
+    backfill_tried: dict[tuple[str, str], float] = {}
+    backfill_state = {"task": None, "migrated": False}
+
+    def want_backfill(items) -> None:
+        for item in items:
+            if time.monotonic() - backfill_tried.get(item, -BACKFILL_RETRY) >= BACKFILL_RETRY:
+                backfill_order.setdefault(item, None)
+        task = backfill_state["task"]
+        if task is None or task.done():
+            task = asyncio.get_running_loop().create_task(backfill_loop())
+            backfill_state["task"] = task
+            tasks.add(task)
+            task.add_done_callback(tasks.discard)
+
+    async def backfill_loop():
+        if not backfill_state["migrated"]:
+            backfill_state["migrated"] = True
+            async with preview_slot:
+                await asyncio.to_thread(migrate_caches)
+        while backfill_order:
+            item = next(iter(backfill_order))
+            del backfill_order[item]
+            kind, value = item
+            try:
+                if kind == "relink":
+                    backfill_tried[item] = time.monotonic()
+                    async with preview_slot:
+                        found = await asyncio.to_thread(relink_source, value)
+                    if found is not None:
+                        logging.info("Relinked moved video to %s", found.name)
+                        async with preview_slot:
+                            await asyncio.to_thread(migrate_caches)
+                        more: list = []
+                        await asyncio.to_thread(showcase_items, None, more)
+                        for extra in more:
+                            if extra[0] == "fill":
+                                backfill_order.setdefault(extra, None)
+                    continue
+                candidate = candidates.get(value)
+                if candidate is None or not candidate["favorite"]:
+                    continue
+                job = await enqueue_preview(candidate, "prefetch", current_revision)
+                while job.get("status") in {"queued", "running"}:
+                    await asyncio.sleep(.2)
+                    job = preview_jobs.get(job["id"], job)
+                if job.get("status") == "cancelled":
+                    backfill_order.setdefault(item, None)  # 让给了工房里正在看的那张，稍后再补
+                elif job.get("status") != "done":
+                    backfill_tried[item] = time.monotonic()
+            except HTTPException as exc:
+                if exc.status_code == 429:
+                    backfill_order.setdefault(item, None)
+                    await asyncio.sleep(1)
+                else:
+                    backfill_tried[item] = time.monotonic()
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                logging.exception("Showcase backfill failed")
+                backfill_tried[item] = time.monotonic()
+            await asyncio.sleep(BACKFILL_PAUSE)
+
+    # 主页放映（控制台读）：不写收藏；把原帧缩成 2560 宽 JPG。收藏缺原帧时排进上面的后台补帧。唯一写口是下面的「别再放」。
     SHOWCASE_WIDTH = 2560
     showcase_lock = threading.Lock()
     brightness_cache: dict[str, tuple[int, float]] = {}
@@ -791,7 +1009,7 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
                     break
         return chosen
 
-    def showcase_items(today: str | None = None) -> list[dict]:
+    def showcase_items(today: str | None = None, wants: list | None = None) -> list[dict]:
         library()
         lyrics = favorite_lyrics()
         choruses = song_choruses()
@@ -805,8 +1023,11 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
             try:
                 cache_key, signature = preview_signature(candidate)
                 ready = cached_preview(output / "preview-cache" / cache_key, signature, candidate) is not None
+                if not ready and wants is not None:
+                    wants.append(("fill", key))
             except OSError:
-                pass
+                if wants is not None:
+                    wants.append(("relink", candidate["source"]))
             rows.append({"id": key, "title": candidate["title"], "source_label": candidate["source_label"],
                          "timecode": str(candidate["timecode"]).split(".")[0], "thumbnail": candidate["thumbnail"],
                          "wide": f"/showcase/{key}.jpg" if ready else None,
@@ -878,7 +1099,11 @@ def create_app(project_root: Path = ROOT, renderer: Renderer | None = None, prev
 
     @app.get("/api/showcase")
     async def get_showcase():
-        items = await asyncio.to_thread(showcase_items)
+        wants: list = []
+        items = await asyncio.to_thread(showcase_items, None, wants)
+        if wants and backfill:
+            # 视频找回优先，找回后下一次请求会把它的收藏排成补帧。
+            want_backfill(sorted(set(wants), key=lambda item: item[0] != "relink"))
         return {"items": items, "total": len(items), "ready": sum(item["wide"] is not None for item in items)}
 
     # 主页「别再放」：唯一的写口，只收 id；跨站请求已被上面的 Origin 检查挡住。
