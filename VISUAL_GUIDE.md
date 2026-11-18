@@ -227,7 +227,7 @@
      - 卡片本身写 `card`、`live`、`tag`（场次，对应造型表）、`title`。
      - `items` 逐张写：`no`、`out`（文件名「编号-场次-内容」）、`ref`、`song`、`time`、`id`（收藏 id）、`suis`（mini/big/none/optional）、`note`。
    - 生成脚本样例：`output/pixel-ext-20261117/plan_src.py`。
-3. **出卡**：按 Vault `50-Workflow/prompts/active/外派任务卡模板.md` 填。正面发给执行者，写明参考帧、src 副本、只准新写 `scene.py`、自查命令、禁区。背面自留验收，并写下当时的已验收文件哈希基线。卡放在 Vault `50-Workflow/外派卡/鹿NN-*`，样例是鹿01—12。
+3. **出卡**：按 Vault `50-Workflow/prompts/active/外派任务卡模板.md` 填。正面发给执行者，写明参考帧、src 副本、只准新写 `scene.py`、自查命令、禁区。背面自留验收，并写下当时的已验收文件哈希基线。卡放在 Vault `50-Workflow/外派卡/鹿NN-*`，样例是鹿01—12。正面【交回】要写一条：本人会直接找执行者来回改，每轮意见原话和改动追加进同名 `.交回.md`，收口时注明最终版是哪一轮；背面验收以最后一轮意见为准（11-18 本人定，样例鹿16—19）。
 4. **执行者自查**：在仓库根目录跑 `python3 output/pixel-ext-20261117/check.py lNN`。它检查尺寸、suis 标志色、有没有清单外的文件，然后拼 `总览.png`，并复制到扁平夹 `待验收/` 给本人看。新日期的卡复制这个 check.py 过去，给 `SIG` 补上新场次。
 5. **工房核验**（交回后）：
    - check 无 FAIL。
