@@ -210,6 +210,11 @@
 
 新场次的新造型：先看那一场的收藏截图定服装，在新文件里加网格和特写，再把一行补进这张表。
 
+**2024 前世素材库（11-18 验收通过，代码在 `output/pixel-lib-20261118/src/`）**：
+- **前世 2024 小人从素材库取**（`lib_suis_mini.py`，鹿16）：`lib_suis_mini.make(outfit, pose, expr, flip=False) -> px.Canvas`。`OUTFITS`: `red`/`white`；`POSES`: `stand`/`mic`/`arms_open`/`raise`/`back`/`kneel`/`tamb`；`EXPRS`: `open`/`sing`/`closed`/`smile`/`wink`/`surprise`。
+- **前世 2024 特写从素材库取**（`lib_suis_close.py`，鹿17）：`lib_suis_close.make(outfit, pose, expr, flip=False) -> px.Canvas`。`OUTFITS`: `red`/`white`；`POSES`: `raise_mic`/`mic_chin`/`mic_side`/`arms_down`/`back`；`EXPRS`: `open`/`closed`/`smile`/`wink`/`daze`。
+- **前世 2024 固定阵容：鼓手、键盘、suis、n-buna（n-buna 在 suis 右边），乐手从 `lib_band` 取**（`lib_band.py`，鹿18）：`lib_band.make(member, pose, expr, flip=False) -> px.Canvas`。`MEMBERS`: `nbuna`（`guitar`/`guitar_up`/`stand`/`wave`）、`drums`（`play`/`hit`/`wave`）、`keys`（`play`/`wave`/`cheer`）；`EXPRS`: `open`/`closed`/`smile`。
+
 ### 新场次的流程（工房自己画）
 
 1. 从 8765 `/api/showcase` 只读这一场的收藏，存到新批次的 `ref/fav/` 并写一份清单；拼成接触表，**逐张打开看**。
