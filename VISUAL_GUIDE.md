@@ -213,7 +213,7 @@
 **2024 前世素材库（11-18 验收通过，代码在 `output/pixel-lib-20261118/src/`）**：
 - **前世 2024 小人从素材库取**（`lib_suis_mini.py`，鹿16）：`lib_suis_mini.make(outfit, pose, expr, flip=False) -> px.Canvas`。`OUTFITS`: `red`/`white`；`POSES`: `stand`/`mic`/`arms_open`/`raise`/`back`/`kneel`/`tamb`；`EXPRS`: `open`/`sing`/`closed`/`smile`/`wink`/`surprise`。
 - **前世 2024 特写从素材库取**（`lib_suis_close.py`，鹿17）：`lib_suis_close.make(outfit, pose, expr, flip=False) -> px.Canvas`。`OUTFITS`: `red`/`white`；`POSES`: `raise_mic`/`mic_chin`/`mic_side`/`arms_down`/`back`；`EXPRS`: `open`/`closed`/`smile`/`wink`/`daze`。
-- **前世 2024 固定阵容：鼓手、键盘、suis、n-buna（n-buna 在 suis 右边），乐手从 `lib_band` 取**（`lib_band.py`，鹿18）：`lib_band.make(member, pose, expr, flip=False) -> px.Canvas`。`MEMBERS`: `nbuna`（`guitar`/`guitar_up`/`stand`/`wave`）、`drums`（`play`/`hit`/`wave`）、`keys`（`play`/`wave`/`cheer`）；`EXPRS`: `open`/`closed`/`smile`。
+- **前世 2024 乐手阵容与站位（11-18 本人改定）**：严格按原 Live 截图拍到的实际左右站位与人数来画——**2024 前世键盘手固定在舞台最右边（画面没拍到就不硬塞），n-buna 在 suis 右边，绝不画两个一样的复制吉他手**；乐手从 `lib_band` 取（`lib_band.py`，鹿18）：`lib_band.make(member, pose, expr, flip=False) -> px.Canvas`。`MEMBERS`: `nbuna`（`guitar`/`guitar_up`/`stand`/`wave`）、`drums`（`play`/`hit`/`wave`）、`keys`（`play`/`wave`/`cheer`）；`EXPRS`: `open`/`closed`/`smile`。近景或主角占半屏的画面必须用 `lib_suis_close`（特写/大号尺寸）或 120×80 特写画布，不在近景里塞 26px 迷你小人，也不在中远景平齐水平线上塞大号巨人。
 
 ### 新场次的流程（工房自己画）
 
