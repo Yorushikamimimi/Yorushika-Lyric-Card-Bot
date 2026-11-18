@@ -214,6 +214,7 @@
 - **前世 2024 小人从素材库取**（`lib_suis_mini.py`，鹿16）：`lib_suis_mini.make(outfit, pose, expr, flip=False) -> px.Canvas`。`OUTFITS`: `red`/`white`；`POSES`: `stand`/`mic`/`arms_open`/`raise`/`back`/`kneel`/`tamb`；`EXPRS`: `open`/`sing`/`closed`/`smile`/`wink`/`surprise`。
 - **前世 2024 特写从素材库取**（`lib_suis_close.py`，鹿17）：`lib_suis_close.make(outfit, pose, expr, flip=False) -> px.Canvas`。`OUTFITS`: `red`/`white`；`POSES`: `raise_mic`/`mic_chin`/`mic_side`/`arms_down`/`back`；`EXPRS`: `open`/`closed`/`smile`/`wink`/`daze`。
 - **前世 2024 乐手阵容与站位（11-18 本人改定）**：严格按原 Live 截图拍到的实际左右站位与人数来画——**2024 前世键盘手固定在舞台最右边（画面没拍到就不硬塞），n-buna 在 suis 右边，绝不画两个一样的复制吉他手**；乐手从 `lib_band` 取（`lib_band.py`，鹿18）：`lib_band.make(member, pose, expr, flip=False) -> px.Canvas`。`MEMBERS`: `nbuna`（`guitar`/`guitar_up`/`stand`/`wave`）、`drums`（`play`/`hit`/`wave`）、`keys`（`play`/`wave`/`cheer`）；`EXPRS`: `open`/`closed`/`smile`。近景或主角占半屏的画面必须用 `lib_suis_close`（特写/大号尺寸）或 120×80 特写画布，不在近景里塞 26px 迷你小人，也不在中远景平齐水平线上塞大号巨人。
+- **前景实景树与人物手部层次（11-18 本人补充定版）**：①**舞台右前方的真实道具树自始至终是绿树**（深绿／中绿层次），不能因背景大屏暖光或逆光剪影画成紫黑或红树，最多在外缘靠光一侧带一缕微弱受光边；树与旁边键盘手错开位置，不让树冠长在乐手头上，外缘叶簇要有层次、不飞散孤立单点；②**举手／持麦／摇铃鼓等前景动作**严格按真实前后遮挡画在头发前面，大臂／袖口不能比小臂细。
 
 ### 新场次的流程（工房自己画）
 
@@ -267,14 +268,18 @@
 - **规格**：4—12 帧，单帧 40—600 毫秒，一圈 1.5—4 秒，无限循环；240×120 画好后最近邻 ×5 导出 1200×600；全部帧共用一张调色板，不减色；单个文件不超过 4MB（夜灯放行上限）。同时存首帧的 `.png`（×5）和 `-1x.png`。
 - **代码**：用 `output/pixel-loop-ext-20261118/src/loopkit.py` 工具包，每张图写一个 `loop_<编号>.py`（`loop_00.py` 是头版样例）；`check_loop.py` 自查。
 - **去向**：本人看过才算过；通过后由工房并进清单 `yoru-anim`（`build_manifest.py` 的 `_LOOP`），夜灯卡片和大图直接放 gif。
+- **后续方向（11-18 本人复盘补充）**：现有仅 1px 眨眼／晃发梢的静态景动图在远景中不够明显，后续新做动图需加入**背景环境动效**（如飘樱、落雨、烟火等）或放大人物改为**中近景**（按 `先调研再样稿` 流程，先出调研卡过后再做样稿）。
 
-### 发布审核（11-18 本人定）
+### 发布审核（11-18 本人定，11-19 对齐收口规范）
 
-把已验收的像素图挑出来发小红书、抖音。工作目录 `output/publish-<日期>/`，对照页做法见 `output/publish-20261118/compare/README.md`。
+把已验收的像素图挑出来发小红书、抖音。固定工作目录 `output/publish-20261118/`（不另建新目录替换，沿用其下 `picks.json` 与 `compare/`），对照页做法见 `output/publish-20261118/compare/README.md`。
 
-- **发什么**：先发图文，每组一张 Live 截图配一张照它画的像素版（只限纪实类）。Live 原截图可以发。一组发两张单独的图（11-18 本人改：不拼版），Live 用工房 4096 原帧原文件，不用 2560 参考帧；出处写在帖子正文里。11-18 第一批本人自己发了小红书和抖音，抖音标了「内容由AI生成」，描述里注明现场画面出处。
-- **怎么挑**：一场 Live 一批，不贪多（一组就是一原图一像素）。在对照页或控制台看大图，收藏写进 `favorites.json`，Claude 直接读，不用本人复制粘贴。
-- **记下已定的**：每批写进 `picks.json`，每张标「直接用」或「待修」，页面上会打「已定」标签，免得下次重复挑。
+- **发什么与怎么出图**：先发图文，每组一张 Live 截图配一张照它画的像素版（只限纪实类）；不拼版，单张单独发。Live 用工房 4096 原帧原文件，像素版从 `-1x` 最近邻整数倍放大到约 1920 高（全景 ×16＝`3840×1920`、特写 ×24＝`2880×1920`），按演出时间顺序编号；若有本人指定的「只发原 Live 尾图」，固定排在组图最后一位。出海或国内平台发帖开启「AI 合成／生成内容」声明开关，配乐用平台曲库，画面不打歌词，正文写清演出出处与非官方二创说明。
+- **怎么挑**：一场 Live 一批，不贪多（一组就是一原图一像素）。在对照页或控制台看大图，收藏写进 `favorites.json`，直接读取，不用本人复制粘贴。
+- **已定、不发与收口同步（11-19 对齐）**：
+  1. 批次结果（`published`、`fix_pix`）和不投稿／放弃项（`skipped` 数组，写 `"status": "不投稿"` 及 `reason`）持续记进 `output/publish-20261118/picks.json`，并在 `publish/ledger.csv` 一平台一行入账、写明 `reviewed_by`（Harness 名）。
+  2. 某场 Live 全批收口后，将 `output/publish-20261118/compare/review.json` 对应 `复看-*` 卡片 `status` 改为 `"已收口"`，夜灯控制台 `#review` 会自动折叠归档。
+  3. 只要本批有新定版的 `fix_pix`，在仓库根目录运行一次 `python3 output/pixel-accepted/build_manifest.py`（自动读取 `picks.json` 将定版精修图同步进 `pixel-fix-*`、`manifest.json`、`~/Pictures/夜鹿二创/` 与控制台 `#assets`，不修改或覆盖历史原图）。
 - **待修的图**：本人没逐条说毛病时，先对照原 Live 截图找问题，出「修 N」版（新目录、只新写一个脚本，原图和原代码不动），做三联对照（Live／旧版／新版）给本人看。精修中提炼的规则先记在 `CURRENT_PROGRESS.md`「发布标准草稿」，攒两三批后由审核对话整理成规则、接进外派卡；每张的改法见 `output/publish-20261118/fix-v1/说明.md`。像素版不合适的标「只发Live」。
 - **挑图工具是通用功能**：收藏、放大后 Tab 切换、复制图片、下载原截图、「已定」标签，以后别的挑图也照这套，不只为发布。
 
