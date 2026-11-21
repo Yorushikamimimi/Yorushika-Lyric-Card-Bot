@@ -1,0 +1,140 @@
+{
+ "post": "鹿57 suis 造型演变一览（6 张）",
+ "made": "2026-11-21",
+ "tool": "publish/watermark.py",
+ "note": "clean 为未加码原图（output/ 不进 git，发帖前别删）；读码：python3 publish/watermark.py read <clean> <可疑图> --k <k>",
+ "files": [
+  {
+   "platform": "小红书",
+   "code": 571,
+   "k": 8,
+   "file": "~/Pictures/发布/20261121-夜鹿造型演变/小红书/01-总览.png",
+   "sha256": "cb36481db1a3a2f219ce0cd8ac39a944d29eb9b3fb64bf0ef1f275ce8ee24741",
+   "clean": "output/pixel-evolution-20261121/out-v6/01-总览.png",
+   "clean_sha256": "1900558df91ce03351e3279f11895dc774a5b0c5bb876e69a61353f27c6f7802",
+   "src_1x": "output/pixel-evolution-20261121/out-v6/01-总览-1x.png",
+   "src_1x_sha256": "c039accdf0cd9145d5b1f739da7f2498ed86e7e0ff2e5069ad2fd88125b7a4b8"
+  },
+  {
+   "platform": "小红书",
+   "code": 571,
+   "k": 10,
+   "file": "~/Pictures/发布/20261121-夜鹿造型演变/小红书/02-2021「前世」.png",
+   "sha256": "1412a5479c2391aa29486d59ed03c41f7094ece836ad19feeb28eb310078f80f",
+   "clean": "output/pixel-evolution-20261121/out-v6/02-2021「前世」.png",
+   "clean_sha256": "e3bee5d4266b35e23a078f471a880713e991aa966acf6b5de0f09ab25a79485c",
+   "src_1x": "output/pixel-evolution-20261121/out-v6/02-2021「前世」-1x.png",
+   "src_1x_sha256": "9186613e8b606526f580cb5d58dc943df86ca5f98da84ab8d46fe6abe47763c5"
+  },
+  {
+   "platform": "小红书",
+   "code": 571,
+   "k": 10,
+   "file": "~/Pictures/发布/20261121-夜鹿造型演变/小红书/03-2022「月光」.png",
+   "sha256": "b3cc2f3a6285d5864ba9ce2b0ff0285f9dd2372742db7f369f9fce9140c33ae5",
+   "clean": "output/pixel-evolution-20261121/out-v6/03-2022「月光」.png",
+   "clean_sha256": "1144d29090aaf774f3690e1e650f073fc067e807011dcad2117d4414c975be19",
+   "src_1x": "output/pixel-evolution-20261121/out-v6/03-2022「月光」-1x.png",
+   "src_1x_sha256": "59bb261358fc41f2a629c5cce78d8f5cb716c22195e57495e8571d8db028bbde"
+  },
+  {
+   "platform": "小红书",
+   "code": 571,
+   "k": 10,
+   "file": "~/Pictures/发布/20261121-夜鹿造型演变/小红书/04-2024「前世」.png",
+   "sha256": "2ef4451a413def28b16be3d6e8522fbc855c8e109628bcb51cc3ef00a5f450f6",
+   "clean": "output/pixel-evolution-20261121/out-v6/04-2024「前世」.png",
+   "clean_sha256": "91287f74ec9a46c4ace0b5705ce631e29a8059f3139cfda6338ff49d6b213298",
+   "src_1x": "output/pixel-evolution-20261121/out-v6/04-2024「前世」-1x.png",
+   "src_1x_sha256": "b8db9f42aa107dadc341daaa6acc26481038719394ce16e16f7bfa23965bb78d"
+  },
+  {
+   "platform": "小红书",
+   "code": 571,
+   "k": 10,
+   "file": "~/Pictures/发布/20261121-夜鹿造型演变/小红书/05-2024「月と猫のダンス」.png",
+   "sha256": "65624d9136b94575dc3507d611b26445a8fb0fd5785be65d1cecfb20eab66153",
+   "clean": "output/pixel-evolution-20261121/out-v6/05-2024「月と猫のダンス」.png",
+   "clean_sha256": "dbc74f2861f041dc25cf9fe023f6b0923100397562ee709713b909043fb48bdc",
+   "src_1x": "output/pixel-evolution-20261121/out-v6/05-2024「月と猫のダンス」-1x.png",
+   "src_1x_sha256": "634b226f664a1e9c6c257dd76bd7d01959989f0e8b0e2a1dec0bfc3f60061630"
+  },
+  {
+   "platform": "小红书",
+   "code": 571,
+   "k": 10,
+   "file": "~/Pictures/发布/20261121-夜鹿造型演变/小红书/06-2025「盗作」.png",
+   "sha256": "6c7e27273028cb706b319a83058467f2410c44e82102c5f8d11f5ae0230d39ab",
+   "clean": "output/pixel-evolution-20261121/out-v6/06-2025「盗作」.png",
+   "clean_sha256": "258fade9ff2d118e0dba701c4c3c2c1c7fe9128635d7730e7e36716a893b58dd",
+   "src_1x": "output/pixel-evolution-20261121/out-v6/06-2025「盗作」-1x.png",
+   "src_1x_sha256": "19382bdbb39f7439fb1227958898c5b3a7b1e81ff9e48e3a63e411dd6405d30e"
+  },
+  {
+   "platform": "抖音",
+   "code": 572,
+   "k": 8,
+   "file": "~/Pictures/发布/20261121-夜鹿造型演变/抖音/01-总览.png",
+   "sha256": "970330405ae2ed78656e2c1127f7a2d5aaffa1e5e59cfe1cde7412629228e0b8",
+   "clean": "output/pixel-evolution-20261121/out-v6/01-总览.png",
+   "clean_sha256": "1900558df91ce03351e3279f11895dc774a5b0c5bb876e69a61353f27c6f7802",
+   "src_1x": "output/pixel-evolution-20261121/out-v6/01-总览-1x.png",
+   "src_1x_sha256": "c039accdf0cd9145d5b1f739da7f2498ed86e7e0ff2e5069ad2fd88125b7a4b8"
+  },
+  {
+   "platform": "抖音",
+   "code": 572,
+   "k": 10,
+   "file": "~/Pictures/发布/20261121-夜鹿造型演变/抖音/02-2021「前世」.png",
+   "sha256": "1d5af282ade35eaf44264f6ed132433cb5fc521f773bed32470c8c583784d82a",
+   "clean": "output/pixel-evolution-20261121/out-v6/02-2021「前世」.png",
+   "clean_sha256": "e3bee5d4266b35e23a078f471a880713e991aa966acf6b5de0f09ab25a79485c",
+   "src_1x": "output/pixel-evolution-20261121/out-v6/02-2021「前世」-1x.png",
+   "src_1x_sha256": "9186613e8b606526f580cb5d58dc943df86ca5f98da84ab8d46fe6abe47763c5"
+  },
+  {
+   "platform": "抖音",
+   "code": 572,
+   "k": 10,
+   "file": "~/Pictures/发布/20261121-夜鹿造型演变/抖音/03-2022「月光」.png",
+   "sha256": "a28f14b31b18fe885b05ac2e94aa1750168d1b93d3354b352baea668107ccaa1",
+   "clean": "output/pixel-evolution-20261121/out-v6/03-2022「月光」.png",
+   "clean_sha256": "1144d29090aaf774f3690e1e650f073fc067e807011dcad2117d4414c975be19",
+   "src_1x": "output/pixel-evolution-20261121/out-v6/03-2022「月光」-1x.png",
+   "src_1x_sha256": "59bb261358fc41f2a629c5cce78d8f5cb716c22195e57495e8571d8db028bbde"
+  },
+  {
+   "platform": "抖音",
+   "code": 572,
+   "k": 10,
+   "file": "~/Pictures/发布/20261121-夜鹿造型演变/抖音/04-2024「前世」.png",
+   "sha256": "01245f8c1448f71090a005df6103878331fdd4eb9647db83c01fedff53c654b7",
+   "clean": "output/pixel-evolution-20261121/out-v6/04-2024「前世」.png",
+   "clean_sha256": "91287f74ec9a46c4ace0b5705ce631e29a8059f3139cfda6338ff49d6b213298",
+   "src_1x": "output/pixel-evolution-20261121/out-v6/04-2024「前世」-1x.png",
+   "src_1x_sha256": "b8db9f42aa107dadc341daaa6acc26481038719394ce16e16f7bfa23965bb78d"
+  },
+  {
+   "platform": "抖音",
+   "code": 572,
+   "k": 10,
+   "file": "~/Pictures/发布/20261121-夜鹿造型演变/抖音/05-2024「月と猫のダンス」.png",
+   "sha256": "181825037b169d23fc67877d5a4c1de42a93c7496ce4688d0ae64b1da9492062",
+   "clean": "output/pixel-evolution-20261121/out-v6/05-2024「月と猫のダンス」.png",
+   "clean_sha256": "dbc74f2861f041dc25cf9fe023f6b0923100397562ee709713b909043fb48bdc",
+   "src_1x": "output/pixel-evolution-20261121/out-v6/05-2024「月と猫のダンス」-1x.png",
+   "src_1x_sha256": "634b226f664a1e9c6c257dd76bd7d01959989f0e8b0e2a1dec0bfc3f60061630"
+  },
+  {
+   "platform": "抖音",
+   "code": 572,
+   "k": 10,
+   "file": "~/Pictures/发布/20261121-夜鹿造型演变/抖音/06-2025「盗作」.png",
+   "sha256": "27cfee2264c4987669c8ea735105ce7d389b6eff65f0bbdcfc5c42749bbf4c3b",
+   "clean": "output/pixel-evolution-20261121/out-v6/06-2025「盗作」.png",
+   "clean_sha256": "258fade9ff2d118e0dba701c4c3c2c1c7fe9128635d7730e7e36716a893b58dd",
+   "src_1x": "output/pixel-evolution-20261121/out-v6/06-2025「盗作」-1x.png",
+   "src_1x_sha256": "19382bdbb39f7439fb1227958898c5b3a7b1e81ff9e48e3a63e411dd6405d30e"
+  }
+ ]
+}
