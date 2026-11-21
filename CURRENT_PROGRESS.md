@@ -26,7 +26,7 @@
   3. Instagram：补第 1 帖链接；本人想发时再发第 2–7 帖。
 - **本人已拍板未落库的决定**：无（三档、只发①③、实况发法已写进 VISUAL_GUIDE 和本文件）。
 - **未提交改动（分清自己的和别人的）**：
-  - `Yorushika-Lyric-Card-Bot`（自己的，本人只说了收口、没授权提交）：本文件、`publish/ledger.csv`（6 行新帖）、`VISUAL_GUIDE.md`（三档动图与实况）。上次提交 `5384485` 也未推送。`output/` 不进 git。
+  - `Yorushika-Lyric-Card-Bot`：无未提交改动；11-21 收口 4 已提交（停点、台账 6 行、VISUAL_GUIDE 三档动图与实况），`5384485` 起本地领先 origin，未推送（push 要本人另说）。`output/` 不进 git。
   - `Obsidian_repo` Vault：本职责鹿54–56 卡与交回随收口 4 提交推送。`README.md`、日报、`模型接入…规范.md`、`御三家AI…报告.md` 等他方改动不碰。
 - **别碰的东西**：
   - 已验收原图不覆盖（修图走 `fix_pix`）；`build_manifest.py` 不改、`manifest.json` 不手编。
