@@ -34,7 +34,7 @@
   3. Instagram：补第 1 帖链接；第 2–7 帖本人想发再发。
 - **本人已拍板未落库的决定**：无（MV 名场面可照着像素化、路人看不懂没关系、先多做调研、调研不返工、歌词卡例外、图鉴封口、假 RPG 人物要从 Live 穿搭取灵感都已写进本停点／`VISUAL_GUIDE.md`／`publish/README.md`／`publish/调研/README.md`）。
 - **未提交改动（分清自己的和别人的）**：
-  - `Yorushika-Lyric-Card-Bot`（本职责，未提交，提交／推送各要本人说）：`CURRENT_PROGRESS.md`、`VISUAL_GUIDE.md`（原创背景条加 MV 名场面例外）、`publish/README.md`（歌词卡例外）、`publish/ledger.csv`（前世 2024 六帖 3 天数据）、新目录 `publish/调研/`（README＋鹿60–64、鹿68 原文）；另有已提交未推送的 `fb3bad9`。`output/` 不进 git。
+  - `Yorushika-Lyric-Card-Bot`（本职责）：无；11-22 已提交推送到 `09f3275`（含 `fb3bad9`）。以后提交／推送仍各要本人说；`output/` 不进 git。
   - `Obsidian_repo` Vault：本职责鹿59–64 卡随收口 7、鹿65–67 卡随收口 8、鹿68 随收口 9（`8df40d0`）提交推送。`README.md`、日报、`模型接入…规范.md`、`御三家AI…报告.md` 等他方改动不碰。
 - **别碰的东西**：
   - 已验收原图不覆盖（修图走 `fix_pix`）；`build_manifest.py` 不改、`manifest.json` 不手编。
