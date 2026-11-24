@@ -51,7 +51,7 @@
   3. Instagram：第 1 帖链接及 3/7 天数据 11-23 本人定均不跟踪（没人看，已全标 NA）；第 2–7 帖本人想发再发。
 - **本人已拍板未落库的决定**：无（MV 名场面可照着像素化、路人看不懂没关系、先多做调研、调研不返工、歌词卡例外、图鉴封口、假 RPG 人物要从 Live 穿搭取灵感、鹿58 v2 合版方案、鹿69 暂留不发、鹿58 动态暂缓均已写入本停点或相应卡／指南）。
 - **未提交改动（分清自己的和别人的）**：
-  - `Yorushika-Lyric-Card-Bot`（本职责）：已推到 `2ac35d0`（台账补编号在 `995c804`）；之后改了本停点；`output/` 下新增 `pixel-tarot-20261124/check_tower.py`、`check_set2.py`（不进 git）；新增 `publish/fingerprints/2026-11-24-鹿71-头像.json`，待本人说提交。`output/` 不进 git：`review.json` 里鹿74、鹿76 已标「已通过」，台账备份 `publish/ledger.csv.bak-20261124-works` 只留本机。
+  - `Yorushika-Lyric-Card-Bot`（本职责）：停点和鹿71 头像指纹清单已推到 `50203ac`，之后只补了这行提交号，无其他未提交。`output/` 不进 git：自查脚本 `pixel-tarot-20261124/check_tower.py`、`check_set2.py` 在那里；`review.json` 里鹿74、鹿76、鹿77 已标「已通过」，台账备份 `publish/ledger.csv.bak-20261124-works` 只留本机。
   - `Obsidian_repo` Vault（本职责）：鹿77、鹿78 卡（各卡＋交回）已推到 `adec37c`，无未提交。`日报.md`、`模型接入…规范.md`、`logs/2026-11.md`、`logs/2026-11/2026-W46.md` 是他方改动，不碰。
 - **别碰的东西**：
   - 已验收原图不覆盖（修图走 `fix_pix`）；`build_manifest.py` 不改、`manifest.json` 不手编。
