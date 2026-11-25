@@ -1,0 +1,272 @@
+{
+ "post": "夜鹿像素塔罗 11 张（12 张图：00 封面＋01 牌背＋02–11 十张正面，按牌号排）",
+ "made": "2026-11-24",
+ "tool": "publish/watermark.py",
+ "note": "clean 为未加码原图（output/ 不进 git，发帖前别删）；读码：python3 publish/watermark.py read <clean> <可疑图> --k <k>（00 封面 k=4，其余 k=6）",
+ "files": [
+  {
+   "platform": "小红书",
+   "code": 781,
+   "k": 4,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/小红书/00-封面.png",
+   "sha256": "947bb6c64901eb0290b5d14ecd708dfb5bf2465a61a6000de42520eebae98e31",
+   "clean": "output/pixel-tarot-20261124/发帖原图/00-封面.png",
+   "clean_sha256": "20bca97b2c8d2cb5d0deba2465b5b0cb3245b64e7a95993be77bb971e092070b",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/00-封面-1x.png",
+   "src_1x_sha256": "9c3d81bcf604cc3d966dcd487f18e91759c720773dc0fc3486c5c56445123e18"
+  },
+  {
+   "platform": "抖音",
+   "code": 782,
+   "k": 4,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/抖音/00-封面.png",
+   "sha256": "8bdcb8579b48f42db79126bff47ce2342076b83c430a9085123594defd1952e3",
+   "clean": "output/pixel-tarot-20261124/发帖原图/00-封面.png",
+   "clean_sha256": "20bca97b2c8d2cb5d0deba2465b5b0cb3245b64e7a95993be77bb971e092070b",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/00-封面-1x.png",
+   "src_1x_sha256": "9c3d81bcf604cc3d966dcd487f18e91759c720773dc0fc3486c5c56445123e18"
+  },
+  {
+   "platform": "小红书",
+   "code": 781,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/小红书/01-牌背.png",
+   "sha256": "0e11d44f1116d8d9df73bf2fb4aef62d0f619763c990d744373ea7c75e48d3b3",
+   "clean": "output/pixel-tarot-20261124/发帖原图/01-牌背.png",
+   "clean_sha256": "a805fa33cae9d04d2cf685be43290cf44db7a40c16ec3fa7e4b49d7d0bb8d710",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/01-牌背-1x.png",
+   "src_1x_sha256": "1a448041bd2990d4957076dde00665f9905e02cab0632132a3e70899319ddb13"
+  },
+  {
+   "platform": "抖音",
+   "code": 782,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/抖音/01-牌背.png",
+   "sha256": "bad4a59c15c10427e9c695e88a1007c6ba8f49cfd7771b6e990a1d90747fcaee",
+   "clean": "output/pixel-tarot-20261124/发帖原图/01-牌背.png",
+   "clean_sha256": "a805fa33cae9d04d2cf685be43290cf44db7a40c16ec3fa7e4b49d7d0bb8d710",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/01-牌背-1x.png",
+   "src_1x_sha256": "1a448041bd2990d4957076dde00665f9905e02cab0632132a3e70899319ddb13"
+  },
+  {
+   "platform": "小红书",
+   "code": 781,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/小红书/02-0愚者.png",
+   "sha256": "38e8ff5dc6796f80e34ab079b447fe25b2647f94af385b5b86375ba94a251911",
+   "clean": "output/pixel-tarot-20261124/发帖原图/02-0愚者.png",
+   "clean_sha256": "d747f6eae767e789b03afb819e5ff6d99d150372707f6c1f4588a0a1045ec07e",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/02-0愚者-1x.png",
+   "src_1x_sha256": "dbb6076b1924c7211823f8caadf62ee70103ccd797a51e87ba1079fef87ca2bc"
+  },
+  {
+   "platform": "抖音",
+   "code": 782,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/抖音/02-0愚者.png",
+   "sha256": "584147fe4e680eabeecf200b4486d3730905426deab45df55f984a8088368250",
+   "clean": "output/pixel-tarot-20261124/发帖原图/02-0愚者.png",
+   "clean_sha256": "d747f6eae767e789b03afb819e5ff6d99d150372707f6c1f4588a0a1045ec07e",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/02-0愚者-1x.png",
+   "src_1x_sha256": "dbb6076b1924c7211823f8caadf62ee70103ccd797a51e87ba1079fef87ca2bc"
+  },
+  {
+   "platform": "小红书",
+   "code": 781,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/小红书/03-II女祭司.png",
+   "sha256": "3c821aecc069b2f853a88e6ef85425923edadfd78fd3a3bade150ea537c32eb9",
+   "clean": "output/pixel-tarot-20261124/发帖原图/03-II女祭司.png",
+   "clean_sha256": "eff1435ecc164b2931f994595880c95e83b7b051e837caf85d8b3d80b6c3baa3",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/03-II女祭司-1x.png",
+   "src_1x_sha256": "3955d7d53b373d851741a320ac20e2368554563036401f7e3c2f0a441ce73e3f"
+  },
+  {
+   "platform": "抖音",
+   "code": 782,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/抖音/03-II女祭司.png",
+   "sha256": "8857339601a0ccaf9f3b8b29e3bc785234f9f21e3e9756de8df22a419313b1b0",
+   "clean": "output/pixel-tarot-20261124/发帖原图/03-II女祭司.png",
+   "clean_sha256": "eff1435ecc164b2931f994595880c95e83b7b051e837caf85d8b3d80b6c3baa3",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/03-II女祭司-1x.png",
+   "src_1x_sha256": "3955d7d53b373d851741a320ac20e2368554563036401f7e3c2f0a441ce73e3f"
+  },
+  {
+   "platform": "小红书",
+   "code": 781,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/小红书/04-VI恋人.png",
+   "sha256": "830e7126111b7c1ac0a36919860428d0699c39ee91e499086a63072241ff5cf8",
+   "clean": "output/pixel-tarot-20261124/发帖原图/04-VI恋人.png",
+   "clean_sha256": "6b8967f584eeabf89605c13cb4739de9756d6ce58f2c6f610e2087a9def94685",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/04-VI恋人-1x.png",
+   "src_1x_sha256": "fd4d7d772f0911953427dcd869f7708ef45237d8a9385e47299089afc3fb6846"
+  },
+  {
+   "platform": "抖音",
+   "code": 782,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/抖音/04-VI恋人.png",
+   "sha256": "cd0d01ad931772f662ac64f32e8fcfef3f67ec2f42a6cd38639cb4060df9e654",
+   "clean": "output/pixel-tarot-20261124/发帖原图/04-VI恋人.png",
+   "clean_sha256": "6b8967f584eeabf89605c13cb4739de9756d6ce58f2c6f610e2087a9def94685",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/04-VI恋人-1x.png",
+   "src_1x_sha256": "fd4d7d772f0911953427dcd869f7708ef45237d8a9385e47299089afc3fb6846"
+  },
+  {
+   "platform": "小红书",
+   "code": 781,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/小红书/05-VII战车.png",
+   "sha256": "5b2ebc39776757b7e721a9b70fa164f75386fac07bad9710666270497ea29cc1",
+   "clean": "output/pixel-tarot-20261124/发帖原图/05-VII战车.png",
+   "clean_sha256": "f55f8a374dfde8304fff61613ab82ba9afd611b22945ca2a249be3537a163573",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/05-VII战车-1x.png",
+   "src_1x_sha256": "b8c3a4c88acd9317420c7238e44d7bb39bc0da3b65f82bf96ee8bb627497d53c"
+  },
+  {
+   "platform": "抖音",
+   "code": 782,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/抖音/05-VII战车.png",
+   "sha256": "23c13b8cfa65cf282689e82e7e4cff0124a4e26ae6d6945b8d792703f313f540",
+   "clean": "output/pixel-tarot-20261124/发帖原图/05-VII战车.png",
+   "clean_sha256": "f55f8a374dfde8304fff61613ab82ba9afd611b22945ca2a249be3537a163573",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/05-VII战车-1x.png",
+   "src_1x_sha256": "b8c3a4c88acd9317420c7238e44d7bb39bc0da3b65f82bf96ee8bb627497d53c"
+  },
+  {
+   "platform": "小红书",
+   "code": 781,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/小红书/06-IX隐者.png",
+   "sha256": "daed7e28d620ba4764b266a1c6c66f0354b640d6676153b8ac82ba8e47278451",
+   "clean": "output/pixel-tarot-20261124/发帖原图/06-IX隐者.png",
+   "clean_sha256": "196c0cbf32f332ec4992bf70e30d59eb8445cb1db6c245cd7ad86b98a4e09e98",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/06-IX隐者-1x.png",
+   "src_1x_sha256": "6ce121e01ba415efb3dc80a5966c3d2d036348f201aeeb215637833295a58966"
+  },
+  {
+   "platform": "抖音",
+   "code": 782,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/抖音/06-IX隐者.png",
+   "sha256": "f04c2ccf110fc2b1885776f314eb124e7a2fc8528a5d4ecc0c2a06a1a502ccec",
+   "clean": "output/pixel-tarot-20261124/发帖原图/06-IX隐者.png",
+   "clean_sha256": "196c0cbf32f332ec4992bf70e30d59eb8445cb1db6c245cd7ad86b98a4e09e98",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/06-IX隐者-1x.png",
+   "src_1x_sha256": "6ce121e01ba415efb3dc80a5966c3d2d036348f201aeeb215637833295a58966"
+  },
+  {
+   "platform": "小红书",
+   "code": 781,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/小红书/07-X命运之轮.png",
+   "sha256": "34ff3a923ea19057f2062661e79caf36b50babd5f5c584762bb9b58334515428",
+   "clean": "output/pixel-tarot-20261124/发帖原图/07-X命运之轮.png",
+   "clean_sha256": "0fec018f017a5123814995d15703038cc1cd3459f92755530b221931dcc28df5",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/07-X命运之轮-1x.png",
+   "src_1x_sha256": "88edf648e9115dbdeeb299b7eb24a89bf6b9bb0e52057987493bad2d489e81fc"
+  },
+  {
+   "platform": "抖音",
+   "code": 782,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/抖音/07-X命运之轮.png",
+   "sha256": "8eac00ac9781dcab89cabbc3d3fa1e2e01959745d26daf323272c498c5871601",
+   "clean": "output/pixel-tarot-20261124/发帖原图/07-X命运之轮.png",
+   "clean_sha256": "0fec018f017a5123814995d15703038cc1cd3459f92755530b221931dcc28df5",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/07-X命运之轮-1x.png",
+   "src_1x_sha256": "88edf648e9115dbdeeb299b7eb24a89bf6b9bb0e52057987493bad2d489e81fc"
+  },
+  {
+   "platform": "小红书",
+   "code": 781,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/小红书/08-XVI高塔.png",
+   "sha256": "b1f0689716a0a91bc98460b7bb46cd8e4bcaadba37b606675d98c1c0ab1f144e",
+   "clean": "output/pixel-tarot-20261124/发帖原图/08-XVI高塔.png",
+   "clean_sha256": "003ca87776d9dc3ee4886e561dbf04cecad78c83b94c77981995b968d31600ab",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/08-XVI高塔-1x.png",
+   "src_1x_sha256": "a6f2529a2ccf833333fb36da50664ed90847c934a5a3aa538c81b99a1108cc39"
+  },
+  {
+   "platform": "抖音",
+   "code": 782,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/抖音/08-XVI高塔.png",
+   "sha256": "a649dc4575c743fdb0aacf4920c96663028ec07abec7ff081647717b514b9ffa",
+   "clean": "output/pixel-tarot-20261124/发帖原图/08-XVI高塔.png",
+   "clean_sha256": "003ca87776d9dc3ee4886e561dbf04cecad78c83b94c77981995b968d31600ab",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/08-XVI高塔-1x.png",
+   "src_1x_sha256": "a6f2529a2ccf833333fb36da50664ed90847c934a5a3aa538c81b99a1108cc39"
+  },
+  {
+   "platform": "小红书",
+   "code": 781,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/小红书/09-XVII星星.png",
+   "sha256": "9e27755429831a3c5c87705e4a54a0cf73c6e85a625d6968478034bb3c13580f",
+   "clean": "output/pixel-tarot-20261124/发帖原图/09-XVII星星.png",
+   "clean_sha256": "63b1ff5fbbc63fda7111e4a1df47bd830d514c0d60f4e42e3561181799d870e4",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/09-XVII星星-1x.png",
+   "src_1x_sha256": "fa2bb78f06059e3dc22475a9fa64481fc32560dfa47d61d6c7978095b2bea41b"
+  },
+  {
+   "platform": "抖音",
+   "code": 782,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/抖音/09-XVII星星.png",
+   "sha256": "1c3ece5b129404847f574699cf0d17dd1fb691004c884c73d74ed0ef9ceb5a0d",
+   "clean": "output/pixel-tarot-20261124/发帖原图/09-XVII星星.png",
+   "clean_sha256": "63b1ff5fbbc63fda7111e4a1df47bd830d514c0d60f4e42e3561181799d870e4",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/09-XVII星星-1x.png",
+   "src_1x_sha256": "fa2bb78f06059e3dc22475a9fa64481fc32560dfa47d61d6c7978095b2bea41b"
+  },
+  {
+   "platform": "小红书",
+   "code": 781,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/小红书/10-XVIII月亮.png",
+   "sha256": "d0fabbd66c2bb9979d51eb4bda0f589bc709c6bc6d8bbbb083769f755656bb60",
+   "clean": "output/pixel-tarot-20261124/发帖原图/10-XVIII月亮.png",
+   "clean_sha256": "a810309b53b9fee2a35342107a9c1416e4f3736b84d2b4f20194c7d4dd506c6a",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/10-XVIII月亮-1x.png",
+   "src_1x_sha256": "600f3a8b8829b1c4980c344d05bff62b9590da6e1dd7732ff17213a9970e05e9"
+  },
+  {
+   "platform": "抖音",
+   "code": 782,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/抖音/10-XVIII月亮.png",
+   "sha256": "771a5d80ec7b2dbae986b54f99df144d1e4e19049820750d21080aa046383cd8",
+   "clean": "output/pixel-tarot-20261124/发帖原图/10-XVIII月亮.png",
+   "clean_sha256": "a810309b53b9fee2a35342107a9c1416e4f3736b84d2b4f20194c7d4dd506c6a",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/10-XVIII月亮-1x.png",
+   "src_1x_sha256": "600f3a8b8829b1c4980c344d05bff62b9590da6e1dd7732ff17213a9970e05e9"
+  },
+  {
+   "platform": "小红书",
+   "code": 781,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/小红书/11-XIX太阳.png",
+   "sha256": "e79e3e47635d788db6a81ac0341c70b74b510fa5bef069cf59a8539279dc3326",
+   "clean": "output/pixel-tarot-20261124/发帖原图/11-XIX太阳.png",
+   "clean_sha256": "97f37507d31e467bc32a46f7aa39b777d08d54f7ec10eb2d154f8c3892b68d6e",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/11-XIX太阳-1x.png",
+   "src_1x_sha256": "a5273da2f8bf617b51cf2d720de72131cf600c5d6185f425a495c92a123c4425"
+  },
+  {
+   "platform": "抖音",
+   "code": 782,
+   "k": 6,
+   "file": "~/Pictures/发布/20261124-夜鹿塔罗/抖音/11-XIX太阳.png",
+   "sha256": "83917c296e8183bafd47869053e809ce5e016861e6450c6a844ae2bd826339e7",
+   "clean": "output/pixel-tarot-20261124/发帖原图/11-XIX太阳.png",
+   "clean_sha256": "97f37507d31e467bc32a46f7aa39b777d08d54f7ec10eb2d154f8c3892b68d6e",
+   "src_1x": "output/pixel-tarot-20261124/发帖原图/11-XIX太阳-1x.png",
+   "src_1x_sha256": "a5273da2f8bf617b51cf2d720de72131cf600c5d6185f425a495c92a123c4425"
+  }
+ ]
+}

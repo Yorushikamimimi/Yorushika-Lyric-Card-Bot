@@ -212,6 +212,7 @@
 
 - **全景小人**：约 26 像素高的彩色 Q 版（头大、大眼带高光、腮红），用字母网格手点，最后加彩色描边。
 - **suis 是主唱，细节要比别人多、更精致**。服装按那一场截图里的外观画。
+- **原创场景里的 suis 一律用正面，不用背影（11-24 本人定）**：素材库的 `back` 姿势头发太直、裙摆是直角，看着假；以后贴人选 `arms_down` 等正面姿势。照 Live 截图画的场景仍按截图走。
 - **suis 的眼睛必须有眼白高光，不能只是黑点（11-17 本人定）**：小人一律用 `suis_expr` 出的表情版（如 `SUIS_T_SING`），不要用不带后缀的底版（`SUIS`、`SUIS_T`、`SUIS_M`、`SUIS_G`、`SUIS_Z` 等都是黑点眼）。2024 前世的 `SUIS` 脸只有 7 宽，要先中线加一列再套表情，做法见 `output/pixel-eyes-20261117/v3/src/mini.py` 的 `SUIS_W_*`。小人保持约 26 像素高的原比例：11-17 试过 Q 版大头（头身 1:2）和 64×64 胸像，本人说脸长、比例不协调、眼睛太大，不要。
 - **suis 的表情要丰富，不要每张都眯眯眼**。同一组图里各张换着用：
   - 小人：`suis_expr` 有 open（睁眼）、sing（张嘴唱）、wink（眨眼）、surprise（惊讶）。
@@ -233,7 +234,7 @@
 
 **2024 前世素材库（11-18 验收通过，代码在 `output/pixel-lib-20261118/src/`）**：
 - **前世 2024 小人从素材库取**（`lib_suis_mini.py`，鹿16）：`lib_suis_mini.make(outfit, pose, expr, flip=False) -> px.Canvas`。`OUTFITS`: `red`/`white`；`POSES`: `stand`/`mic`/`arms_open`/`raise`/`back`/`kneel`/`tamb`；`EXPRS`: `open`/`sing`/`closed`/`smile`/`wink`/`surprise`。
-- **前世 2024 特写从素材库取**（`lib_suis_close.py`，鹿17）：`lib_suis_close.make(outfit, pose, expr, flip=False) -> px.Canvas`。`OUTFITS`: `red`/`white`；`POSES`: `raise_mic`/`mic_chin`/`mic_side`/`arms_down`/`back`；`EXPRS`: `open`/`closed`/`smile`/`wink`/`daze`。
+- **前世 2024 特写从素材库取**（`lib_suis_close.py`，鹿17）：`lib_suis_close.make(outfit, pose, expr, flip=False) -> px.Canvas`。`OUTFITS`: `red`/`white`；`POSES`: `raise_mic`/`mic_chin`/`mic_side`/`arms_down`/`back`；`EXPRS`: `open`/`closed`/`smile`/`wink`/`daze`。（2026-11-25 经本人拍板已按鹿82 终核替换为松弛垂感裙摆＋缩短举手＋收窄背影头发新版，原旧版备份为同目录 `lib_suis_close.py.bak-20261125-pre82`；仅影响新画图，已发已过不动）
 - **前世 2024 乐手阵容与站位（11-18 本人改定）**：严格按原 Live 截图拍到的实际左右站位与人数来画——**2024 前世键盘手固定在舞台最右边（画面没拍到就不硬塞），n-buna 在 suis 右边，绝不画两个一样的复制吉他手**；乐手从 `lib_band` 取（`lib_band.py`，鹿18）：`lib_band.make(member, pose, expr, flip=False) -> px.Canvas`。`MEMBERS`: `nbuna`（`guitar`/`guitar_up`/`stand`/`wave`）、`drums`（`play`/`hit`/`wave`）、`keys`（`play`/`wave`/`cheer`）；`EXPRS`: `open`/`closed`/`smile`。近景或主角占半屏的画面必须用 `lib_suis_close`（特写/大号尺寸）或 120×80 特写画布，不在近景里塞 26px 迷你小人，也不在中远景平齐水平线上塞大号巨人。
 - **前景实景树与人物手部层次（11-18 本人补充定版）**：①**舞台右前方的真实道具树自始至终是绿树**（深绿／中绿层次），不能因背景大屏暖光或逆光剪影画成紫黑或红树，最多在外缘靠光一侧带一缕微弱受光边；树与旁边键盘手错开位置，不让树冠长在乐手头上，外缘叶簇要有层次、不飞散孤立单点；②**举手／持麦／摇铃鼓等前景动作**严格按真实前后遮挡画在头发前面，大臂／袖口不能比小臂细。
 
@@ -257,7 +258,7 @@
     - 迷你 suis（`lib_suis_gekkou_mini.py`，鹿48）：`OUTFITS`: `dress`（象牙白蕾丝泡泡袖长裙、赤脚、铜橙短发）；`POSES`: `stand`/`mic`/`mic_one`/`side`/`back`（本人嫌坐姿、赤脚迈步怪已删，坐长椅等姿势在场景里单独画）；`EXPRS`: `open`/`sing`/`closed`/`smile`/`wink`/`surprise`（30 组合）。
     - 特写与中近景 suis（`lib_suis_gekkou_close.py`，鹿49）：`OUTFITS`: `dress`/`dress_mid`；`POSES`: `mic_front`/`mic_side`/`raise_left`/`arms_down`/`back`/`back_raise`；`EXPRS`: `open`/`closed`/`smile`/`wink`/`daze`（60 组合）。
     - 全员 5 乐手与 6 人站位（`lib_band_gekkou.py`，鹿50）：`MEMBERS`: `masack`/`kitani`/`shimozuru`/`nbuna`（无帽）/`hirahata`（`mini.KEYS` 光头眼镜＋右耳小耳麦，无头顶带）；`POSES`: `play`/`play_alt`/`stand`；`EXPRS`: `open`/`closed`/`smile`（45 组合＋站位参考图 `out/月光舞台站位参考.png`）。后续月光场景一律直接从该目录取人。
-- **2021 前世素材库（`鹿51` 11-21 定版通过，只做中近景，代码在 `output/publish-20261118/lib-zense2021-20261121/src/`）**：`lib_suis_zense2021_close.py` 从月光鹿49 派生，只换深棕长直发＋全身宝蓝五分泡泡袖束腰长裙；`OUTFITS`: `dress`/`dress_mid`；`POSES`/`EXPRS` 同鹿49（60 组合）。2021 不建迷你和乐手库（本人定），乐手在场景里画暗剪影。
+- **2021 前世素材库（`鹿51` 11-21 定版通过，只做中近景，代码在 `output/publish-20261118/lib-zense2021-20261121/src/`）**：`lib_suis_zense2021_close.py` 从月光鹿49 派生，只换深棕长直发＋全身宝蓝五分泡泡袖束腰长裙；`OUTFITS`: `dress`/`dress_mid`；`POSES`/`EXPRS` 同鹿49（60 组合）。2021 不建迷你和乐手库（本人定），乐手在场景里画暗剪影。（2026-11-25 经本人拍板已按鹿82 终核替换为松弛宝蓝垂褶＋露赤脚新版，原旧版备份为同目录 `lib_suis_zense2021_close.py.bak-20261125-pre82`；仅影响新画图，已发已过不动）
 - **2021 前世（鹿36 定案，`lore-zense2021-20261119/`）**：① suis 全场一套——宝蓝色五分泡泡袖束腰长裙（全身一色宝蓝；设定集写的白色百褶片 11-21 本人判定没有）、赤脚、深棕长直发（发尾偏浅）、右手细银戒、黑麦银网头。② **共 10 人**，全程坐姿演奏，左→右紧贴横滨八景岛大水槽玻璃：弦乐四重奏 4 人（左透明亚克力板后）→ 平畑（光头圆眼镜＋红 Nord Piano 3）→ n-buna（全黑卫衣＋深红棕空心电吉他，**无红围巾**）→ 下鶴（原木民谣吉他＋**标志白中筒袜**）→ Kitani（蓬松卷发＋白 P-Bass）→ Masack（**黑宽檐帽**＋透明鼓房）；suis 在前排独立圆台（多坐木椅，《ノーチラス》站唱）。
 - **2024 前世（鹿37 定案，`lore-zense2024-20261119/`；已发三批封板，供后续重做参考）**：① suis 两套——A 套（`0:24`～`30:22` 前 7 首）白泡泡袖衬衫（红袖带）＋红长裙＋白大蝴蝶结带红垂带；B 套（`30:45`《嘘月》～终）象牙白多层薄纱蕾丝长裙、赤脚、米色蕾丝发饰（**无红蝴蝶结**，`66:30` 偏红是灯光）。② 纯享版无演职表，可见约 8 位乐手（含弦乐＋小号），suis 偏右、右侧为疑似 n-buna（深色连帽＋粉红围巾）、最右长椅＋**真实绿树（红果绿叶）**；《嘘月》起换客厅/书房与大月亮实景。
 
