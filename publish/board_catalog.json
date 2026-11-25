@@ -1,0 +1,444 @@
+{
+  "schemaVersion": 1,
+  "_说明": "夜鹿二创方向与素材看板 · 唯一进 Git 的人工标记与目录映射表。改动 disposition / reason / note / overrides 后运行 `python3 publish/build_board.py` 即重建 output/publish-20261118/board/board.json。",
+  "groups": [
+    {
+      "id": "active",
+      "name": "正在扩充的方向",
+      "desc": "以 8765 收藏母池（64 项不重复精选）＋ 3 场箱庭动图为优先扩充队列，按鹿102–鹿118 排卡推进。",
+      "collapsedDefault": false
+    },
+    {
+      "id": "ready",
+      "name": "已齐活 · 待排发专题",
+      "desc": "单轮素材已画完且终核全过，随时可直接排分批次发帖或按节点释放。",
+      "collapsedDefault": false
+    },
+    {
+      "id": "archive",
+      "name": "已收官 · 历史与搁置",
+      "desc": "已发收官的旧系列、141 项旧 Live＋像素边角料（不再单发对照帖）以及明确搁置/淘汰的试验线。",
+      "collapsedDefault": false
+    },
+    {
+      "id": "drawer",
+      "name": "底层角色素材库",
+      "desc": "5 场 suis 迷你／特写／乐手库与 鹿99 n-buna 双套库，供所有创作线统一复用。",
+      "collapsedDefault": false
+    }
+  ],
+  "directions": [
+    {
+      "id": "iso-stage",
+      "group": "active",
+      "name": "Live 舞台像素箱庭",
+      "tagline": "45° 等距立体微缩舞台＋6 人同台站位；已过 5 场静图＋2 场动图，再扩 6 场景＋3 场补动图。",
+      "cover": "pixel-iso-20261125/待验收-鹿92/鹿92-1-tsukineko2024-箱庭.png",
+      "cards_hint": "已过 鹿90/92/93/95/96 · 拟排 鹿102–105",
+      "planned_cards": ["鹿102", "鹿103", "鹿104", "鹿105"]
+    },
+    {
+      "id": "fake-rpg",
+      "group": "active",
+      "name": "假 RPG 界面（会話／存档／状态／过场 CG）",
+      "tagline": "Live 实景＋权威小人融合复古 RPG UI；已齐 14 张，再扩 16 幕会話＋12 幕朗诵过场 CG。",
+      "cover": "pixel-rpg-talk-20261125/待验收-鹿83/鹿83-2-前世-会話.png",
+      "cards_hint": "已过 鹿80/83/84/87/88 · 拟排 鹿112–117",
+      "planned_cards": ["鹿112", "鹿113", "鹿114", "鹿115", "鹿116", "鹿117"]
+    },
+    {
+      "id": "member-stage",
+      "group": "active",
+      "name": "成员线与舞台细节",
+      "tagline": "n-buna 独唱特写、乐器近景、乐队纵深同框与机关名场面；已过 3 张，启用 鹿99 双套库再扩 10 项。",
+      "cover": "pixel-451-20261125/待验收-鹿100/鹿100-1-nbuna451.png",
+      "cards_hint": "已过 鹿97/98-2/98-3/100 · 拟排 鹿106–108",
+      "planned_cards": ["鹿106", "鹿107", "鹿108"]
+    },
+    {
+      "id": "live-anim",
+      "group": "active",
+      "name": "会动 Live 舞台（GIF／实况）",
+      "tagline": "三景深＋粒子灯光呼吸小循环 GIF／实况；已过 鹿70 3 张，先补齐月光 2022 与月猫 2024 空白再扩共 12 项。",
+      "cover": "pixel-live-anim-20261123/out/01-盗作2025-彩纸爆开与屋台.gif",
+      "cards_hint": "已过 鹿70（3张） · 拟排 鹿109–111",
+      "planned_cards": ["鹿109", "鹿110", "鹿111"]
+    },
+    {
+      "id": "emoji-pack",
+      "group": "active",
+      "name": "Q 版表情包（静／动）",
+      "tagline": "第 1 弹 v2 12 枚已发小红书/抖音；另存 4 枚旧版动图；拟借 Live 道具与 n-buna 元素扩第 2 弹 12 枚。",
+      "cover": "pixel-emoji-20261121/定稿v2/总览-有字.png",
+      "cards_hint": "已发 鹿58 · 拟排 鹿118",
+      "planned_cards": ["鹿118"]
+    },
+    {
+      "id": "pixel-tarot",
+      "group": "ready",
+      "name": "夜鹿像素塔罗卡（23 张全套）",
+      "tagline": "144×216 B 尺寸，牌背＋22 张大阿卡纳与鹿81官网考据配曲全部齐活，暂留不打包、待定分组重出图。",
+      "cover": "pixel-tarot-20261124/待验收-鹿86/鹿86-00-全套总览.png",
+      "cards_hint": "已过 鹿75/76/77/78/81/85/86"
+    },
+    {
+      "id": "japan-spots",
+      "group": "ready",
+      "name": "日本景点四季（6 张）",
+      "tagline": "镰仓/雨晴/宫岛＋富士山/金阁寺/小樽运河四季巡礼，suis 特写库全正面出镜，6 张全过待排发。",
+      "cover": "pixel-spots-20261124/out2/03-宫岛大鸟居-落日.png",
+      "cards_hint": "已过 鹿74 / 鹿79"
+    },
+    {
+      "id": "suis-avatars",
+      "group": "ready",
+      "name": "suis 像素头像（15 张）",
+      "tagline": "1:1 头像终审删去 A03 留 15 张，小红书／抖音发帖图（含 4×4 圆框封面与暗码）已导出待发。",
+      "cover": "pixel-avatars-20261123/发帖原图/00-总览.png",
+      "cards_hint": "已过 鹿71 · 已入发帖夹"
+    },
+    {
+      "id": "cdj-event",
+      "group": "ready",
+      "name": "CDJ 26/27 应景帖（12 月节点发）",
+      "tagline": "方案一「重返 CDJ」3 帖样稿已过：12-23 倒计时、12-26 开场前动图、12-27 歌单卡（待换今年歌单）。",
+      "cover": "pixel-cdj-20261125/待验收-鹿91/鹿91-1-倒计时.png",
+      "cards_hint": "已过 鹿89 / 鹿91"
+    },
+    {
+      "id": "costume-evo",
+      "group": "archive",
+      "name": "suis 五场造型演变（鹿57）",
+      "tagline": "总览＋5 场细节图共 6 张 3:4，小红书／抖音已发并入账（可补重发 X/IG）。",
+      "cover": "pixel-evolution-20261121/out-v6/01-总览.png",
+      "cards_hint": "已发 鹿57"
+    },
+    {
+      "id": "legacy-live-pixel",
+      "group": "archive",
+      "name": "原 Live＋像素对照＆四季小景（旧 141＋鹿101）",
+      "tagline": "Live＋像素对照帖已收官；旧 141 项自动只读归入本区（含已发 35 项＋四季小景 14 项＋边角料/跳过项）；含 鹿101 X 新造型 15 张。",
+      "cover": "zense2024-x-20261125/out/ao-春泥棒・红花树大屏与洋楼-X.png",
+      "cards_hint": "manifest 141 项（只读）＋ 鹿101（X 15张）"
+    },
+    {
+      "id": "shelved-live-photo",
+      "group": "archive",
+      "name": "原 Live 实拍苹果实况（鹿72 · 搁置）",
+      "tagline": "HLG→SDR 带原声实况 4 张；重开时由本人自选片源场景，不让 Agent 挑。",
+      "cover": "live-photo-real-20261124/待验收/鹿72-01-盗作2025-盗作彩纸爆开.gif",
+      "cards_hint": "搁置 鹿72"
+    },
+    {
+      "id": "shelved-luanru",
+      "group": "archive",
+      "name": "实拍 × 像素小人乱入（鹿73 · 搁置）",
+      "tagline": "第 1 版小人占比太小、互动感弱，本人定放到最后再说。",
+      "cover": "live-luanru-20261124/待验收/鹿73-01-盗作2025-盗作-彩纸爆开-竖.jpg",
+      "cards_hint": "搁置 鹿73"
+    },
+    {
+      "id": "shelved-alt-emoji",
+      "group": "archive",
+      "name": "彩铅软萌表情包（鹿69 · 留存）",
+      "tagline": "非像素贴纸风 4 张静＋动图，本人定先留着不发。",
+      "cover": "emoji-alt-20261123/待验收/00-总览-静态.png",
+      "cards_hint": "搁置 鹿69"
+    },
+    {
+      "id": "shelved-lyric-card",
+      "group": "archive",
+      "name": "像素歌词卡小试（鹿59 · 留存）",
+      "tagline": "3 张试作，本人评价好看但像炒冷饭，暂不发。",
+      "cover": "pixel-lyric-20261121/待验收/01-春泥棒.png",
+      "cards_hint": "留存 鹿59"
+    },
+    {
+      "id": "shelved-retired",
+      "group": "archive",
+      "name": "已封口与否决试验（图鉴／奇幻RPG／同曲对照）",
+      "tagline": "记录已明确不过关或封口的方向：夜鹿图鉴（鹿65）、旧版/奇幻 RPG（鹿66/67）、同曲多场对照。",
+      "cover": "pixel-zukan-20261121/待验收/000-总览.png",
+      "cards_hint": "淘汰留档 鹿65 / 鹿66 / 鹿67 / 同曲对照"
+    },
+    {
+      "id": "char-libs",
+      "group": "drawer",
+      "name": "底层角色素材库",
+      "tagline": "各场 Live 权威角色资产：前世 2024（含 鹿82 松弛裙摆）、盗作 2025 v2、月猫 2024、月光 2022、前世 2021（含 鹿94 迷你）、n-buna 双套终版（鹿99）。",
+      "cover": "publish-20261118/lib-nbuna-20261125/待验收-鹿99-7/鹿99-4-与suis同框对照.png",
+      "cards_hint": "鹿16-18 / 38-40 / 42-44 / 48-51 / 82 / 94 / 99"
+    }
+  ],
+  "planned_cards": [
+    {"id": "鹿102", "direction": "iso-stage", "title": "箱庭第4批 · 前世2024书房烟花 & 月猫A套西装", "codes": ["X1", "X3"], "target_count": 2, "note": "启用两场尚未画过的另一套造型/场景，补齐前后半场箱庭对比"},
+    {"id": "鹿103", "direction": "iso-stage", "title": "箱庭第5批 · 前世2024洋楼花树 & 月光大新月长椅", "codes": ["X2", "X6"], "target_count": 2, "note": "春泥棒洋楼窗景＋憂一乗夜景长椅第二版"},
+    {"id": "鹿104", "direction": "iso-stage", "title": "箱庭第6批 · 盗作灯笼台阶 & 苹果糖屋台街角", "codes": ["X4", "X5"], "target_count": 2, "note": "局部祭典屋台街角微缩箱庭"},
+    {"id": "鹿105", "direction": "iso-stage", "title": "箱庭动画补齐 · 月猫／月光／前世2021 3场灯光", "codes": ["ISO-ANIM-3"], "target_count": 3, "note": "照鹿96 灯光呼吸做法补齐其余3场静态箱庭（布局与小人不变）"},
+    {"id": "鹿106", "direction": "member-stage", "title": "成员线第2批 · 启用 鹿99 n-buna 双套特写库", "codes": ["M01", "M04", "M05"], "target_count": 3, "note": "粉月戴帽 n-buna＋月猫逆光吉他＋效果器板近景"},
+    {"id": "鹿107", "direction": "member-stage", "title": "成员线第3批 · 键盘特写与舞台纵深同框", "codes": ["M06", "M07", "M08"], "target_count": 3, "note": "月猫 Kitani＋鼓组＋suis、红光 Nord 键盘双手、鼓组前景＋蓝光 suis"},
+    {"id": "鹿108", "direction": "member-stage", "title": "成员线第4批 · 屋台双吉他／换乐器／立体全乐队", "codes": ["M02", "M03", "M09", "M10"], "target_count": 4, "note": "遵循鹿97规矩：前世/早期未知身份乐手不硬标人名"},
+    {"id": "鹿109", "direction": "live-anim", "title": "会动Live第2批 · 优先补齐月光2022／月猫2024 0空白", "codes": ["A01", "A02", "A04", "A07"], "target_count": 4, "note": "月光放射圣光／大新月长椅＋月猫金光斜俯拍／屋子落樱"},
+    {"id": "鹿110", "direction": "live-anim", "title": "会动Live第3批 · 光柱与烟雾舞台动效", "codes": ["A03", "A05", "A06", "A08"], "target_count": 4, "note": "月光光柱圆环＋月猫紫光扇面／蓝雨＋盗作蓝白激光白烟"},
+    {"id": "鹿111", "direction": "live-anim", "title": "会动Live第4批 · 灯笼／烟花／矩阵激光／冬眠秋林", "codes": ["A09", "A10", "A11", "A12"], "target_count": 4, "note": "4 场高辨识粒子与灯光循环"},
+    {"id": "鹿112", "direction": "fake-rpg", "title": "假RPG 会話画面 Vol.2（前世2024×4）", "codes": ["R01", "R02", "R03", "R04"], "target_count": 4, "note": "靴の花火紫色小火车／雨とカプチーノ／冬眠秋林／书房小电车"},
+    {"id": "鹿113", "direction": "fake-rpg", "title": "假RPG 会話画面 Vol.3（前世2024×2＋月猫2024×2）", "codes": ["R05", "R06", "R07", "R08"], "target_count": 4, "note": "洋楼大叶／深蓝人影／画室线稿／蓝色放射光束"},
+    {"id": "鹿114", "direction": "fake-rpg", "title": "假RPG 会話画面 Vol.4（月猫2024×2＋月光2022×2）", "codes": ["R09", "R10", "R11", "R12"], "target_count": 4, "note": "暖黄逆光屋／仰角粉画屏／暖光倒影／红砖街灯鲸鱼屏"},
+    {"id": "鹿115", "direction": "fake-rpg", "title": "假RPG 会話画面 Vol.5（月光2022×2＋盗作2025×2）", "codes": ["R13", "R14", "R15", "R16"], "target_count": 4, "note": "深夜路灯／冷白圣光结局感／春ひさぎ洋红／灯笼台阶"},
+    {"id": "鹿116", "direction": "fake-rpg", "title": "假RPG新子型 · 朗诵过场 CG（月光 Poetry 6 幕）", "codes": ["C01", "C02", "C03", "C04", "C05", "C06"], "target_count": 6, "note": "无人纯景诗朗诵全屏CG事件框"},
+    {"id": "鹿117", "direction": "fake-rpg", "title": "假RPG新子型 · 盗作与月猫过场 CG 6 幕", "codes": ["C07", "C08", "C09", "C10", "C11", "C12"], "target_count": 6, "note": "追憶／候车小屋／空屋少年／月猫绘本风插画"},
+    {"id": "鹿118", "direction": "emoji-pack", "title": "Q版表情包第2弹 · Live道具梗＆n-buna专属（12枚）", "codes": ["E01", "E02", "E03", "E04", "E05", "E06", "E07", "E08"], "target_count": 12, "note": "E01–E07 suis Live道具/动作梗 8 枚 ＋ E08 n-buna 压帽/弹琴/锁眉/举麦 4 枚"}
+  ],
+  "fav_sheet_map": {
+    "01-iso": {
+      "direction": "iso-stage",
+      "batch": "收藏待扩 · 箱庭新选 6 场",
+      "code_to_card": {"X1": "鹿102", "X3": "鹿102", "X2": "鹿103", "X6": "鹿103", "X4": "鹿104", "X5": "鹿104"}
+    },
+    "02a-rpg-talk": {
+      "direction": "fake-rpg",
+      "batch": "收藏待扩 · 会話画面 Vol.2–5（16 幕）",
+      "code_to_card": {
+        "R01": "鹿112", "R02": "鹿112", "R03": "鹿112", "R04": "鹿112",
+        "R05": "鹿113", "R06": "鹿113", "R07": "鹿113", "R08": "鹿113",
+        "R09": "鹿114", "R10": "鹿114", "R11": "鹿114", "R12": "鹿114",
+        "R13": "鹿115", "R14": "鹿115", "R15": "鹿115", "R16": "鹿115"
+      }
+    },
+    "02b-rpg-cg": {
+      "direction": "fake-rpg",
+      "batch": "收藏待扩 · 朗诵与绘本过场 CG（12 幕）",
+      "code_to_card": {
+        "C01": "鹿116", "C02": "鹿116", "C03": "鹿116", "C04": "鹿116", "C05": "鹿116", "C06": "鹿116",
+        "C07": "鹿117", "C08": "鹿117", "C09": "鹿117", "C10": "鹿117", "C11": "鹿117", "C12": "鹿117"
+      }
+    },
+    "03-member": {
+      "direction": "member-stage",
+      "batch": "收藏待扩 · 成员与舞台细节（10 项）",
+      "code_to_card": {
+        "M01": "鹿106", "M04": "鹿106", "M05": "鹿106",
+        "M06": "鹿107", "M07": "鹿107", "M08": "鹿107",
+        "M02": "鹿108", "M03": "鹿108", "M09": "鹿108", "M10": "鹿108"
+      }
+    },
+    "04-anim": {
+      "direction": "live-anim",
+      "batch": "收藏待扩 · 会动舞台新场景（12 项）",
+      "code_to_card": {
+        "A01": "鹿109", "A02": "鹿109", "A04": "鹿109", "A07": "鹿109",
+        "A03": "鹿110", "A05": "鹿110", "A06": "鹿110", "A08": "鹿110",
+        "A09": "鹿111", "A10": "鹿111", "A11": "鹿111", "A12": "鹿111"
+      }
+    },
+    "05-emoji": {
+      "direction": "emoji-pack",
+      "batch": "收藏待扩 · Live 梗表情包第 2 弹（8 组灵感 → 12 枚）",
+      "code_to_card": {
+        "E01": "鹿118", "E02": "鹿118", "E03": "鹿118", "E04": "鹿118",
+        "E05": "鹿118", "E06": "鹿118", "E07": "鹿118", "E08": "鹿118"
+      }
+    }
+  },
+  "items": [
+    {"id": "iso-l92-1", "direction": "iso-stage", "batch": "5 场静态箱庭全齐", "title": "月猫 2024 · 春泥棒正面屋子樱花林（箱庭）", "live": "月と猫のダンス 2024", "song": "春泥棒", "tc": "01:09:33", "card": "鹿92", "media": "pixel-iso-20261125/待验收-鹿92/鹿92-1-tsukineko2024-箱庭.png", "alt_media": ["pixel-iso-20261125/待验收-鹿92/鹿92-0-原图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "5场静态齐；合帖文案与发帖图待本人口头拍板后导出"},
+    {"id": "iso-l92-2", "direction": "iso-stage", "batch": "5 场静态箱庭全齐", "title": "月光 2022 · 雨晴る洋楼台阶全景（箱庭）", "live": "月光 2022", "song": "雨晴る", "tc": "00:44:00", "card": "鹿92", "media": "pixel-iso-20261125/待验收-鹿92/鹿92-2-gekkou2022-箱庭.png", "alt_media": ["pixel-iso-20261125/待验收-鹿92/鹿92-0-原图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "5场静态齐；含高台键盘手"},
+    {"id": "iso-l93-1", "direction": "iso-stage", "batch": "5 场静态箱庭全齐", "title": "盗作 2025 · B套祭典屋台与火柱（箱庭）", "live": "盗作 2025", "song": "盗作 / 爆弾魔", "tc": "01:01:41", "card": "鹿93", "media": "pixel-iso2-20261125/待验收-鹿93/鹿93-1-tousaku2025-箱庭.png", "alt_media": ["pixel-iso2-20261125/待验收-鹿93/鹿93-0-原图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "与 鹿96-1 灯光动图配套；静态首发"},
+    {"id": "iso-l93-2", "direction": "iso-stage", "batch": "5 场静态箱庭全齐", "title": "前世 2024 · A套大屏真树舞台（箱庭）", "live": "前世 2024", "song": "靴の花火", "tc": "00:12:30", "card": "鹿93", "media": "pixel-iso2-20261125/待验收-鹿93/鹿93-2-zense2024-箱庭.png", "alt_media": ["pixel-iso2-20261125/待验收-鹿93/鹿93-0-原图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "与 鹿96-2 灯光动图配套；红裙 suis＋4乐手"},
+    {"id": "iso-l95-1", "direction": "iso-stage", "batch": "5 场静态箱庭全齐", "title": "前世 2021 · 八景岛水族馆弧形玻璃（箱庭）", "live": "前世 2021", "song": "冬眠", "tc": "01:05:00", "card": "鹿95", "media": "pixel-iso3-20261125/待验收-鹿95/鹿95-3-zense2021-箱庭.png", "alt_media": ["pixel-iso3-20261125/待验收-鹿95/鹿95-0-原图对照.jpg", "pixel-iso3-20261125/待验收-鹿95/鹿95-0-五场总览.png"], "versions": 1, "disposition": "待排发", "note": "启用 鹿94 前世2021迷你suis；弦乐四重奏暗剪影入bg"},
+    {"id": "iso-l96-1", "direction": "iso-stage", "batch": "箱庭灯光动画版", "title": "盗作 2025 · 箱庭灯光呼吸动画 GIF", "live": "盗作 2025", "song": "盗作 / 爆弾魔", "tc": "01:01:41", "card": "鹿96", "media": "pixel-iso-anim-20261125/待验收-鹿96/鹿96-1-tousaku2025-灯光.gif", "alt_media": ["pixel-iso-anim-20261125/待验收-鹿96/鹿96-1-tousaku2025-灯光.mp4", "pixel-iso-anim-20261125/待验收-鹿96/鹿96-1-tousaku2025-逐帧条.png"], "versions": 1, "disposition": "待排发", "note": "4火柱呼吸＋火星＋9提灯呼吸＋11彩纸微飘"},
+    {"id": "iso-l96-2", "direction": "iso-stage", "batch": "箱庭灯光动画版", "title": "前世 2024 · 箱庭灯光呼吸动画 GIF", "live": "前世 2024", "song": "靴の花火", "tc": "00:12:30", "card": "鹿96", "media": "pixel-iso-anim-20261125/待验收-鹿96/鹿96-2-zense2024-灯光.gif", "alt_media": ["pixel-iso-anim-20261125/待验收-鹿96/鹿96-2-zense2024-灯光.mp4", "pixel-iso-anim-20261125/待验收-鹿96/鹿96-2-zense2024-逐帧条.png"], "versions": 1, "disposition": "待排发", "note": "7蓝灯流光＋20地灯跑马＋7飞鸟扇翅＋夕空渐变缓浪"},
+    {"id": "iso-plan-105-tsukineko", "direction": "iso-stage", "batch": "收藏待扩 · 箱庭补 3 场动图（鹿105）", "title": "月猫 2024 · 春泥棒箱庭补灯光动画", "live": "月と猫のダンス 2024", "song": "春泥棒", "tc": "01:09:33", "card": "", "planned_card": "鹿105", "stage_override": "收藏待排", "media": "pixel-iso-20261125/待验收-鹿92/鹿92-1-tsukineko2024-箱庭.png", "versions": 1, "disposition": "待排发", "note": "拟补落樱飘落＋屋窗暖光呼吸＋顶灯微晃（布局和小人照鹿92不动）"},
+    {"id": "iso-plan-105-gekkou", "direction": "iso-stage", "batch": "收藏待扩 · 箱庭补 3 场动图（鹿105）", "title": "月光 2022 · 雨晴る箱庭补灯光动画", "live": "月光 2022", "song": "雨晴る", "tc": "00:44:00", "card": "", "planned_card": "鹿105", "stage_override": "收藏待排", "media": "pixel-iso-20261125/待验收-鹿92/鹿92-2-gekkou2022-箱庭.png", "versions": 1, "disposition": "待排发", "note": "拟补街灯呼吸＋地灯轻流＋冷蓝顶光微微呼吸（布局和小人照鹿92不动）"},
+    {"id": "iso-plan-105-zense2021", "direction": "iso-stage", "batch": "收藏待扩 · 箱庭补 3 场动图（鹿105）", "title": "前世 2021 · 水族馆箱庭补灯光动画", "live": "前世 2021", "song": "冬眠", "tc": "01:05:00", "card": "", "planned_card": "鹿105", "stage_override": "收藏待排", "media": "pixel-iso3-20261125/待验收-鹿95/鹿95-3-zense2021-箱庭.png", "versions": 1, "disposition": "待排发", "note": "拟补水族箱水波光影＋鱼群慢游＋泡泡上升（布局和小人照鹿95不动）"},
+
+    {"id": "rpg-l80-1", "direction": "fake-rpg", "batch": "第1组 · 4 场总存档页（鹿80）", "title": "4 场精选合辑セーブ画面", "live": "月光2022 / 前世2024 / 月猫2024 / 盗作2025", "song": "雨とカプチーノ / 靴の花火 / ブレーメン / 春ひさぎ", "tc": "总存档", "card": "鹿80", "media": "pixel-rpg-live-20261124/待验收-鹿80/鹿80-1-セーブ.png", "alt_media": ["pixel-rpg-live-20261124/待验收-鹿80/鹿80-0-缩略图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "4 格 72×44 舞台缩略图＋对应场次小人，可作 RPG 合帖封面"},
+    {"id": "rpg-l83-1", "direction": "fake-rpg", "batch": "第2组 · 会話画面 Vol.1（鹿83 · 4张）", "title": "月光 2022 · パレード 会話画面", "live": "月光 2022", "song": "パレード", "tc": "00:55:12", "card": "鹿83", "media": "pixel-rpg-talk-20261125/待验收-鹿83/鹿83-1-月光-会話.png", "alt_media": ["pixel-rpg-talk-20261125/待验收-鹿83/鹿83-0-原图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "dress＋kitani；台词官网核验通过"},
+    {"id": "rpg-l83-2", "direction": "fake-rpg", "batch": "第2组 · 会話画面 Vol.1（鹿83 · 4张）", "title": "前世 2024 · 春泥棒 会話画面", "live": "前世 2024", "song": "春泥棒", "tc": "01:15:24", "card": "鹿83", "media": "pixel-rpg-talk-20261125/待验收-鹿83/鹿83-2-前世-会話.png", "alt_media": ["pixel-rpg-talk-20261125/待验收-鹿83/鹿83-0-原图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "下半场 white 白裙＋n-buna 同框"},
+    {"id": "rpg-l83-3", "direction": "fake-rpg", "batch": "第2组 · 会話画面 Vol.1（鹿83 · 4张）", "title": "月猫 2024 · 斜陽 会話画面", "live": "月と猫のダンス 2024", "song": "斜陽", "tc": "00:56:46", "card": "鹿83", "media": "pixel-rpg-talk-20261125/待验收-鹿83/鹿83-3-月と猫-会話.png", "alt_media": ["pixel-rpg-talk-20261125/待验收-鹿83/鹿83-0-原图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "下半场 blouse 奶白衬衫独唱"},
+    {"id": "rpg-l83-4", "direction": "fake-rpg", "batch": "第2组 · 会話画面 Vol.1（鹿83 · 4张）", "title": "盗作 2025 · 嘘月 会話画面", "live": "盗作 2025", "song": "嘘月", "tc": "00:51:29", "card": "鹿83", "media": "pixel-rpg-talk-20261125/待验收-鹿83/鹿83-4-盗作-会話.png", "alt_media": ["pixel-rpg-talk-20261125/待验收-鹿83/鹿83-0-原图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "下半场 haori 梅紫长袍＋n-buna"},
+    {"id": "rpg-l84-1", "direction": "fake-rpg", "batch": "第3组 · 单场存档页（鹿84＋鹿87 · 4张）", "title": "月光 2022 · 单场 4 格セーブ", "live": "月光 2022", "song": "夕凪 / 夜紛い / パレード / 憂一乗", "tc": "单场存档", "card": "鹿84", "media": "pixel-rpg-save-solo-20261125/待验收-鹿84/鹿84-1-月光-セーブ.png", "alt_media": ["pixel-rpg-save-solo-20261125/待验收-鹿84/鹿84-0-月光对照.jpg"], "versions": 1, "disposition": "待排发", "note": "4 格全 dress，已过"},
+    {"id": "rpg-l84-2", "direction": "fake-rpg", "batch": "第3组 · 单场存档页（鹿84＋鹿87 · 4张）", "title": "盗作 2025 · 单场 4 格セーブ", "live": "盗作 2025", "song": "春ひさぎ / レプリカント / 盗作 / 爆弾魔", "tc": "单场存档", "card": "鹿84", "media": "pixel-rpg-save-solo-20261125/待验收-鹿84/鹿84-2-盗作-セーブ.png", "alt_media": ["pixel-rpg-save-solo-20261125/待验收-鹿84/鹿84-0-盗作对照.jpg"], "versions": 1, "disposition": "待排发", "note": "上半场 lace×2＋下半场 haori×2"},
+    {"id": "rpg-l87-1", "direction": "fake-rpg", "batch": "第3组 · 单场存档页（鹿84＋鹿87 · 4张）", "title": "前世 2024 · 单场 4 格セーブ", "live": "前世 2024", "song": "ルバート / ただ君に晴れ / 忘れてください / 花に亡霊", "tc": "单场存档", "card": "鹿87", "media": "pixel-rpg-save-solo2-20261125/待验收-鹿87/鹿87-1-zense2024-セーブ.png", "alt_media": ["pixel-rpg-save-solo2-20261125/待验收-鹿87/鹿87-0-zense2024对照.jpg"], "versions": 1, "disposition": "待排发", "note": "红裙×2＋白裙×2，时间码均对上半场"},
+    {"id": "rpg-l87-2", "direction": "fake-rpg", "batch": "第3组 · 单场存档页（鹿84＋鹿87 · 4张）", "title": "月猫 2024 · 单场 4 格セーブ", "live": "月と猫のダンス 2024", "song": "さよならモルテン / 雨とカプチーノ / 左右盲 / 春泥棒", "tc": "单场存档", "card": "鹿87", "media": "pixel-rpg-save-solo2-20261125/待验收-鹿87/鹿87-2-tsukineko2024-セーブ.png", "alt_media": ["pixel-rpg-save-solo2-20261125/待验收-鹿87/鹿87-0-tsukineko2024对照.jpg"], "versions": 1, "disposition": "待排发", "note": "suit×2＋blouse×2，终核过"},
+    {"id": "rpg-l88-1", "direction": "fake-rpg", "batch": "第4组 · 5 场角色ステータス（鹿88 · 5张）", "title": "前世 2021 · 水底に唄う者 ステータス", "live": "前世 2021", "song": "ノーチラス / 冬眠 / 思想犯 / 花人局", "tc": "角色面板", "card": "鹿88", "media": "pixel-rpg-status-20261125/待验收-鹿88/鹿88-1-zense2021-ステータス.png", "alt_media": ["pixel-rpg-status-20261125/待验收-鹿88/鹿88-0-原图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "Lv21 宝蓝泡袖长裙＋特写半身"},
+    {"id": "rpg-l88-2", "direction": "fake-rpg", "batch": "第4组 · 5 场角色ステータス（鹿88 · 5张）", "title": "月光 2022 · 街灯の下の歌姫 ステータス", "live": "月光 2022", "song": "六月 / 憂一乗 / 夜紛い / 八月某月明かり", "tc": "角色面板", "card": "鹿88", "media": "pixel-rpg-status-20261125/待验收-鹿88/鹿88-2-gekkou2022-ステータス.png", "alt_media": ["pixel-rpg-status-20261125/待验收-鹿88/鹿88-0-原图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "Lv34 蕾丝长裙＋赤脚"},
+    {"id": "rpg-l88-3", "direction": "fake-rpg", "batch": "第4组 · 5 场角色ステータス（鹿88 · 5张）", "title": "前世 2024 · 前世を歌う者 ステータス", "live": "前世 2024", "song": "負け犬 / ルバート / 靴の花火 / ヒッチコック", "tc": "角色面板", "card": "鹿88", "media": "pixel-rpg-status-20261125/待验收-鹿88/鹿88-3-zense2024-ステータス.png", "alt_media": ["pixel-rpg-status-20261125/待验收-鹿88/鹿88-0-原图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "Lv52 红长裙＋白大蝴蝶结"},
+    {"id": "rpg-l88-4", "direction": "fake-rpg", "batch": "第4组 · 5 场角色ステータス（鹿88 · 5张）", "title": "月猫 2024 · 猫と踊る月の子 ステータス", "live": "月と猫のダンス 2024", "song": "春泥棒 / 斜陽 / 雪国 / いさな", "tc": "角色面板", "card": "鹿88", "media": "pixel-rpg-status-20261125/待验收-鹿88/鹿88-4-tsukineko2024-ステータス.png", "alt_media": ["pixel-rpg-status-20261125/待验收-鹿88/鹿88-0-原图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "Lv58 奶白衬衫＋黑长裙"},
+    {"id": "rpg-l88-5", "direction": "fake-rpg", "batch": "第4组 · 5 场角色ステータス（鹿88 · 5张）", "title": "盗作 2025 · 花を盗む旅芸人 ステータス", "live": "盗作 2025", "song": "嘘月 / 盗作 / 夜行 / 花に亡霊", "tc": "角色面板", "card": "鹿88", "media": "pixel-rpg-status-20261125/待验收-鹿88/鹿88-5-tousaku2025-ステータス.png", "alt_media": ["pixel-rpg-status-20261125/待验收-鹿88/鹿88-0-原图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "Lv71 梅紫广袖长袍"},
+
+    {"id": "mem-l100-1", "direction": "member-stage", "batch": "成员线首批成品（3 张齐）", "title": "月猫 2024 · n-buna 举麦唱《451》（鹿100 终版）", "live": "月と猫のダンス 2024", "song": "451", "tc": "00:25:25", "card": "鹿100", "media": "pixel-451-20261125/待验收-鹿100/鹿100-1-nbuna451.png", "alt_media": ["pixel-451-20261125/待验收-鹿100/鹿100-0-原图对照.jpg", "pixel-451-20261125/待验收-鹿100/鹿100-2-n-buna局部8倍.png"], "versions": 1, "disposition": "待排发", "note": "启用 鹿99 月猫特写×2 终版库重画，替换 鹿98-1"},
+    {"id": "mem-l98-2", "direction": "member-stage", "batch": "成员线首批成品（3 张齐）", "title": "盗作 2025 · 爆弾魔火柱与全乐队 GIF", "live": "盗作 2025", "song": "爆弾魔", "tc": "01:05:41", "card": "鹿98", "media": "pixel-member-20261125/待验收-鹿98/鹿98-2-bakudanma.gif", "alt_media": ["pixel-member-20261125/待验收-鹿98/鹿98-2-bakudanma.mp4", "pixel-member-20261125/待验收-鹿98/鹿98-0-原图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "鹿98 第1版整卡过，和 鹿100／鹿98-3 并入待排发"},
+    {"id": "mem-l98-3", "direction": "member-stage", "batch": "成员线首批成品（3 张齐）", "title": "前世 2021 · CRT 电视与红圆凳", "live": "前世 2021", "song": "ただ君に晴れ", "tc": "00:15:30", "card": "鹿98", "media": "pixel-member-20261125/待验收-鹿98/鹿98-3-crt2021.png", "alt_media": ["pixel-member-20261125/待验收-鹿98/鹿98-0-原图对照.jpg"], "versions": 1, "disposition": "待排发", "note": "鹿98 第1版整卡过，本场独有 CRT 叙事道具"},
+    {"id": "mem-l98-1-old", "direction": "member-stage", "batch": "历史废稿／已被新库替代", "title": "月猫 2024 · 《451》旧版迷你黑豆眼废稿", "live": "月と猫のダンス 2024", "song": "451", "tc": "00:25:25", "card": "鹿98", "media": "pixel-member-20261125/待验收-鹿98/鹿98-1-nbuna451.png", "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "鹿98 终核本人退回（黑豆眼＋左屏红条太规整），已出 鹿99+鹿100 重画替代", "note": "保留作历史对比，不排发"},
+
+    {"id": "anim-l70-01", "direction": "live-anim", "batch": "鹿70 样稿（3 张齐）", "title": "盗作 2025 · 彩纸爆开与屋台（GIF／实况）", "live": "盗作 2025", "song": "盗作", "tc": "01:01:41", "card": "鹿70", "media": "pixel-live-anim-20261123/out/01-盗作2025-彩纸爆开与屋台.gif", "alt_media": ["pixel-live-anim-20261123/out/01-盗作2025-彩纸爆开与屋台.mp4"], "versions": 1, "disposition": "待排发", "note": "第1版即过，含完整 GIF/MP4/苹果实况 .JPG+.MOV"},
+    {"id": "anim-l70-02", "direction": "live-anim", "batch": "鹿70 样稿（3 张齐）", "title": "前世 2024 · 花に亡霊满屏烟花（GIF／实况）", "live": "前世 2024", "song": "花に亡霊", "tc": "00:40:13", "card": "鹿70", "media": "pixel-live-anim-20261123/out/02-前世2024-花に亡霊满屏烟花.gif", "alt_media": ["pixel-live-anim-20261123/out/02-前世2024-花に亡霊满屏烟花.mp4"], "versions": 4, "disposition": "待排发", "note": "第4版过：前排单手斜握麦特写 suis＋三层景深＋满屏烟花"},
+    {"id": "anim-l70-03", "direction": "live-anim", "batch": "鹿70 样稿（3 张齐）", "title": "前世 2024 · 春泥棒红花树大屏与洋楼（GIF／实况）", "live": "前世 2024", "song": "春泥棒", "tc": "01:15:24", "card": "鹿70", "media": "pixel-live-anim-20261123/out/03-前世2024-春泥棒红花树大屏与洋楼.gif", "alt_media": ["pixel-live-anim-20261123/out/03-前世2024-春泥棒红花树大屏与洋楼.mp4"], "versions": 2, "disposition": "待排发", "note": "第2版过，含4条竖排日文歌词飘花动效"},
+
+    {"id": "emo-v2-01", "direction": "emoji-pack", "batch": "第1弹 v2 合版 12 枚（已发小红书／抖音）", "title": "01-好耶（v2 合版·原版保留）", "live": "前世 2024", "song": "suis 表情包", "tc": "01/12", "card": "鹿58", "media": "pixel-emoji-20261121/定稿v2/有字/01-好耶.png", "versions": 6, "disposition": "已发布", "ledger_match": "鹿58-表情包", "post_folder": "~/Pictures/发布/20261121-夜鹿表情包/", "note": "v2 合版保留第1版原稿（暗码 581/582）"},
+    {"id": "emo-v2-02", "direction": "emoji-pack", "batch": "第1弹 v2 合版 12 枚（已发小红书／抖音）", "title": "02-呜呜呜（v2 合版·新版 adopted）", "live": "前世 2024", "song": "suis 表情包", "tc": "02/12", "card": "鹿58", "media": "pixel-emoji-20261121/定稿v2/有字/02-呜呜呜.png", "versions": 6, "disposition": "已发布", "ledger_match": "鹿58-表情包", "post_folder": "~/Pictures/发布/20261121-夜鹿表情包/", "note": "采用第6版优化精修"},
+    {"id": "emo-v2-03", "direction": "emoji-pack", "batch": "第1弹 v2 合版 12 枚（已发小红书／抖音）", "title": "03-晚安（v2 合版·新版 adopted）", "live": "前世 2024", "song": "suis 表情包", "tc": "03/12", "card": "鹿58", "media": "pixel-emoji-20261121/定稿v2/有字/03-晚安.png", "versions": 6, "disposition": "已发布", "ledger_match": "鹿58-表情包", "post_folder": "~/Pictures/发布/20261121-夜鹿表情包/", "note": "采用第6版优化精修"},
+    {"id": "emo-v2-04", "direction": "emoji-pack", "batch": "第1弹 v2 合版 12 枚（已发小红书／抖音）", "title": "04-早安（v2 合版·原版保留）", "live": "前世 2024", "song": "suis 表情包", "tc": "04/12", "card": "鹿58", "media": "pixel-emoji-20261121/定稿v2/有字/04-早安.png", "versions": 6, "disposition": "已发布", "ledger_match": "鹿58-表情包", "post_folder": "~/Pictures/发布/20261121-夜鹿表情包/", "note": "v2 合版保留第1版原稿"},
+    {"id": "emo-v2-05", "direction": "emoji-pack", "batch": "第1弹 v2 合版 12 枚（已发小红书／抖音）", "title": "05-收到（v2 合版·新版 adopted）", "live": "前世 2024", "song": "suis 表情包", "tc": "05/12", "card": "鹿58", "media": "pixel-emoji-20261121/定稿v2/有字/05-收到.png", "versions": 6, "disposition": "已发布", "ledger_match": "鹿58-表情包", "post_folder": "~/Pictures/发布/20261121-夜鹿表情包/", "note": "采用第6版优化精修"},
+    {"id": "emo-v2-06", "direction": "emoji-pack", "batch": "第1弹 v2 合版 12 枚（已发小红书／抖音）", "title": "06-谢谢（v2 合版·新版 adopted）", "live": "前世 2024", "song": "suis 表情包", "tc": "06/12", "card": "鹿58", "media": "pixel-emoji-20261121/定稿v2/有字/06-谢谢.png", "versions": 6, "disposition": "已发布", "ledger_match": "鹿58-表情包", "post_folder": "~/Pictures/发布/20261121-夜鹿表情包/", "note": "采用第6版优化精修"},
+    {"id": "emo-v2-07", "direction": "emoji-pack", "batch": "第1弹 v2 合版 12 枚（已发小红书／抖音）", "title": "07-问号（v2 合版·新版 adopted）", "live": "前世 2024", "song": "suis 表情包", "tc": "07/12", "card": "鹿58", "media": "pixel-emoji-20261121/定稿v2/有字/07-问号.png", "versions": 6, "disposition": "已发布", "ledger_match": "鹿58-表情包", "post_folder": "~/Pictures/发布/20261121-夜鹿表情包/", "note": "采用第6版优化精修"},
+    {"id": "emo-v2-08", "direction": "emoji-pack", "batch": "第1弹 v2 合版 12 枚（已发小红书／抖音）", "title": "08-生气（v2 合版·原版保留）", "live": "前世 2024", "song": "suis 表情包", "tc": "08/12", "card": "鹿58", "media": "pixel-emoji-20261121/定稿v2/有字/08-生气.png", "versions": 6, "disposition": "已发布", "ledger_match": "鹿58-表情包", "post_folder": "~/Pictures/发布/20261121-夜鹿表情包/", "note": "保留原版半眯浅眸版"},
+    {"id": "emo-v2-09", "direction": "emoji-pack", "batch": "第1弹 v2 合版 12 枚（已发小红书／抖音）", "title": "09-害羞（v2 合版·新版 adopted）", "live": "前世 2024", "song": "suis 表情包", "tc": "09/12", "card": "鹿58", "media": "pixel-emoji-20261121/定稿v2/有字/09-害羞.png", "versions": 6, "disposition": "已发布", "ledger_match": "鹿58-表情包", "post_folder": "~/Pictures/发布/20261121-夜鹿表情包/", "note": "采用第6版优化精修"},
+    {"id": "emo-v2-10", "direction": "emoji-pack", "batch": "第1弹 v2 合版 12 枚（已发小红书／抖音）", "title": "10-震惊（v2 合版·原版保留）", "live": "前世 2024", "song": "suis 表情包", "tc": "10/12", "card": "鹿58", "media": "pixel-emoji-20261121/定稿v2/有字/10-震惊.png", "versions": 6, "disposition": "已发布", "ledger_match": "鹿58-表情包", "post_folder": "~/Pictures/发布/20261121-夜鹿表情包/", "note": "v2 合版保留第1版原稿"},
+    {"id": "emo-v2-11", "direction": "emoji-pack", "batch": "第1弹 v2 合版 12 枚（已发小红书／抖音）", "title": "11-唱歌（v2 合版·新版 adopted）", "live": "前世 2024", "song": "suis 表情包", "tc": "11/12", "card": "鹿58", "media": "pixel-emoji-20261121/定稿v2/有字/11-唱歌.png", "versions": 6, "disposition": "已发布", "ledger_match": "鹿58-表情包", "post_folder": "~/Pictures/发布/20261121-夜鹿表情包/", "note": "采用第6版优化精修"},
+    {"id": "emo-v2-12", "direction": "emoji-pack", "batch": "第1弹 v2 合版 12 枚（已发小红书／抖音）", "title": "12-比心（v2 合版·新版 adopted）", "live": "前世 2024", "song": "suis 表情包", "tc": "12/12", "card": "鹿58", "media": "pixel-emoji-20261121/定稿v2/有字/12-比心.png", "versions": 6, "disposition": "已发布", "ledger_match": "鹿58-表情包", "post_folder": "~/Pictures/发布/20261121-夜鹿表情包/", "note": "采用第6版优化精修"},
+    {"id": "emo-gif-01", "direction": "emoji-pack", "batch": "正式动态表情包（4 枚暂存未发）", "title": "01-好耶（480×480 透明动态 GIF）", "live": "前世 2024", "song": "suis 表情包动图", "tc": "GIF 1/4", "card": "鹿58", "media": "pixel-emoji-20261121/定稿/动图/01-好耶.gif", "versions": 1, "disposition": "备选留存", "note": "11-22 本人定算正式动态表情包先存着，待补齐其余或决定发法"},
+    {"id": "emo-gif-02", "direction": "emoji-pack", "batch": "正式动态表情包（4 枚暂存未发）", "title": "02-呜呜呜（480×480 透明动态 GIF）", "live": "前世 2024", "song": "suis 表情包动图", "tc": "GIF 2/4", "card": "鹿58", "media": "pixel-emoji-20261121/定稿/动图/02-呜呜呜.gif", "versions": 1, "disposition": "备选留存", "note": "480×480 透明 GIF，暂存未发"},
+    {"id": "emo-gif-03", "direction": "emoji-pack", "batch": "正式动态表情包（4 枚暂存未发）", "title": "03-晚安（480×480 透明动态 GIF）", "live": "前世 2024", "song": "suis 表情包动图", "tc": "GIF 3/4", "card": "鹿58", "media": "pixel-emoji-20261121/定稿/动图/03-晚安.gif", "versions": 1, "disposition": "备选留存", "note": "480×480 透明 GIF，暂存未发"},
+    {"id": "emo-gif-11", "direction": "emoji-pack", "batch": "正式动态表情包（4 枚暂存未发）", "title": "11-唱歌（480×480 透明动态 GIF）", "live": "前世 2024", "song": "suis 表情包动图", "tc": "GIF 4/4", "card": "鹿58", "media": "pixel-emoji-20261121/定稿/动图/11-唱歌.gif", "versions": 1, "disposition": "备选留存", "note": "480×480 透明 GIF，暂存未发"},
+
+    {"id": "tarot-00-back", "direction": "pixel-tarot", "batch": "第1批样稿（鹿76 · 牌背＋3 张）", "title": "统一牌背（月×鹿角星盘 · 180°中心对称）", "live": "全套通用", "song": "全套统一牌背", "tc": "00/22", "card": "鹿76", "media": "pixel-tarot-20261124/发帖原图/01-牌背.png", "versions": 1, "disposition": "待排发", "note": "144×216 B尺寸；旧11张已出帖夹，待按23张整套决定分上/下或全发并重导出"},
+    {"id": "tarot-00-fool", "direction": "pixel-tarot", "batch": "第2批补牌（鹿78 · 6 张）", "title": "0 愚者 THE FOOL ×《ブレーメン》", "live": "夜鹿作品", "song": "ブレーメン", "tc": "0/XXII", "card": "鹿78", "media": "pixel-tarot-20261124/待验收-鹿78/鹿78-05_fool-愚者.png", "versions": 1, "disposition": "待排发", "note": "强配曲；放下思虑踏上旅途"},
+    {"id": "tarot-01-magician", "direction": "pixel-tarot", "batch": "第3批补牌（鹿85 · 6 张）", "title": "I 魔术师 THE MAGICIAN ×《テレパス》", "live": "夜鹿作品", "song": "テレパス", "tc": "I/XXII", "card": "鹿85", "media": "pixel-tarot-20261124/待验收-鹿85/鹿85-11_magician-魔术师.png", "versions": 1, "disposition": "待排发", "note": "强配曲；38色无人物静物构图"},
+    {"id": "tarot-02-priestess", "direction": "pixel-tarot", "batch": "第2批补牌（鹿78 · 6 张）", "title": "II 女祭司 HIGH PRIESTESS ×《嘘月》", "live": "前世 2024B", "song": "嘘月", "tc": "II/XXII", "card": "鹿78", "media": "pixel-tarot-20261124/待验收-鹿78/鹿78-06_priestess-女祭司.png", "versions": 1, "disposition": "待排发", "note": "中配曲；原样复用前世2024白裙特写库"},
+    {"id": "tarot-03-empress", "direction": "pixel-tarot", "batch": "第3批补牌（鹿85 · 6 张）", "title": "III 女帝 THE EMPRESS ×《忘れてください》", "live": "夜鹿作品", "song": "忘れてください", "tc": "III/XXII", "card": "鹿85", "media": "pixel-tarot-20261124/待验收-鹿85/鹿85-12_empress-女帝.png", "versions": 1, "disposition": "待排发", "note": "强配曲；庭院滋养与果实成长"},
+    {"id": "tarot-04-emperor", "direction": "pixel-tarot", "batch": "第4批收官（鹿86 · 6 张）", "title": "IV 皇帝 THE EMPEROR ×《神様のダンス》", "live": "夜鹿作品", "song": "神様のダンス", "tc": "IV/XXII", "card": "鹿86", "media": "pixel-tarot-20261124/待验收-鹿86/鹿86-17_emperor-皇帝.png", "versions": 1, "disposition": "待排发", "note": "中配曲（反面诠释拒绝外部权威）；37色"},
+    {"id": "tarot-05-hierophant", "direction": "pixel-tarot", "batch": "第3批补牌（鹿85 · 6 张）", "title": "V 教皇 THE HIEROPHANT ×《ヒッチコック》", "live": "夜鹿作品", "song": "ヒッチコック", "tc": "V/XXII", "card": "鹿85", "media": "pixel-tarot-20261124/待验收-鹿85/鹿85-13_hierophant-教皇.png", "versions": 1, "disposition": "待排发", "note": "强配曲；42色"},
+    {"id": "tarot-06-lovers", "direction": "pixel-tarot", "batch": "第2批补牌（鹿78 · 6 张）", "title": "VI 恋人 THE LOVERS ×《雨とカプチーノ》", "live": "夜鹿作品", "song": "雨とカプチーノ", "tc": "VI/XXII", "card": "鹿78", "media": "pixel-tarot-20261124/待验收-鹿78/鹿78-07_lovers-恋人.png", "versions": 1, "disposition": "待排发", "note": "中配曲"},
+    {"id": "tarot-07-chariot", "direction": "pixel-tarot", "batch": "第2批补牌（鹿78 · 6 张）", "title": "VII 战车 THE CHARIOT ×《夜行》", "live": "夜鹿作品", "song": "夜行", "tc": "VII/XXII", "card": "鹿78", "media": "pixel-tarot-20261124/待验收-鹿78/鹿78-08_chariot-战车.png", "versions": 1, "disposition": "待排发", "note": "中配曲；鹿81终核拍板保留《夜行》"},
+    {"id": "tarot-08-strength", "direction": "pixel-tarot", "batch": "第3批补牌（鹿85 · 6 张）", "title": "VIII 力量 STRENGTH ×《アルジャーノン》", "live": "夜鹿作品", "song": "アルジャーノン", "tc": "VIII/XXII", "card": "鹿85", "media": "pixel-tarot-20261124/待验收-鹿85/鹿85-14_strength-力量.png", "versions": 1, "disposition": "待排发", "note": "强配曲；迷宫中的缓慢成长，40色"},
+    {"id": "tarot-09-hermit", "direction": "pixel-tarot", "batch": "第2批补牌（鹿78 · 6 张）", "title": "IX 隐者 THE HERMIT ×《六月は雨上がりの街を書く》", "live": "夜鹿作品", "song": "六月は雨上がりの街を書く", "tc": "IX/XXII", "card": "鹿78", "media": "pixel-tarot-20261124/待验收-鹿78/鹿78-09_hermit-隐者.png", "versions": 1, "disposition": "待排发", "note": "鹿81已改强配曲《六月は雨上がりの街を書く》，不用重画"},
+    {"id": "tarot-10-wheel", "direction": "pixel-tarot", "batch": "第1批样稿（鹿76 · 牌背＋3 张）", "title": "X 命运之轮 WHEEL OF FORTUNE ×《春泥棒》", "live": "夜鹿作品", "song": "春泥棒", "tc": "X/XXII", "card": "鹿76", "media": "pixel-tarot-20261124/发帖原图/07-X命运之轮.png", "versions": 2, "disposition": "待排发", "note": "强配曲；第2版樱枝绕轮过"},
+    {"id": "tarot-11-justice", "direction": "pixel-tarot", "batch": "第3批补牌（鹿85 · 6 张）", "title": "XI 正义 JUSTICE ×《強盗と花束》", "live": "夜鹿作品", "song": "強盗と花束", "tc": "XI/XXII", "card": "鹿85", "media": "pixel-tarot-20261124/待验收-鹿85/鹿85-15_justice-正义.png", "versions": 1, "disposition": "待排发", "note": "强配曲；49色"},
+    {"id": "tarot-12-hangedman", "direction": "pixel-tarot", "batch": "第3批补牌（鹿85 · 6 张）", "title": "XII 倒吊人 THE HANGED MAN ×《チノカテ》", "live": "夜鹿作品", "song": "チノカテ", "tc": "XII/XXII", "card": "鹿85", "media": "pixel-tarot-20261124/待验收-鹿85/鹿85-16_hangedman-倒吊人.png", "versions": 1, "disposition": "待排发", "note": "强配曲；55色"},
+    {"id": "tarot-13-death", "direction": "pixel-tarot", "batch": "第4批收官（鹿86 · 6 张）", "title": "XIII 死神 DEATH ×《雲と幽霊》", "live": "夜鹿作品", "song": "雲と幽霊", "tc": "XIII/XXII", "card": "鹿86", "media": "pixel-tarot-20261124/待验收-鹿86/鹿86-18_death-死神.png", "versions": 1, "disposition": "待排发", "note": "强配曲；44色"},
+    {"id": "tarot-14-temperance", "direction": "pixel-tarot", "batch": "第4批收官（鹿86 · 6 张）", "title": "XIV 节制 TEMPERANCE ×《風を食む》", "live": "夜鹿作品", "song": "風を食む", "tc": "XIV/XXII", "card": "鹿86", "media": "pixel-tarot-20261124/待验收-鹿86/鹿86-19_temperance-节制.png", "versions": 1, "disposition": "待排发", "note": "中配曲；39色"},
+    {"id": "tarot-15-devil", "direction": "pixel-tarot", "batch": "第4批收官（鹿86 · 6 张）", "title": "XV 恶魔 THE DEVIL ×《昼鳶》", "live": "夜鹿作品", "song": "昼鳶", "tc": "XV/XXII", "card": "鹿86", "media": "pixel-tarot-20261124/待验收-鹿86/鹿86-20_devil-恶魔.png", "versions": 1, "disposition": "待排发", "note": "强配曲；34色"},
+    {"id": "tarot-16-tower", "direction": "pixel-tarot", "batch": "单卡补齐（鹿77 · 1 张）", "title": "XVI 高塔 THE TOWER ×《盗作》", "live": "夜鹿作品", "song": "盗作", "tc": "XVI/XXII", "card": "鹿77", "media": "pixel-tarot-20261124/待验收-鹿77/鹿77-01-高塔-单张.png", "versions": 1, "disposition": "待排发", "note": "中配曲；两侧掉落乐谱纸与磁带，无人构图"},
+    {"id": "tarot-17-star", "direction": "pixel-tarot", "batch": "第2批补牌（鹿78 · 6 张）", "title": "XVII 星星 THE STAR ×《アポリア》", "live": "夜鹿作品", "song": "アポリア", "tc": "XVII/XXII", "card": "鹿78", "media": "pixel-tarot-20261124/待验收-鹿78/鹿78-10_star-星星.png", "versions": 1, "disposition": "待排发", "note": "鹿81已改强配曲《アポリア》，星空水面符号高度相通"},
+    {"id": "tarot-18-moon", "direction": "pixel-tarot", "batch": "第1批样稿（鹿76 · 牌背＋3 张）", "title": "XVIII 月亮 THE MOON ×《月に吠える》", "live": "夜鹿作品", "song": "月に吠える", "tc": "XVIII/XXII", "card": "鹿76", "media": "pixel-tarot-20261124/发帖原图/10-XVIII月亮.png", "versions": 9, "disposition": "待排发", "note": "强配曲；狼参考图考据重画至第9版去红嘴缝通过"},
+    {"id": "tarot-19-sun", "direction": "pixel-tarot", "batch": "第1批样稿（鹿76 · 牌背＋3 张）", "title": "XIX 太阳 THE SUN ×《晴る》", "live": "前世 2024A", "song": "晴る", "tc": "XIX/XXII", "card": "鹿76", "media": "pixel-tarot-20261124/发帖原图/11-XIX太阳.png", "versions": 2, "disposition": "待排发", "note": "强配曲；前世红裙特写 suis"},
+    {"id": "tarot-20-judgement", "direction": "pixel-tarot", "batch": "第4批收官（鹿86 · 6 张）", "title": "XX 审判 JUDGEMENT ×《ノーチラス》", "live": "夜鹿作品", "song": "ノーチラス", "tc": "XX/XXII", "card": "鹿86", "media": "pixel-tarot-20261124/待验收-鹿86/鹿86-21_judgement-审判.png", "versions": 1, "disposition": "待排发", "note": "强配曲；41色"},
+    {"id": "tarot-21-world", "direction": "pixel-tarot", "batch": "第4批收官（鹿86 · 6 张）", "title": "XXI 世界 THE WORLD ×《エイミー》", "live": "夜鹿作品", "song": "エイミー", "tc": "XXI/XXII", "card": "鹿86", "media": "pixel-tarot-20261124/待验收-鹿86/鹿86-22_world-世界.png", "versions": 1, "disposition": "待排发", "note": "强配曲；42色；23张至此满编"},
+
+    {"id": "spot-01", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "01-镰仓高校前道口 · 江之岛与江之电（夏）", "live": "前世 2024A", "song": "圣地巡礼", "tc": "夏 · 镰仓", "card": "鹿74", "media": "pixel-spots-20261124/out2/01-镰仓高校前道口-江之岛与江之电-suis全身眨眼.png", "versions": 7, "disposition": "待排发", "note": "第7版过：特写库红裙全身眨眼"},
+    {"id": "spot-02", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "02-雨晴海岸 · 女岩与立山雪峰（夏）", "live": "前世 2024B", "song": "北陆圣地", "tc": "夏 · 富山", "card": "鹿74", "media": "pixel-spots-20261124/out2/02-雨晴海岸-女岩与立山雪峰.png", "versions": 3, "disposition": "待排发", "note": "第3版过"},
+    {"id": "spot-03", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "03-宫岛大鸟居 · 落日（夏末）", "live": "前世 2024B", "song": "严格取景参考模板", "tc": "夏末 · 广岛", "card": "鹿74", "media": "pixel-spots-20261124/out2/03-宫岛大鸟居-落日.png", "versions": 3, "disposition": "待排发", "note": "第3版过；本人评价取景最好的一张"},
+    {"id": "spot-04", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "04-富士山 · 春晨湖畔樱花（春）", "live": "前世 2024B", "song": "原创景点", "tc": "春 · 富士", "card": "鹿79", "media": "pixel-spots-20261124/out3/04-富士山-春晨湖畔樱花.png", "versions": 2, "disposition": "待排发", "note": "第2轮去掉忠灵塔改正面富士山＋正面 suis 通过"},
+    {"id": "spot-05", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "05-金阁寺 · 镜湖池初秋（秋）", "live": "前世 2024A", "song": "原创景点", "tc": "秋 · 京都", "card": "鹿79", "media": "pixel-spots-20261124/out3/05-金阁寺-镜湖池初秋.png", "versions": 1, "disposition": "待排发", "note": "红裙 suis 正面，第1版过"},
+    {"id": "spot-06", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "06-小樽运河 · 冬夜煤气灯（冬）", "live": "前世 2024B", "song": "原创景点", "tc": "冬 · 小樽", "card": "鹿79", "media": "pixel-spots-20261124/out3/06-小樽运河-冬夜煤气灯.png", "versions": 1, "disposition": "待排发", "note": "白裙 suis 正面，第1版过"},
+    {"id": "spot-04-old", "direction": "japan-spots", "batch": "返修淘汰旧稿", "title": "04-忠灵塔与富士山（初版背影废稿）", "live": "前世 2024B", "song": "原创景点", "tc": "春 · 旧版", "card": "鹿79", "media": "pixel-spots-20261124/out3/04-忠灵塔与富士山-春晨樱花.png", "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "鹿79第1轮退回：背影难看、忠灵塔不认识，已改富士山正面", "note": "立下「原创场景 suis 一律正面」铁律的起因"},
+
+    {"id": "ava-01", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "01-前世2024 · 红裙抬手闭眼唱 · 白星光", "live": "前世 2024A", "song": "头像 01/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/01-前世2024-红裙-抬手闭眼唱-白星光.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "含暗码 711/712；待本人定何时发"},
+    {"id": "ava-02", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "02-盗作2025 · 紫羽织握麦睁眼 · 火柱提灯", "live": "盗作 2025B", "song": "头像 02/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/02-盗作2025-紫羽织-握麦睁眼-火柱提灯.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "1040×1040 含暗码版本在发布夹"},
+    {"id": "ava-03", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "03-月猫2024 · 奶白衬衫握麦 · 橙色光束", "live": "月と猫のダンス 2024B", "song": "头像 03/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/03-月猫2024-奶白衬衫-握麦-橙色光束.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "已入发帖夹"},
+    {"id": "ava-04", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "04-月光2022 · 白蕾丝裙双手握麦 · 聚光", "live": "月光 2022", "song": "头像 04/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/04-月光2022-白蕾丝裙-双手握麦-聚光.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "已入发帖夹"},
+    {"id": "ava-05", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "05-前世2021 · 宝蓝长裙握麦 · 光柱", "live": "前世 2021", "song": "头像 05/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/05-前世2021-宝蓝长裙-握麦-光柱.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "已入发帖夹"},
+    {"id": "ava-06", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "06-前世2024A · 红裙微笑举手 · 春泥棒红花树", "live": "前世 2024A", "song": "头像 06/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/06-前世2024A-红裙-微笑举手-春泥棒红花树.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "已入发帖夹"},
+    {"id": "ava-07", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "07-前世2024A · 红裙眨眼侧麦 · 满屏烟花夜空", "live": "前世 2024A", "song": "头像 07/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/07-前世2024A-红裙-眨眼侧麦-满屏烟花夜空.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "已入发帖夹"},
+    {"id": "ava-08", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "08-前世2024B · 白纱裙闭眼垂手 · 嘘月满月夜海", "live": "前世 2024B", "song": "头像 08/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/08-前世2024B-白纱裙-闭眼垂手-嘘月满月夜海.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "已入发帖夹"},
+    {"id": "ava-09", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "09-前世2024B · 白纱裙呆萌握麦 · 青空蓝天白云", "live": "前世 2024B", "song": "头像 09/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/09-前世2024B-白纱裙-呆萌握麦-青空蓝天白云.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "已入发帖夹"},
+    {"id": "ava-10", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "10-月猫2024A · 深色西装眨眼握麦 · 暖橙画笔斜光", "live": "月と猫のダンス 2024A", "song": "头像 10/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/10-月猫2024A-深色西装-眨眼握麦-暖橙画笔斜光.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "已入发帖夹"},
+    {"id": "ava-11", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "11-月猫2024B · 奶白衬衫微笑举手 · 粉紫樱花大屏", "live": "月と猫のダンス 2024B", "song": "头像 11/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/11-月猫2024B-奶白衬衫-微笑举手-粉紫樱花大屏.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "已入发帖夹"},
+    {"id": "ava-12", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "12-月光2022 · 白蕾丝裙微笑握麦 · 大新月星空", "live": "月光 2022", "song": "头像 12/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/12-月光2022-白蕾丝裙-微笑握麦-大新月星空.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "已入发帖夹"},
+    {"id": "ava-13", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "13-前世2021 · 宝蓝长裙闭眼握麦 · 水族馆气泡", "live": "前世 2021", "song": "头像 13/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/13-前世2021-宝蓝长裙-闭眼握麦-水族馆蓝光气泡.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "已入发帖夹"},
+    {"id": "ava-14", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "14-盗作2025A · 黑蕾丝礼服闭眼握麦 · 洋红霓虹光幕", "live": "盗作 2025A", "song": "头像 14/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/14-盗作2025A-黑蕾丝礼服-闭眼握麦-洋红霓虹光幕.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "已入发帖夹"},
+    {"id": "ava-15", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "15-盗作2025B · 梅紫长袍微笑举手 · 彩纸蓝光提灯", "live": "盗作 2025B", "song": "头像 15/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/15-盗作2025B-梅紫长袍-微笑举手-彩纸蓝光提灯.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "已入发帖夹"},
+    {"id": "ava-a03-drop", "direction": "suis-avatars", "batch": "终核淘汰项", "title": "A03-盗作2025 · 梅紫长袍握麦 · 新火柱（删去）", "live": "盗作 2025B", "song": "头像淘汰项", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/out/A03-盗作2025-梅紫长袍-握麦-新火柱.png", "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "鹿71 终核本人删去 A03，保留其余 15 张进入定稿与发帖夹", "note": "仅在 out/ 留档"},
+
+    {"id": "cdj-1", "direction": "cdj-event", "batch": "CDJ 26/27 节点 3 帖", "title": "帖1 · 12-23 倒计时 3 天", "live": "CDJ 26/27", "song": "时隔三年重返 CDJ", "tc": "2026-12-23", "card": "鹿91", "media": "pixel-cdj-20261125/待验收-鹿91/鹿91-1-倒计时.png", "versions": 1, "disposition": "待排发", "note": "12-23 前导出发帖图；无人物纯氛围"},
+    {"id": "cdj-2", "direction": "cdj-event", "batch": "CDJ 26/27 节点 3 帖", "title": "帖2 · 12-26 17:45 开场前灯海动图", "live": "CDJ 26/27", "song": "EARTH STAGE", "tc": "2026-12-26", "card": "鹿91", "media": "pixel-cdj-20261125/待验收-鹿91/鹿91-2-开场前.gif", "alt_media": ["pixel-cdj-20261125/待验收-鹿91/鹿91-2-开场前.mp4"], "versions": 1, "disposition": "待排发", "note": "GIF + MP4，开场前夕发"},
+    {"id": "cdj-3a", "direction": "cdj-event", "batch": "CDJ 26/27 节点 3 帖", "title": "帖3a · 12-27 官方歌单卡（2023 歌单占位）", "live": "CDJ 26/27", "song": "待替换今年官方歌单", "tc": "2026-12-27", "card": "鹿91", "media": "pixel-cdj-20261125/待验收-鹿91/鹿91-3a-歌单卡.png", "versions": 1, "disposition": "待排发", "note": "12-26 晚查到官方歌单后只换文字层重新生成即可"},
+    {"id": "cdj-3b", "direction": "cdj-event", "batch": "CDJ 26/27 节点 3 帖", "title": "帖3b · 散场冬夜备选卡", "live": "CDJ 26/27", "song": "散场夜景", "tc": "2026-12-27", "card": "鹿91", "media": "pixel-cdj-20261125/待验收-鹿91/鹿91-3b-散场夜景.png", "versions": 1, "disposition": "备选留存", "note": "如官方歌单未公开则改发本张"},
+
+    {"id": "evo-01", "direction": "costume-evo", "batch": "鹿57 · 造型演变 6 张（已发小红书／抖音）", "title": "01-五场 Live 造型演变总览", "live": "全 5 场", "song": "2021–2025", "tc": "01/06", "card": "鹿57", "media": "pixel-evolution-20261121/out-v6/01-总览.png", "versions": 5, "disposition": "已发布", "ledger_match": "鹿57-造型演变", "post_folder": "~/Pictures/发布/20261121-夜鹿造型演变/", "note": "第5版过（抖音误排第6张，本人定不改）"},
+    {"id": "evo-02", "direction": "costume-evo", "batch": "鹿57 · 造型演变 6 张（已发小红书／抖音）", "title": "02-2021「前世」细节卡", "live": "前世 2021", "song": "宝蓝泡泡袖长裙", "tc": "02/06", "card": "鹿57", "media": "pixel-evolution-20261121/out-v6/02-2021「前世」.png", "versions": 5, "disposition": "已发布", "ledger_match": "鹿57-造型演变", "post_folder": "~/Pictures/发布/20261121-夜鹿造型演变/", "note": "小红书／抖音已发"},
+    {"id": "evo-03", "direction": "costume-evo", "batch": "鹿57 · 造型演变 6 张（已发小红书／抖音）", "title": "03-2022「月光」细节卡", "live": "月光 2022", "song": "白蕾丝长裙", "tc": "03/06", "card": "鹿57", "media": "pixel-evolution-20261121/out-v6/03-2022「月光」.png", "versions": 5, "disposition": "已发布", "ledger_match": "鹿57-造型演变", "post_folder": "~/Pictures/发布/20261121-夜鹿造型演变/", "note": "小红书／抖音已发"},
+    {"id": "evo-04", "direction": "costume-evo", "batch": "鹿57 · 造型演变 6 张（已发小红书／抖音）", "title": "04-2024「前世」细节卡", "live": "前世 2024", "song": "A红裙＋B白纱", "tc": "04/06", "card": "鹿57", "media": "pixel-evolution-20261121/out-v6/04-2024「前世」.png", "versions": 5, "disposition": "已发布", "ledger_match": "鹿57-造型演变", "post_folder": "~/Pictures/发布/20261121-夜鹿造型演变/", "note": "小红书／抖音已发"},
+    {"id": "evo-05", "direction": "costume-evo", "batch": "鹿57 · 造型演变 6 张（已发小红书／抖音）", "title": "05-2024「月と猫のダンス」细节卡", "live": "月と猫のダンス 2024", "song": "A西装＋B奶白衬衫", "tc": "05/06", "card": "鹿57", "media": "pixel-evolution-20261121/out-v6/05-2024「月と猫のダンス」.png", "versions": 5, "disposition": "已发布", "ledger_match": "鹿57-造型演变", "post_folder": "~/Pictures/发布/20261121-夜鹿造型演变/", "note": "小红书／抖音已发"},
+    {"id": "evo-06", "direction": "costume-evo", "batch": "鹿57 · 造型演变 6 张（已发小红书／抖音）", "title": "06-2025「盗作」细节卡", "live": "盗作 2025", "song": "A黑蕾丝＋B梅紫广袖", "tc": "06/06", "card": "鹿57", "media": "pixel-evolution-20261121/out-v6/06-2025「盗作」.png", "versions": 5, "disposition": "已发布", "ledger_match": "鹿57-造型演变", "post_folder": "~/Pictures/发布/20261121-夜鹿造型演变/", "note": "小红书／抖音已发"},
+
+    {"id": "x24-g", "direction": "legacy-live-pixel", "batch": "鹿101 · X 重发前世 2024 换新造型（15 张）", "title": "前世2024（1）· 蓝屏大树与纸片 · X新造型", "live": "前世 2024", "song": "春泥棒 / 纸片", "tc": "X 第1帖", "card": "鹿101", "media": "zense2024-x-20261125/out/g-蓝屏大树与纸片-X.png", "alt_media": ["zense2024-x-20261125/对照/g.png"], "versions": 2, "disposition": "已发布", "ledger_match": "yoru-zense2024-g", "platforms_override": {"xhs": "skip", "dy": "skip", "ig": "skip"}, "post_folder": "~/Pictures/发布/X-前世2024新造型/第1帖-前世2024第一批/", "note": "11-25 23:49 已发 X 首帖（第2轮精修新版 suis 造型）"},
+    {"id": "x24-j", "direction": "legacy-live-pixel", "batch": "鹿101 · X 重发前世 2024 换新造型（15 张）", "title": "前世2024（1）· 晴る花树与洋楼 · X新造型", "live": "前世 2024", "song": "晴る", "tc": "X 第1帖", "card": "鹿101", "media": "zense2024-x-20261125/out/j-晴る・花树与洋楼-X.png", "alt_media": ["zense2024-x-20261125/对照/j.png"], "versions": 2, "disposition": "已发布", "ledger_match": "yoru-zense2024-j", "platforms_override": {"xhs": "skip", "dy": "skip", "ig": "skip"}, "post_folder": "~/Pictures/发布/X-前世2024新造型/第1帖-前世2024第一批/", "note": "11-25 23:49 已发 X 首帖"},
+    {"id": "x24-n", "direction": "legacy-live-pixel", "batch": "鹿101 · X 重发前世 2024 换新造型（15 张）", "title": "前世2024（1）· 靴の花火粉色海面全景 · X新造型", "live": "前世 2024", "song": "靴の花火", "tc": "X 第1帖", "card": "鹿101", "media": "zense2024-x-20261125/out/n-靴の花火・粉色海面全景-X.png", "alt_media": ["zense2024-x-20261125/对照/n.png"], "versions": 2, "disposition": "已发布", "ledger_match": "yoru-zense2024-n", "platforms_override": {"xhs": "skip", "dy": "skip", "ig": "skip"}, "post_folder": "~/Pictures/发布/X-前世2024新造型/第1帖-前世2024第一批/", "note": "11-25 23:49 已发 X 首帖（第2轮全景 suis 放大站前）"},
+    {"id": "x24-u", "direction": "legacy-live-pixel", "batch": "鹿101 · X 重发前世 2024 换新造型（15 张）", "title": "前世2024（1）· 海面上的蓝裙舞者 · X新造型", "live": "前世 2024", "song": "ただ君に晴れ", "tc": "X 第1帖", "card": "鹿101", "media": "zense2024-x-20261125/out/u-ただ君に晴れ・海面上的蓝裙舞者-X.png", "alt_media": ["zense2024-x-20261125/对照/u.png"], "versions": 2, "disposition": "已发布", "ledger_match": "yoru-zense2024-u", "platforms_override": {"xhs": "skip", "dy": "skip", "ig": "skip"}, "post_folder": "~/Pictures/发布/X-前世2024新造型/第1帖-前世2024第一批/", "note": "11-25 23:49 已发 X 首帖"},
+    {"id": "x24-ag", "direction": "legacy-live-pixel", "batch": "鹿101 · X 重发前世 2024 换新造型（15 张）", "title": "前世2024（1）· 花に亡霊满屏烟花 · X新造型", "live": "前世 2024", "song": "花に亡霊", "tc": "X 第1帖", "card": "鹿101", "media": "zense2024-x-20261125/out/ag-花に亡霊・满屏烟花-X.png", "alt_media": ["zense2024-x-20261125/对照/ag.png"], "versions": 2, "disposition": "已发布", "ledger_match": "yoru-zense2024-ag", "platforms_override": {"xhs": "skip", "dy": "skip", "ig": "skip"}, "post_folder": "~/Pictures/发布/X-前世2024新造型/第1帖-前世2024第一批/", "note": "11-25 23:49 已发 X 首帖（第2轮放大站前）"},
+    {"id": "x24-a", "direction": "legacy-live-pixel", "batch": "鹿101 · X 重发前世 2024 换新造型（15 张）", "title": "前世2024（2）· 夕焼け全景 · X新造型", "live": "前世 2024", "song": "夕焼け", "tc": "X 第2帖", "card": "鹿101", "media": "zense2024-x-20261125/out/a-夕焼け全景-X.png", "alt_media": ["zense2024-x-20261125/对照/a.png"], "versions": 2, "disposition": "已入发帖夹", "platforms_override": {"xhs": "skip", "dy": "skip", "x": "ready", "ig": "skip"}, "post_folder": "~/Pictures/发布/X-前世2024新造型/第2帖-前世2024第二批/", "note": "已出 X 第2帖 4:5 发帖夹（11-26 计划发）"},
+    {"id": "x24-d", "direction": "legacy-live-pixel", "batch": "鹿101 · X 重发前世 2024 换新造型（15 张）", "title": "前世2024（2）· 青空全景 · X新造型", "live": "前世 2024", "song": "青空", "tc": "X 第2帖", "card": "鹿101", "media": "zense2024-x-20261125/out/d-青空全景-X.png", "alt_media": ["zense2024-x-20261125/对照/d.png"], "versions": 2, "disposition": "已入发帖夹", "platforms_override": {"xhs": "skip", "dy": "skip", "x": "ready", "ig": "skip"}, "post_folder": "~/Pictures/发布/X-前世2024新造型/第2帖-前世2024第二批/", "note": "第2轮改大号站前；已入 X 第2帖夹"},
+    {"id": "x24-c", "direction": "legacy-live-pixel", "batch": "鹿101 · X 重发前世 2024 换新造型（15 张）", "title": "前世2024（2）· 嘘月全景 · X新造型", "live": "前世 2024", "song": "嘘月", "tc": "X 第2帖", "card": "鹿101", "media": "zense2024-x-20261125/out/c-嘘月全景-X.png", "alt_media": ["zense2024-x-20261125/对照/c.png"], "versions": 2, "disposition": "已入发帖夹", "platforms_override": {"xhs": "skip", "dy": "skip", "x": "ready", "ig": "skip"}, "post_folder": "~/Pictures/发布/X-前世2024新造型/第2帖-前世2024第二批/", "note": "已入 X 第2帖夹"},
+    {"id": "x24-e", "direction": "legacy-live-pixel", "batch": "鹿101 · X 重发前世 2024 换新造型（15 张）", "title": "前世2024（2）· 抬手唱特写 · X新造型", "live": "前世 2024", "song": "抬手唱特写", "tc": "X 第2帖", "card": "鹿101", "media": "zense2024-x-20261125/out/e-抬手唱特写-X.png", "alt_media": ["zense2024-x-20261125/对照/e.png"], "versions": 2, "disposition": "已入发帖夹", "platforms_override": {"xhs": "skip", "dy": "skip", "x": "ready", "ig": "skip"}, "post_folder": "~/Pictures/发布/X-前世2024新造型/第2帖-前世2024第二批/", "note": "已入 X 第2帖夹"},
+    {"id": "x24-ap", "direction": "legacy-live-pixel", "batch": "鹿101 · X 重发前世 2024 换新造型（15 张）", "title": "前世2024（2）· 春泥棒彩点花树 · X新造型", "live": "前世 2024", "song": "春泥棒", "tc": "X 第2帖", "card": "鹿101", "media": "zense2024-x-20261125/out/ap-春泥棒・彩点花树-X.png", "alt_media": ["zense2024-x-20261125/对照/ap.png"], "versions": 2, "disposition": "已入发帖夹", "platforms_override": {"xhs": "skip", "dy": "skip", "x": "ready", "ig": "skip"}, "post_folder": "~/Pictures/发布/X-前世2024新造型/第2帖-前世2024第二批/", "note": "已入 X 第2帖夹"},
+    {"id": "x24-f", "direction": "legacy-live-pixel", "batch": "鹿101 · X 重发前世 2024 换新造型（15 张）", "title": "前世2024（3）· 白屏几何与铃鼓 · X新造型", "live": "前世 2024", "song": "铃鼓段", "tc": "X 第3帖", "card": "鹿101", "media": "zense2024-x-20261125/out/f-白屏几何与铃鼓-X.png", "alt_media": ["zense2024-x-20261125/对照/f.png"], "versions": 2, "disposition": "已入发帖夹", "platforms_override": {"xhs": "skip", "dy": "skip", "x": "ready", "ig": "skip"}, "post_folder": "~/Pictures/发布/X-前世2024新造型/第3帖-前世2024第三批/", "note": "已入 X 第3帖夹"},
+    {"id": "x24-i", "direction": "legacy-live-pixel", "batch": "鹿101 · X 重发前世 2024 换新造型（15 张）", "title": "前世2024（3）· 彩色山丘全乐队 · X新造型", "live": "前世 2024", "song": "靴の花火", "tc": "X 第3帖", "card": "鹿101", "media": "zense2024-x-20261125/out/i-彩色山丘全乐队-X.png", "alt_media": ["zense2024-x-20261125/对照/i.png"], "versions": 2, "disposition": "已入发帖夹", "platforms_override": {"xhs": "skip", "dy": "skip", "x": "ready", "ig": "skip"}, "post_folder": "~/Pictures/发布/X-前世2024新造型/第3帖-前世2024第三批/", "note": "第2轮补回贝斯手；已入 X 第3帖夹"},
+    {"id": "x24-ad", "direction": "legacy-live-pixel", "batch": "鹿101 · X 重发前世 2024 换新造型（15 张）", "title": "前世2024（3）· 雨とカプチーノ蓝屏撑伞 · X新造型", "live": "前世 2024", "song": "雨とカプチーノ", "tc": "X 第3帖", "card": "鹿101", "media": "zense2024-x-20261125/out/ad-雨とカプチーノ・蓝屏撑伞的人-X.png", "alt_media": ["zense2024-x-20261125/对照/ad.png"], "versions": 2, "disposition": "已入发帖夹", "platforms_override": {"xhs": "skip", "dy": "skip", "x": "ready", "ig": "skip"}, "post_folder": "~/Pictures/发布/X-前世2024新造型/第3帖-前世2024第三批/", "note": "已入 X 第3帖夹"},
+    {"id": "x24-ai", "direction": "legacy-live-pixel", "batch": "鹿101 · X 重发前世 2024 换新造型（15 张）", "title": "前世2024（3）· 冬眠蓝白光束扇面 · X新造型", "live": "前世 2024", "song": "冬眠", "tc": "X 第3帖", "card": "鹿101", "media": "zense2024-x-20261125/out/ai-冬眠・蓝白光束扇面-X.png", "alt_media": ["zense2024-x-20261125/对照/ai.png"], "versions": 2, "disposition": "已入发帖夹", "platforms_override": {"xhs": "skip", "dy": "skip", "x": "ready", "ig": "skip"}, "post_folder": "~/Pictures/发布/X-前世2024新造型/第3帖-前世2024第三批/", "note": "已入 X 第3帖夹"},
+    {"id": "x24-ao", "direction": "legacy-live-pixel", "batch": "鹿101 · X 重发前世 2024 换新造型（15 张）", "title": "前世2024（3）· 春泥棒红花树大屏与洋楼 · X新造型", "live": "前世 2024", "song": "春泥棒", "tc": "X 第3帖", "card": "鹿101", "media": "zense2024-x-20261125/out/ao-春泥棒・红花树大屏与洋楼-X.png", "alt_media": ["zense2024-x-20261125/对照/ao.png"], "versions": 2, "disposition": "已入发帖夹", "platforms_override": {"xhs": "skip", "dy": "skip", "x": "ready", "ig": "skip"}, "post_folder": "~/Pictures/发布/X-前世2024新造型/第3帖-前世2024第三批/", "note": "已入 X 第3帖夹"},
+
+    {"id": "livephoto-01", "direction": "shelved-live-photo", "batch": "鹿72 样稿（4 张 · 搁置）", "title": "01-盗作 2025 · 盗作彩纸爆开（原 Live 实况）", "live": "盗作 2025", "song": "盗作", "tc": "Live实况 1/4", "card": "鹿72", "media": "live-photo-real-20261124/待验收/鹿72-01-盗作2025-盗作彩纸爆开.gif", "alt_media": ["live-photo-real-20261124/out/01-盗作2025-盗作彩纸爆开.mp4"], "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "搁置（鹿72）：先做像素类与新线；重启时由本人自翻片源挑好看片段，不让 Agent 选段", "note": "含带声 .JPG+.MOV 实况配对"},
+    {"id": "livephoto-02", "direction": "shelved-live-photo", "batch": "鹿72 样稿（4 张 · 搁置）", "title": "02-前世 2024 · 花に亡霊满屏烟花（原 Live 实况）", "live": "前世 2024", "song": "花に亡霊", "tc": "Live实况 2/4", "card": "鹿72", "media": "live-photo-real-20261124/待验收/鹿72-02-前世2024-花に亡霊满屏烟花.gif", "alt_media": ["live-photo-real-20261124/out/02-前世2024-花に亡霊满屏烟花.mp4"], "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "搁置（鹿72）：待本人想推实拍线时重挑片源与规格", "note": "HLG→SDR 已校色"},
+    {"id": "livephoto-03", "direction": "shelved-live-photo", "batch": "鹿72 样稿（4 张 · 搁置）", "title": "03-前世 2024 · 春泥棒樱花树与白帘（原 Live 实况）", "live": "前世 2024", "song": "春泥棒", "tc": "Live实况 3/4", "card": "鹿72", "media": "live-photo-real-20261124/待验收/鹿72-03-前世2024-春泥棒樱花树与白帘.gif", "alt_media": ["live-photo-real-20261124/out/03-前世2024-春泥棒樱花树与白帘.mp4"], "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "搁置（鹿72）：待本人想推实拍线时重挑片源与规格", "note": "带原声 .MOV"},
+    {"id": "livephoto-04", "direction": "shelved-live-photo", "batch": "鹿72 样稿（4 张 · 搁置）", "title": "04-月猫 2024 · 春泥棒粉紫樱海（原 Live 实况）", "live": "月と猫のダンス 2024", "song": "春泥棒", "tc": "Live实况 4/4", "card": "鹿72", "media": "live-photo-real-20261124/待验收/鹿72-04-月猫2024-春泥棒粉紫樱海.gif", "alt_media": ["live-photo-real-20261124/out/04-月猫2024-春泥棒粉紫樱海.mp4"], "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "搁置（鹿72）：待本人想推实拍线时重挑片源与规格", "note": "带原声 .MOV"},
+
+    {"id": "luanru-01", "direction": "shelved-luanru", "batch": "鹿73 样稿（4 张 · 搁置）", "title": "01-盗作 2025 · 彩纸爆开 × 小人乱入", "live": "盗作 2025", "song": "盗作", "tc": "乱入 1/4", "card": "鹿73", "media": "live-luanru-20261124/待验收/鹿73-01-盗作2025-盗作-彩纸爆开-竖.jpg", "alt_media": ["live-luanru-20261124/待验收/鹿73-01-盗作2025-盗作-彩纸爆开-对照.jpg"], "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "搁置（鹿73）：像素小人占高 9%–18% 太小、与真人同人无互动，放最后没素材时再放大重做", "note": "11-25 本人定放到最后"},
+    {"id": "luanru-02", "direction": "shelved-luanru", "batch": "鹿73 样稿（4 张 · 搁置）", "title": "02-月猫 2024 · 春泥棒键盘同框 × 小人乱入", "live": "月と猫のダンス 2024", "song": "春泥棒", "tc": "乱入 2/4", "card": "鹿73", "media": "live-luanru-20261124/待验收/鹿73-02-月猫2024-春泥棒-键盘同框-竖.jpg", "alt_media": ["live-luanru-20261124/待验收/鹿73-02-月猫2024-春泥棒-键盘同框-对照.jpg"], "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "搁置（鹿73）：放到最后，后续重做需放大到 1/3 挑近景留白图", "note": "保留参考"},
+    {"id": "luanru-03", "direction": "shelved-luanru", "batch": "鹿73 样稿（4 张 · 搁置）", "title": "03-月光 2022 · 憂一乗大新月 × 小人乱入", "live": "月光 2022", "song": "憂一乗", "tc": "乱入 3/4", "card": "鹿73", "media": "live-luanru-20261124/待验收/鹿73-03-月光2022-憂一乗-大新月-竖.jpg", "alt_media": ["live-luanru-20261124/待验收/鹿73-03-月光2022-憂一乗-大新月-对照.jpg"], "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "搁置（鹿73）：小人过小、放最后", "note": "保留参考"},
+    {"id": "luanru-04", "direction": "shelved-luanru", "batch": "鹿73 样稿（4 张 · 搁置）", "title": "04-月光 2022 · 六月街灯赤脚 × 小人乱入", "live": "月光 2022", "song": "六月は雨上がりの街を書く", "tc": "乱入 4/4", "card": "鹿73", "media": "live-luanru-20261124/待验收/鹿73-04-月光2022-六月-街灯赤脚-竖.jpg", "alt_media": ["live-luanru-20261124/待验收/鹿73-04-月光2022-六月-街灯赤脚-对照.jpg"], "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "搁置（鹿73）：小人过小、放最后", "note": "保留参考"},
+
+    {"id": "alt-emo-s01", "direction": "shelved-alt-emoji", "batch": "鹿69 彩铅静态 4 枚", "title": "01-好耶（彩铅静态贴纸）", "live": "前世 2024", "song": "非像素贴纸", "tc": "静 1/4", "card": "鹿69", "media": "emoji-alt-20261123/待验收/01-好耶-静态.png", "versions": 1, "disposition": "备选留存", "note": "11-23 本人定先留着但不发"},
+    {"id": "alt-emo-s02", "direction": "shelved-alt-emoji", "batch": "鹿69 彩铅静态 4 枚", "title": "02-唱歌（彩铅静态贴纸）", "live": "月光 2022", "song": "非像素贴纸", "tc": "静 2/4", "card": "鹿69", "media": "emoji-alt-20261123/待验收/02-唱歌-静态.png", "versions": 1, "disposition": "备选留存", "note": "先留着不发"},
+    {"id": "alt-emo-s03", "direction": "shelved-alt-emoji", "batch": "鹿69 彩铅静态 4 枚", "title": "03-呜呜呜（彩铅静态贴纸）", "live": "盗作 2025", "song": "非像素贴纸", "tc": "静 3/4", "card": "鹿69", "media": "emoji-alt-20261123/待验收/03-呜呜呜-静态.png", "versions": 1, "disposition": "备选留存", "note": "先留着不发"},
+    {"id": "alt-emo-s04", "direction": "shelved-alt-emoji", "batch": "鹿69 彩铅静态 4 枚", "title": "04-晚安（彩铅静态贴纸）", "live": "月猫 2024", "song": "非像素贴纸", "tc": "静 4/4", "card": "鹿69", "media": "emoji-alt-20261123/待验收/04-晚安-静态.png", "versions": 1, "disposition": "备选留存", "note": "先留着不发"},
+    {"id": "alt-emo-g01", "direction": "shelved-alt-emoji", "batch": "鹿69 彩铅动态 4 枚", "title": "01-好耶（彩铅 12 帧透明 GIF）", "live": "前世 2024", "song": "非像素贴纸", "tc": "动 1/4", "card": "鹿69", "media": "emoji-alt-20261123/待验收/01-好耶-动态.gif", "versions": 1, "disposition": "备选留存", "note": "先留着不发"},
+    {"id": "alt-emo-g02", "direction": "shelved-alt-emoji", "batch": "鹿69 彩铅动态 4 枚", "title": "02-唱歌（彩铅 12 帧透明 GIF）", "live": "月光 2022", "song": "非像素贴纸", "tc": "动 2/4", "card": "鹿69", "media": "emoji-alt-20261123/待验收/02-唱歌-动态.gif", "versions": 1, "disposition": "备选留存", "note": "先留着不发"},
+    {"id": "alt-emo-g03", "direction": "shelved-alt-emoji", "batch": "鹿69 彩铅动态 4 枚", "title": "03-呜呜呜（彩铅 12 帧透明 GIF）", "live": "盗作 2025", "song": "非像素贴纸", "tc": "动 3/4", "card": "鹿69", "media": "emoji-alt-20261123/待验收/03-呜呜呜-动态.gif", "versions": 1, "disposition": "备选留存", "note": "先留着不发"},
+    {"id": "alt-emo-g04", "direction": "shelved-alt-emoji", "batch": "鹿69 彩铅动态 4 枚", "title": "04-晚安（彩铅 12 帧透明 GIF）", "live": "月猫 2024", "song": "非像素贴纸", "tc": "动 4/4", "card": "鹿69", "media": "emoji-alt-20261123/待验收/04-晚安-动态.gif", "versions": 1, "disposition": "备选留存", "note": "先留着不发"},
+
+    {"id": "lyric-59-01", "direction": "shelved-lyric-card", "batch": "鹿59 像素歌词卡小试", "title": "01-春泥棒（像素歌词卡）", "live": "前世 2024", "song": "春泥棒", "tc": "试作 1/3", "card": "鹿59", "media": "pixel-lyric-20261121/待验收/01-春泥棒.png", "versions": 2, "disposition": "备选留存", "note": "本人评价好看但像炒冷饭，暂不发"},
+    {"id": "lyric-59-02", "direction": "shelved-lyric-card", "batch": "鹿59 像素歌词卡小试", "title": "02-ただ君に晴れ（像素歌词卡）", "live": "前世 2024", "song": "ただ君に晴れ", "tc": "试作 2/3", "card": "鹿59", "media": "pixel-lyric-20261121/待验收/02-ただ君に晴れ.png", "versions": 2, "disposition": "备选留存", "note": "好看但炒冷饭，暂不发"},
+    {"id": "lyric-59-03", "direction": "shelved-lyric-card", "batch": "鹿59 像素歌词卡小试", "title": "03-八月、某、月明かり（像素歌词卡）", "live": "月光 2022", "song": "八月、某、月明かり", "tc": "试作 3/3", "card": "鹿59", "media": "pixel-lyric-20261121/待验收/03-八月某月明かり.png", "versions": 2, "disposition": "备选留存", "note": "好看但炒冷饭，暂不发"},
+
+    {"id": "ret-zukan-001", "direction": "shelved-retired", "batch": "鹿65 · 夜鹿图鉴 9 张（已封口）", "title": "001-花緑青", "live": "夜鹿图鉴", "song": "花緑青", "tc": "001/009", "card": "鹿65", "media": "pixel-zukan-20261121/待验收/001-花緑青.png", "versions": 2, "disposition": "已淘汰·搁置", "disposition_reason": "11-22 本人封口：夜鹿图鉴卡片形式本身一般，不发", "note": "代码与MV草稿留存"},
+    {"id": "ret-zukan-002", "direction": "shelved-retired", "batch": "鹿65 · 夜鹿图鉴 9 张（已封口）", "title": "002-桜の大樹", "live": "夜鹿图鉴", "song": "春泥棒", "tc": "002/009", "card": "鹿65", "media": "pixel-zukan-20261121/待验收/002-桜の大樹.png", "versions": 2, "disposition": "已淘汰·搁置", "disposition_reason": "11-22 本人封口：图鉴形式本身一般，不发", "note": "已封口"},
+    {"id": "ret-zukan-003", "direction": "shelved-retired", "batch": "鹿65 · 夜鹿图鉴 9 张（已封口）", "title": "003-海辺の踏切", "live": "夜鹿图鉴", "song": "ただ君に晴れ", "tc": "003/009", "card": "鹿65", "media": "pixel-zukan-20261121/待验收/003-海辺の踏切.png", "versions": 2, "disposition": "已淘汰·搁置", "disposition_reason": "11-22 本人封口：图鉴形式本身一般，不发", "note": "已封口"},
+    {"id": "ret-zukan-004", "direction": "shelved-retired", "batch": "鹿65 · 夜鹿图鉴 9 张（已封口）", "title": "004-靴飛ばし", "live": "夜鹿图鉴", "song": "靴の花火", "tc": "004/009", "card": "鹿65", "media": "pixel-zukan-20261121/待验收/004-靴飛ばし.png", "versions": 2, "disposition": "已淘汰·搁置", "disposition_reason": "11-22 本人封口：图鉴形式本身一般，不发", "note": "已封口"},
+    {"id": "ret-zukan-005", "direction": "shelved-retired", "batch": "鹿65 · 夜鹿图鉴 9 张（已封口）", "title": "005-白い少女", "live": "夜鹿图鉴", "song": "夜行 / 嘘月", "tc": "005/009", "card": "鹿65", "media": "pixel-zukan-20261121/待验收/005-白い少女.png", "versions": 2, "disposition": "已淘汰·搁置", "disposition_reason": "11-22 本人封口：图鉴形式本身一般，不发", "note": "已封口"},
+    {"id": "ret-zukan-006", "direction": "shelved-retired", "batch": "鹿65 · 夜鹿图鉴 9 张（已封口）", "title": "006-エイミーの手紙", "live": "夜鹿图鉴", "song": "だから僕は音楽を辞めた", "tc": "006/009", "card": "鹿65", "media": "pixel-zukan-20261121/待验收/006-エイミーの手紙.png", "versions": 2, "disposition": "已淘汰·搁置", "disposition_reason": "11-22 本人封口：图鉴形式本身一般，不发", "note": "已封口"},
+    {"id": "ret-zukan-007", "direction": "shelved-retired", "batch": "鹿65 · 夜鹿图鉴 9 张（已封口）", "title": "007-エルマの日記", "live": "夜鹿图鉴", "song": "エルマ", "tc": "007/009", "card": "鹿65", "media": "pixel-zukan-20261121/待验收/007-エルマの日記.png", "versions": 2, "disposition": "已淘汰·搁置", "disposition_reason": "11-22 本人封口：图鉴形式本身一般，不发", "note": "已封口"},
+    {"id": "ret-zukan-008", "direction": "shelved-retired", "batch": "鹿65 · 夜鹿图鉴 9 张（已封口）", "title": "008-先生", "live": "夜鹿图鉴", "song": "ヒッチコック", "tc": "008/009", "card": "鹿65", "media": "pixel-zukan-20261121/待验收/008-先生.png", "versions": 2, "disposition": "已淘汰·搁置", "disposition_reason": "11-22 本人封口：图鉴形式本身一般，不发", "note": "已封口"},
+    {"id": "ret-zukan-009", "direction": "shelved-retired", "batch": "鹿65 · 夜鹿图鉴 9 张（已封口）", "title": "009-カプチーノ", "live": "夜鹿图鉴", "song": "雨とカプチーノ", "tc": "009/009", "card": "鹿65", "media": "pixel-zukan-20261121/待验收/009-カプチーノ.png", "versions": 2, "disposition": "已淘汰·搁置", "disposition_reason": "11-22 本人封口：图鉴形式本身一般，不发", "note": "已封口"},
+    {"id": "ret-rpg66-1", "direction": "shelved-retired", "batch": "鹿66 · 旧背景旧小人假 RPG 试验", "title": "旧版 RPG 会話画面（复用旧图）", "live": "试验样稿", "song": "鹿66", "tc": "1/3", "card": "鹿66", "media": "pixel-rpg-20261122/待验收/1-会話.png", "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "复用旧背景旧小人，本人定形式可但需全新画，后已由 Live 实景假 RPG 鹿80/83 接替", "note": "仅保留 UI 代码框架"},
+    {"id": "ret-rpg66-2", "direction": "shelved-retired", "batch": "鹿66 · 旧背景旧小人假 RPG 试验", "title": "旧版 RPG セーブ画面（复用旧图）", "live": "试验样稿", "song": "鹿66", "tc": "2/3", "card": "鹿66", "media": "pixel-rpg-20261122/待验收/2-セーブ.png", "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "复用旧图，已由 鹿80/84/87 接替", "note": "Ui 框架复用至 鹿80"},
+    {"id": "ret-rpg66-3", "direction": "shelved-retired", "batch": "鹿66 · 旧背景旧小人假 RPG 试验", "title": "旧版 RPG ステータス画面（复用旧图）", "live": "试验样稿", "song": "鹿66", "tc": "3/3", "card": "鹿66", "media": "pixel-rpg-20261122/待验收/3-ステータス.png", "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "复用旧图，已由 鹿88 接替", "note": "Ui 框架复用至 鹿88"},
+    {"id": "ret-rpg67-1", "direction": "shelved-retired", "batch": "鹿67 · 奇幻职业风假 RPG（不过关）", "title": "奇幻风 RPG 会話（海边巴士站）", "live": "试验样稿", "song": "鹿67", "tc": "1/3", "card": "鹿67", "media": "pixel-rpg-20261122/待验收2/1-会話.png", "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "本人不过关：人物必须从 Live 穿搭取灵感、不能画奇幻职业装", "note": "成为后续 鹿83-88 仅用 Live 穿搭铁律的原因"},
+    {"id": "ret-rpg67-2", "direction": "shelved-retired", "batch": "鹿67 · 奇幻职业风假 RPG（不过关）", "title": "奇幻风 RPG セーブ（海边）", "live": "试验样稿", "song": "鹿67", "tc": "2/3", "card": "鹿67", "media": "pixel-rpg-20261122/待验收2/2-セーブ.png", "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "奇幻职业风不过关、背景也一般", "note": "已由 鹿84/87 替代"},
+    {"id": "ret-rpg67-3", "direction": "shelved-retired", "batch": "鹿67 · 奇幻职业风假 RPG（不过关）", "title": "奇幻风 RPG ステータス（歌姫/吟游诗人）", "live": "试验样稿", "song": "鹿67", "tc": "3/3", "card": "鹿67", "media": "pixel-rpg-20261122/待验收2/3-ステータス.png", "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "奇幻职业装被本人否决，后用 鹿88 真实 Live 穿搭重做", "note": "竖版排版为 鹿88 沿用"},
+    {"id": "ret-cmp-haru", "direction": "shelved-retired", "batch": "同曲多场 Live 对照试验（11-24 搁置）", "title": "春泥棒 × 4 场 Live 抽帧对照拼图", "live": "前世21 / 前世24 / 月猫24 / 盗作25", "song": "春泥棒", "tc": "试看 1/2", "card": "", "stage_override": "已通过", "media": "live-compare-20261124/haru-对照.jpg", "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "11-24 本人看过定搁置：各场风格不一拼起来割裂，暂不推进", "note": "仅留样表备查"},
+    {"id": "ret-cmp-rain", "direction": "shelved-retired", "batch": "同曲多场 Live 对照试验（11-24 搁置）", "title": "雨とカプチーノ × 4 场 Live 抽帧对照拼图", "live": "前世21 / 月光22 / 前世24 / 月猫24", "song": "雨とカプチーノ", "tc": "试看 2/2", "card": "", "stage_override": "已通过", "media": "live-compare-20261124/rain-对照.jpg", "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "11-24 本人看过定搁置：各场走位舞美不统一，不推进", "note": "仅留样表备查"},
+
+    {"id": "lib-z24-mini", "direction": "char-libs", "batch": "前世 2024（鹿16-18 ＋ 鹿82 裙摆松弛版）", "title": "前世 2024 · suis 迷你全身与动作表", "live": "前世 2024", "song": "A红裙 / B白纱", "tc": "迷你库", "card": "鹿16", "media": "pixel-lib-20261118/out/素材表-mini.png", "versions": 1, "disposition": "备选留存", "note": "底层组件；裙摆发饰 11-25 定案不改"},
+    {"id": "lib-z24-close", "direction": "char-libs", "batch": "前世 2024（鹿16-18 ＋ 鹿82 裙摆松弛版）", "title": "前世 2024 · suis 特写与表情全览", "live": "前世 2024", "song": "lib_suis_close", "tc": "特写库", "card": "鹿17", "media": "pixel-lib-20261118/out/素材表-close.png", "versions": 1, "disposition": "备选留存", "note": "鹿82 后已替换为松弛裙摆版"},
+    {"id": "lib-z24-band", "direction": "char-libs", "batch": "前世 2024（鹿16-18 ＋ 鹿82 裙摆松弛版）", "title": "前世 2024 · 4 乐手标准站位与乐器", "live": "前世 2024", "song": "乐手库", "tc": "乐手库", "card": "鹿18", "media": "pixel-lib-20261118/out/素材表-band.png", "versions": 1, "disposition": "备选留存", "note": "吉他/贝斯/键盘/鼓"},
+    {"id": "lib-z24-82-w", "direction": "char-libs", "batch": "前世 2024（鹿16-18 ＋ 鹿82 裙摆松弛版）", "title": "前世 2024 白纱裙 · 鹿82 松弛裙摆全动作", "live": "前世 2024B", "song": "鹿82 落库替换", "tc": "特写补充", "card": "鹿82", "media": "pixel-skirt-20261125/待验收-鹿82-2/鹿82-01-前世2024白裙-全动作.png", "versions": 2, "disposition": "备选留存", "note": "已并入 lib_suis_close.py"},
+    {"id": "lib-z24-82-r", "direction": "char-libs", "batch": "前世 2024（鹿16-18 ＋ 鹿82 裙摆松弛版）", "title": "前世 2024 红裙 · 鹿82 松弛裙摆全动作", "live": "前世 2024A", "song": "鹿82 落库替换", "tc": "特写补充", "card": "鹿82", "media": "pixel-skirt-20261125/待验收-鹿82-2/鹿82-02-前世2024红裙-全动作.png", "versions": 2, "disposition": "备选留存", "note": "已并入 lib_suis_close.py"},
+
+    {"id": "lib-tk25-mini", "direction": "char-libs", "batch": "盗作 2025 v2 三件套（鹿38-40）", "title": "盗作 2025 · suis 迷你全身表（A黑蕾丝／B梅紫）", "live": "盗作 2025", "song": "lib-tousaku-v2", "tc": "迷你库", "card": "鹿38", "media": "publish-20261118/lib-tousaku-v2-20261119/out/素材表-mini.png", "versions": 1, "disposition": "备选留存", "note": "已通过"},
+    {"id": "lib-tk25-close", "direction": "char-libs", "batch": "盗作 2025 v2 三件套（鹿38-40）", "title": "盗作 2025 · suis 特写表", "live": "盗作 2025", "song": "lib-tousaku-v2", "tc": "特写库", "card": "鹿39", "media": "publish-20261118/lib-tousaku-v2-20261119/out/素材表-close.png", "versions": 1, "disposition": "备选留存", "note": "已通过"},
+    {"id": "lib-tk25-band", "direction": "char-libs", "batch": "盗作 2025 v2 三件套（鹿38-40）", "title": "盗作 2025 · 5 乐手全员表", "live": "盗作 2025", "song": "5位权威乐手", "tc": "乐手库", "card": "鹿40", "media": "publish-20261118/lib-tousaku-v2-20261119/out/素材表-band.png", "versions": 1, "disposition": "备选留存", "note": "含 n-buna 宽檐帽、下鶴、Kitani、平畑、Masack"},
+    {"id": "lib-tk25-stage", "direction": "char-libs", "batch": "盗作 2025 v2 三件套（鹿38-40）", "title": "盗作 2025 · 舞台 6 人站位参考", "live": "盗作 2025", "song": "舞台站位", "tc": "站位图", "card": "鹿40", "media": "publish-20261118/lib-tousaku-v2-20261119/out/盗作舞台站位参考.png", "versions": 1, "disposition": "备选留存", "note": "已通过"},
+
+    {"id": "lib-mn24-mini", "direction": "char-libs", "batch": "月猫 2024 三件套（鹿42-44）", "title": "月猫 2024 · suis 迷你表（A西装／B奶白衬衫）", "live": "月と猫のダンス 2024", "song": "lib-tsukineko", "tc": "迷你库", "card": "鹿42", "media": "publish-20261118/lib-tsukineko-20261120/out/素材表-mini.png", "versions": 1, "disposition": "备选留存", "note": "已通过"},
+    {"id": "lib-mn24-close", "direction": "char-libs", "batch": "月猫 2024 三件套（鹿42-44）", "title": "月猫 2024 · suis 特写表", "live": "月と猫のダンス 2024", "song": "lib-tsukineko", "tc": "特写库", "card": "鹿43", "media": "publish-20261118/lib-tsukineko-20261120/out/素材表-close.png", "versions": 1, "disposition": "备选留存", "note": "已通过"},
+    {"id": "lib-mn24-band", "direction": "char-libs", "batch": "月猫 2024 三件套（鹿42-44）", "title": "月猫 2024 · 5 乐手全员表", "live": "月と猫のダンス 2024", "song": "5位权威乐手", "tc": "乐手库", "card": "鹿44", "media": "publish-20261118/lib-tsukineko-20261120/out/素材表-band.png", "versions": 1, "disposition": "备选留存", "note": "已通过"},
+    {"id": "lib-mn24-stage", "direction": "char-libs", "batch": "月猫 2024 三件套（鹿42-44）", "title": "月猫 2024 · 舞台 6 人站位参考", "live": "月と猫のダンス 2024", "song": "舞台站位", "tc": "站位图", "card": "鹿44", "media": "publish-20261118/lib-tsukineko-20261120/out/月猫舞台站位参考.png", "versions": 1, "disposition": "备选留存", "note": "已通过"},
+
+    {"id": "lib-gk22-mini", "direction": "char-libs", "batch": "月光 2022 三件套（鹿48-50）", "title": "月光 2022 · suis 迷你全身表", "live": "月光 2022", "song": "lib-gekkou", "tc": "迷你库", "card": "鹿48", "media": "publish-20261118/lib-gekkou-20261121/out/素材表-mini.png", "versions": 1, "disposition": "备选留存", "note": "已通过"},
+    {"id": "lib-gk22-close", "direction": "char-libs", "batch": "月光 2022 三件套（鹿48-50）", "title": "月光 2022 · suis 特写表", "live": "月光 2022", "song": "lib-gekkou", "tc": "特写库", "card": "鹿49", "media": "publish-20261118/lib-gekkou-20261121/out/素材表-close.png", "versions": 1, "disposition": "备选留存", "note": "已通过"},
+    {"id": "lib-gk22-band", "direction": "char-libs", "batch": "月光 2022 三件套（鹿48-50）", "title": "月光 2022 · 5 乐手全员表", "live": "月光 2022", "song": "5位乐手", "tc": "乐手库", "card": "鹿50", "media": "publish-20261118/lib-gekkou-20261121/out/素材表-band.png", "versions": 1, "disposition": "备选留存", "note": "前世2021亦借用本乐手库"},
+    {"id": "lib-gk22-stage", "direction": "char-libs", "batch": "月光 2022 三件套（鹿48-50）", "title": "月光 2022 · 舞台 6 人站位参考", "live": "月光 2022", "song": "舞台站位", "tc": "站位图", "card": "鹿50", "media": "publish-20261118/lib-gekkou-20261121/out/月光舞台站位参考.png", "versions": 1, "disposition": "备选留存", "note": "已通过"},
+
+    {"id": "lib-z21-close", "direction": "char-libs", "batch": "前世 2021 素材库（鹿51 ＋ 鹿94）", "title": "前世 2021 · suis 中近景与特写表（宝蓝裙）", "live": "前世 2021", "song": "lib-zense2021", "tc": "特写库", "card": "鹿51", "media": "publish-20261118/lib-zense2021-20261121/out/素材表-close.png", "versions": 1, "disposition": "备选留存", "note": "鹿82 顺手更新松弛裙摆（dress_mid 逐像素未变）"},
+    {"id": "lib-z21-mini", "direction": "char-libs", "batch": "前世 2021 素材库（鹿51 ＋ 鹿94）", "title": "前世 2021 · 迷你 suis 素材表（鹿94 派生）", "live": "前世 2021", "song": "lib-zense2021", "tc": "迷你库", "card": "鹿94", "media": "publish-20261118/lib-zense2021-20261121/待验收-鹿94/鹿94-1-素材表.png", "alt_media": ["publish-20261118/lib-zense2021-20261121/待验收-鹿94/鹿94-2-和月光迷你对照.png"], "versions": 1, "disposition": "备选留存", "note": "已登记 VISUAL_GUIDE，鹿95箱庭启用"},
+
+    {"id": "lib-nbuna-mn", "direction": "char-libs", "batch": "鹿99 · n-buna 特写中近景双套库（第 7 版终核过）", "title": "n-buna · 月猫 2024 无帽西装全动作表", "live": "月と猫のダンス 2024", "song": "lib-nbuna-20261125", "tc": "双套库 1/4", "card": "鹿99", "media": "publish-20261118/lib-nbuna-20261125/待验收-鹿99-7/鹿99-1-素材表-月猫2024.png", "versions": 7, "disposition": "备选留存", "note": "深棕小瞳＋眼白＋粗上睑＋平直眉；鹿100、鹿106 复用"},
+    {"id": "lib-nbuna-tk", "direction": "char-libs", "batch": "鹿99 · n-buna 特写中近景双套库（第 7 版终核过）", "title": "n-buna · 盗作 2025 宽檐帽红吉他全动作表", "live": "盗作 2025", "song": "lib-nbuna-20261125", "tc": "双套库 2/4", "card": "鹿99", "media": "publish-20261118/lib-nbuna-20261125/待验收-鹿99-7/鹿99-2-素材表-盗作2025.png", "versions": 7, "disposition": "备选留存", "note": "粉月戴帽等成员线 鹿106 复用"},
+    {"id": "lib-nbuna-face", "direction": "char-libs", "batch": "鹿99 · n-buna 特写中近景双套库（第 7 版终核过）", "title": "n-buna · 面部表情 8 倍放大核查表", "live": "月猫 / 盗作", "song": "lib-nbuna-20261125", "tc": "双套库 3/4", "card": "鹿99", "media": "publish-20261118/lib-nbuna-20261125/待验收-鹿99-7/鹿99-3-面部表情8倍放大.png", "versions": 7, "disposition": "备选留存", "note": "第7版终版面部基准"},
+    {"id": "lib-nbuna-pair", "direction": "char-libs", "batch": "鹿99 · n-buna 特写中近景双套库（第 7 版终核过）", "title": "n-buna × suis · 同框身高头身比对照", "live": "月猫 / 盗作", "song": "lib-nbuna-20261125", "tc": "双套库 4/4", "card": "鹿99", "media": "publish-20261118/lib-nbuna-20261125/待验收-鹿99-7/鹿99-4-与suis同框对照.png", "versions": 7, "disposition": "备选留存", "note": "已写入 VISUAL_GUIDE 第9节"}
+  ],
+  "overrides": {}
+}
