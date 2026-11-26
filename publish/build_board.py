@@ -558,11 +558,33 @@ def build_board(
         all_items.append(it)
 
     # 4. Apply manual disposition/note overrides: board_catalog.json 先，board_edits.json（页面改动）按字段叠上
-    overrides = {k: dict(v) for k, v in (catalog.get("overrides") or {}).items() if isinstance(v, dict)}
+    #    呈现字段（batch/title/media/alt_media）只允许 board_catalog.json 的 overrides 覆盖，不放开给 board_edits.json
+    catalog_overrides = {k: dict(v) for k, v in (catalog.get("overrides") or {}).items() if isinstance(v, dict)}
+    overrides = {k: dict(v) for k, v in catalog_overrides.items()}
     for k, v in page_edits.items():
         if isinstance(v, dict):
             overrides.setdefault(k, {}).update(v)
     for it in all_items:
+        cov = catalog_overrides.get(it["id"])
+        if isinstance(cov, dict):
+            old_media = it["media"]
+            if "batch" in cov and cov["batch"]:
+                it["batch"] = str(cov["batch"])
+            if "title" in cov and cov["title"]:
+                it["title"] = str(cov["title"])
+            if "media" in cov and cov["media"]:
+                new_media = str(cov["media"])
+                if "alt_media" in cov and isinstance(cov["alt_media"], list):
+                    it["alt_media"] = [str(x) for x in cov["alt_media"] if x]
+                elif new_media != old_media:
+                    alts = list(it.get("alt_media") or [])
+                    if old_media and old_media not in alts:
+                        alts.insert(0, old_media)
+                    it["alt_media"] = alts
+                it["media"] = new_media
+            elif "alt_media" in cov and isinstance(cov["alt_media"], list):
+                it["alt_media"] = [str(x) for x in cov["alt_media"] if x]
+
         ov = overrides.get(it["id"])
         if not isinstance(ov, dict):
             continue

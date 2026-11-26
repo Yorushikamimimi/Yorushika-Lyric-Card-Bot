@@ -317,12 +317,12 @@
     {"id": "tarot-20-judgement", "direction": "pixel-tarot", "batch": "第4批收官（鹿86 · 6 张）", "title": "XX 审判 JUDGEMENT ×《ノーチラス》", "live": "夜鹿作品", "song": "ノーチラス", "tc": "XX/XXII", "card": "鹿86", "media": "pixel-tarot-20261124/待验收-鹿86/鹿86-21_judgement-审判.png", "versions": 1, "disposition": "待排发", "note": "强配曲；41色"},
     {"id": "tarot-21-world", "direction": "pixel-tarot", "batch": "第4批收官（鹿86 · 6 张）", "title": "XXI 世界 THE WORLD ×《エイミー》", "live": "夜鹿作品", "song": "エイミー", "tc": "XXI/XXII", "card": "鹿86", "media": "pixel-tarot-20261124/待验收-鹿86/鹿86-22_world-世界.png", "versions": 1, "disposition": "待排发", "note": "强配曲；42色；23张至此满编"},
 
-    {"id": "spot-01", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "01-镰仓高校前道口 · 江之岛与江之电（夏）", "live": "前世 2024A", "song": "圣地巡礼", "tc": "夏 · 镰仓", "card": "鹿74", "media": "pixel-spots-20261124/out2/01-镰仓高校前道口-江之岛与江之电-suis全身眨眼.png", "versions": 7, "disposition": "待排发", "note": "第7版过：特写库红裙全身眨眼"},
-    {"id": "spot-02", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "02-雨晴海岸 · 女岩与立山雪峰（夏）", "live": "前世 2024B", "song": "北陆圣地", "tc": "夏 · 富山", "card": "鹿74", "media": "pixel-spots-20261124/out2/02-雨晴海岸-女岩与立山雪峰.png", "versions": 3, "disposition": "待排发", "note": "第3版过"},
-    {"id": "spot-03", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "03-宫岛大鸟居 · 落日（夏末）", "live": "前世 2024B", "song": "严格取景参考模板", "tc": "夏末 · 广岛", "card": "鹿74", "media": "pixel-spots-20261124/out2/03-宫岛大鸟居-落日.png", "versions": 3, "disposition": "待排发", "note": "第3版过；本人评价取景最好的一张"},
-    {"id": "spot-04", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "04-富士山 · 春晨湖畔樱花（春）", "live": "前世 2024B", "song": "原创景点", "tc": "春 · 富士", "card": "鹿79", "media": "pixel-spots-20261124/out3/04-富士山-春晨湖畔樱花.png", "versions": 2, "disposition": "待排发", "note": "第2轮去掉忠灵塔改正面富士山＋正面 suis 通过"},
-    {"id": "spot-05", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "05-金阁寺 · 镜湖池初秋（秋）", "live": "前世 2024A", "song": "原创景点", "tc": "秋 · 京都", "card": "鹿79", "media": "pixel-spots-20261124/out3/05-金阁寺-镜湖池初秋.png", "versions": 1, "disposition": "待排发", "note": "红裙 suis 正面，第1版过"},
-    {"id": "spot-06", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "06-小樽运河 · 冬夜煤气灯（冬）", "live": "前世 2024B", "song": "原创景点", "tc": "冬 · 小樽", "card": "鹿79", "media": "pixel-spots-20261124/out3/06-小樽运河-冬夜煤气灯.png", "versions": 1, "disposition": "待排发", "note": "白裙 suis 正面，第1版过"},
+    {"id": "spot-01", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "01-镰仓高校前道口 · 江之岛与江之电（夏）", "live": "前世 2024A", "song": "圣地巡礼", "tc": "夏 · 镰仓", "card": "鹿74", "media": "pixel-spots-20261124/out2/01-镰仓高校前道口-江之岛与江之电-suis全身眨眼.png", "versions": 7, "disposition": "已发布", "ledger_match": "鹿79-日本景点四季", "post_folder": "~/Pictures/发布/20261126-夜鹿日本景点四季/", "note": "第7版过：特写库红裙全身眨眼"},
+    {"id": "spot-02", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "02-雨晴海岸 · 女岩与立山雪峰（夏）", "live": "前世 2024B", "song": "北陆圣地", "tc": "夏 · 富山", "card": "鹿74", "media": "pixel-spots-20261124/out2/02-雨晴海岸-女岩与立山雪峰.png", "versions": 3, "disposition": "已发布", "ledger_match": "鹿79-日本景点四季", "post_folder": "~/Pictures/发布/20261126-夜鹿日本景点四季/", "note": "第3版过"},
+    {"id": "spot-03", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "03-宫岛大鸟居 · 落日（夏末）", "live": "前世 2024B", "song": "严格取景参考模板", "tc": "夏末 · 广岛", "card": "鹿74", "media": "pixel-spots-20261124/out2/03-宫岛大鸟居-落日.png", "versions": 3, "disposition": "已发布", "ledger_match": "鹿79-日本景点四季", "post_folder": "~/Pictures/发布/20261126-夜鹿日本景点四季/", "note": "第3版过；本人评价取景最好的一张"},
+    {"id": "spot-04", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "04-富士山 · 春晨湖畔樱花（春）", "live": "前世 2024B", "song": "原创景点", "tc": "春 · 富士", "card": "鹿79", "media": "pixel-spots-20261124/out3/04-富士山-春晨湖畔樱花.png", "versions": 2, "disposition": "已发布", "ledger_match": "鹿79-日本景点四季", "post_folder": "~/Pictures/发布/20261126-夜鹿日本景点四季/", "note": "第2轮去掉忠灵塔改正面富士山＋正面 suis 通过"},
+    {"id": "spot-05", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "05-金阁寺 · 镜湖池初秋（秋）", "live": "前世 2024A", "song": "原创景点", "tc": "秋 · 京都", "card": "鹿79", "media": "pixel-spots-20261124/out3/05-金阁寺-镜湖池初秋.png", "versions": 1, "disposition": "已发布", "ledger_match": "鹿79-日本景点四季", "post_folder": "~/Pictures/发布/20261126-夜鹿日本景点四季/", "note": "红裙 suis 正面，第1版过"},
+    {"id": "spot-06", "direction": "japan-spots", "batch": "四季景点全集（6 张齐）", "title": "06-小樽运河 · 冬夜煤气灯（冬）", "live": "前世 2024B", "song": "原创景点", "tc": "冬 · 小樽", "card": "鹿79", "media": "pixel-spots-20261124/out3/06-小樽运河-冬夜煤气灯.png", "versions": 1, "disposition": "已发布", "ledger_match": "鹿79-日本景点四季", "post_folder": "~/Pictures/发布/20261126-夜鹿日本景点四季/", "note": "白裙 suis 正面，第1版过"},
     {"id": "spot-04-old", "direction": "japan-spots", "batch": "返修淘汰旧稿", "title": "04-忠灵塔与富士山（初版背影废稿）", "live": "前世 2024B", "song": "原创景点", "tc": "春 · 旧版", "card": "鹿79", "media": "pixel-spots-20261124/out3/04-忠灵塔与富士山-春晨樱花.png", "versions": 1, "disposition": "已淘汰·搁置", "disposition_reason": "鹿79第1轮退回：背影难看、忠灵塔不认识，已改富士山正面", "note": "立下「原创场景 suis 一律正面」铁律的起因"},
 
     {"id": "ava-01", "direction": "suis-avatars", "batch": "15 张定稿（已进发帖夹待发）", "title": "01-前世2024 · 红裙抬手闭眼唱 · 白星光", "live": "前世 2024A", "song": "头像 01/15", "tc": "1:1", "card": "鹿71", "media": "pixel-avatars-20261123/定稿/01-前世2024-红裙-抬手闭眼唱-白星光.png", "versions": 1, "disposition": "已入发帖夹", "post_folder": "~/Pictures/发布/20261124-夜鹿头像/", "platforms_override": {"xhs": "ready", "dy": "ready"}, "note": "含暗码 711/712；待本人定何时发"},
@@ -440,5 +440,36 @@
     {"id": "lib-nbuna-face", "direction": "char-libs", "batch": "鹿99 · n-buna 特写中近景双套库（第 7 版终核过）", "title": "n-buna · 面部表情 8 倍放大核查表", "live": "月猫 / 盗作", "song": "lib-nbuna-20261125", "tc": "双套库 3/4", "card": "鹿99", "media": "publish-20261118/lib-nbuna-20261125/待验收-鹿99-7/鹿99-3-面部表情8倍放大.png", "versions": 7, "disposition": "备选留存", "note": "第7版终版面部基准"},
     {"id": "lib-nbuna-pair", "direction": "char-libs", "batch": "鹿99 · n-buna 特写中近景双套库（第 7 版终核过）", "title": "n-buna × suis · 同框身高头身比对照", "live": "月猫 / 盗作", "song": "lib-nbuna-20261125", "tc": "双套库 4/4", "card": "鹿99", "media": "publish-20261118/lib-nbuna-20261125/待验收-鹿99-7/鹿99-4-与suis同框对照.png", "versions": 7, "disposition": "备选留存", "note": "已写入 VISUAL_GUIDE 第9节"}
   ],
-  "overrides": {}
+  "overrides": {
+    "fav-x1": {
+      "batch": "第 4–6 批（鹿102–104 · 6 张已通过）",
+      "title": "前世 2024 · 花に亡霊书房烟花（箱庭 · 鹿102）",
+      "media": "pixel-iso4-20261126/待验收-鹿102/鹿102-1-zense2024fire-箱庭.png"
+    },
+    "fav-x3": {
+      "batch": "第 4–6 批（鹿102–104 · 6 张已通过）",
+      "title": "月猫 2024 · ブレーメン A 套黄光屋子（箱庭 · 鹿102）",
+      "media": "pixel-iso4-20261126/待验收-鹿102/鹿102-2-tsukineko2024suit-箱庭.png"
+    },
+    "fav-x2": {
+      "batch": "第 4–6 批（鹿102–104 · 6 张已通过）",
+      "title": "前世 2024 · 春泥棒洋楼红花树（箱庭 · 鹿103）",
+      "media": "pixel-iso4-20261126/待验收-鹿103/鹿103-3-zense2024tree-箱庭.png"
+    },
+    "fav-x6": {
+      "batch": "第 4–6 批（鹿102–104 · 6 张已通过）",
+      "title": "月光 2022 · 憂一乗大新月长椅（箱庭 · 鹿103）",
+      "media": "pixel-iso4-20261126/待验收-鹿103/鹿103-4-gekkou2022moon-箱庭.png"
+    },
+    "fav-x4": {
+      "batch": "第 4–6 批（鹿102–104 · 6 张已通过）",
+      "title": "盗作 2025 · 逃亡灯笼台阶（箱庭 · 鹿104）",
+      "media": "pixel-iso4-20261126/待验收-鹿104/鹿104-5-tousaku2025steps-箱庭.png"
+    },
+    "fav-x5": {
+      "batch": "第 4–6 批（鹿102–104 · 6 张已通过）",
+      "title": "盗作 2025 · 夜行苹果糖屋台（箱庭 · 鹿104）",
+      "media": "pixel-iso4-20261126/待验收-鹿104/鹿104-6-tousaku2025yatai-箱庭.png"
+    }
+  }
 }

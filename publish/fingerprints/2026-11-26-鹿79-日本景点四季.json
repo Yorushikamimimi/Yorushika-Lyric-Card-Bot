@@ -1,0 +1,140 @@
+{
+ "post": "ヨルシカ suis 日本四季像素风景 6 张（春富士山／夏镰仓／夏雨晴海岸／夏末宫岛／秋金阁寺／冬小樽运河）",
+ "made": "2026-11-26",
+ "tool": "publish/watermark.py",
+ "note": "clean 为未加码原图（output/ 不进 git，发帖前别删）；读码：python3 publish/watermark.py read <clean> <可疑图> --k 16",
+ "files": [
+  {
+   "platform": "小红书",
+   "code": 791,
+   "k": 16,
+   "file": "~/Pictures/发布/20261126-夜鹿日本景点四季/小红书/01-春-富士山樱花.png",
+   "sha256": "1b2fc3b39c2107b52c8cd387fcf8cec4f9bf0754c65a7621a02e474583d421af",
+   "clean": "output/pixel-spots-20261124/发帖原图/01-春-富士山樱花.png",
+   "clean_sha256": "4be8bb306b9b82857a4d6b58c2a6097ea17de40035f50c14da3c0a9aa11aa245",
+   "src_1x": "output/pixel-spots-20261124/发帖原图/01-春-富士山樱花-1x.png",
+   "src_1x_sha256": "88bd62c84710de065c7c247c1953bb9e2b6f624615e6e566561f3a40b5993c93"
+  },
+  {
+   "platform": "抖音",
+   "code": 792,
+   "k": 16,
+   "file": "~/Pictures/发布/20261126-夜鹿日本景点四季/抖音/01-春-富士山樱花.png",
+   "sha256": "e2d86104d6be6e4d2171115db2d6d2425bba3ed2a835d55a40745bd9994b3815",
+   "clean": "output/pixel-spots-20261124/发帖原图/01-春-富士山樱花.png",
+   "clean_sha256": "4be8bb306b9b82857a4d6b58c2a6097ea17de40035f50c14da3c0a9aa11aa245",
+   "src_1x": "output/pixel-spots-20261124/发帖原图/01-春-富士山樱花-1x.png",
+   "src_1x_sha256": "88bd62c84710de065c7c247c1953bb9e2b6f624615e6e566561f3a40b5993c93"
+  },
+  {
+   "platform": "小红书",
+   "code": 791,
+   "k": 16,
+   "file": "~/Pictures/发布/20261126-夜鹿日本景点四季/小红书/02-夏-镰仓高校前.png",
+   "sha256": "8492e373b62df283c6652e2c4da625c71e7e71dfd87f6f7f2e9b2929547527ff",
+   "clean": "output/pixel-spots-20261124/发帖原图/02-夏-镰仓高校前.png",
+   "clean_sha256": "ea40d88a570b9c2edd1d09e68693cad4ad66d36835ecbe3bc093222d3038767a",
+   "src_1x": "output/pixel-spots-20261124/发帖原图/02-夏-镰仓高校前-1x.png",
+   "src_1x_sha256": "03017091246d2c60201e3cb18afffc3bbaaadaa15bd02bdefa9d30935531af7c"
+  },
+  {
+   "platform": "抖音",
+   "code": 792,
+   "k": 16,
+   "file": "~/Pictures/发布/20261126-夜鹿日本景点四季/抖音/02-夏-镰仓高校前.png",
+   "sha256": "978e1bb8db78f62c30df81e8efe9809c8b0cefb2b65f86b8fdf027472fffad86",
+   "clean": "output/pixel-spots-20261124/发帖原图/02-夏-镰仓高校前.png",
+   "clean_sha256": "ea40d88a570b9c2edd1d09e68693cad4ad66d36835ecbe3bc093222d3038767a",
+   "src_1x": "output/pixel-spots-20261124/发帖原图/02-夏-镰仓高校前-1x.png",
+   "src_1x_sha256": "03017091246d2c60201e3cb18afffc3bbaaadaa15bd02bdefa9d30935531af7c"
+  },
+  {
+   "platform": "小红书",
+   "code": 791,
+   "k": 16,
+   "file": "~/Pictures/发布/20261126-夜鹿日本景点四季/小红书/03-夏-雨晴海岸.png",
+   "sha256": "215d7b7ab9bb059317d7c3b28e6272f50a1aabc5e379cb233a6452da51f5fbfa",
+   "clean": "output/pixel-spots-20261124/发帖原图/03-夏-雨晴海岸.png",
+   "clean_sha256": "2825540be91d4b570ed58f19795ad354a30a7140e634b2e38d7165cadb312267",
+   "src_1x": "output/pixel-spots-20261124/发帖原图/03-夏-雨晴海岸-1x.png",
+   "src_1x_sha256": "fe6bc9a95124b6f3100052ef21fd693d53da2e03022bd352e47c447b6f78d83b"
+  },
+  {
+   "platform": "抖音",
+   "code": 792,
+   "k": 16,
+   "file": "~/Pictures/发布/20261126-夜鹿日本景点四季/抖音/03-夏-雨晴海岸.png",
+   "sha256": "91009a3ff2824a2f081a29102db0f4bbeba393d914765f4a76fe7dabfdf97030",
+   "clean": "output/pixel-spots-20261124/发帖原图/03-夏-雨晴海岸.png",
+   "clean_sha256": "2825540be91d4b570ed58f19795ad354a30a7140e634b2e38d7165cadb312267",
+   "src_1x": "output/pixel-spots-20261124/发帖原图/03-夏-雨晴海岸-1x.png",
+   "src_1x_sha256": "fe6bc9a95124b6f3100052ef21fd693d53da2e03022bd352e47c447b6f78d83b"
+  },
+  {
+   "platform": "小红书",
+   "code": 791,
+   "k": 16,
+   "file": "~/Pictures/发布/20261126-夜鹿日本景点四季/小红书/04-夏末-宫岛大鸟居.png",
+   "sha256": "b51077587cb5416b16ef48e197f214dce9e44df59f540a52df90053ebd97989b",
+   "clean": "output/pixel-spots-20261124/发帖原图/04-夏末-宫岛大鸟居.png",
+   "clean_sha256": "9d5d88a36ec61a36578b4f35aba9c61706244791c27b3b57e1f6dffe9a25a65c",
+   "src_1x": "output/pixel-spots-20261124/发帖原图/04-夏末-宫岛大鸟居-1x.png",
+   "src_1x_sha256": "9e651f4444004078f2607e73251824e15e55f9720a2ab721e28eb2ddcf3a9883"
+  },
+  {
+   "platform": "抖音",
+   "code": 792,
+   "k": 16,
+   "file": "~/Pictures/发布/20261126-夜鹿日本景点四季/抖音/04-夏末-宫岛大鸟居.png",
+   "sha256": "daf4ed1eaa48821d8fc654b516cd455fb4b19bcf2b31fcb9e4762ef90cc52a1e",
+   "clean": "output/pixel-spots-20261124/发帖原图/04-夏末-宫岛大鸟居.png",
+   "clean_sha256": "9d5d88a36ec61a36578b4f35aba9c61706244791c27b3b57e1f6dffe9a25a65c",
+   "src_1x": "output/pixel-spots-20261124/发帖原图/04-夏末-宫岛大鸟居-1x.png",
+   "src_1x_sha256": "9e651f4444004078f2607e73251824e15e55f9720a2ab721e28eb2ddcf3a9883"
+  },
+  {
+   "platform": "小红书",
+   "code": 791,
+   "k": 16,
+   "file": "~/Pictures/发布/20261126-夜鹿日本景点四季/小红书/05-秋-金阁寺.png",
+   "sha256": "8e1329f8a28986ccd214d6e5415ecb16b21fb2afcf2e5fb8c6946f4e5db6efd2",
+   "clean": "output/pixel-spots-20261124/发帖原图/05-秋-金阁寺.png",
+   "clean_sha256": "5aa3b7ab3c6df6752ecaea003988c4d288f6950a07fed1df7672cd1f7d13d960",
+   "src_1x": "output/pixel-spots-20261124/发帖原图/05-秋-金阁寺-1x.png",
+   "src_1x_sha256": "43ee1c52c573c787f35b8418fde75dbc3ffc072161dcd6d386f8d7e269ed4c74"
+  },
+  {
+   "platform": "抖音",
+   "code": 792,
+   "k": 16,
+   "file": "~/Pictures/发布/20261126-夜鹿日本景点四季/抖音/05-秋-金阁寺.png",
+   "sha256": "0fce797fa6ef57a119b39f81db0d33a50f4aad328792ad7bf83a54afa4c2efe8",
+   "clean": "output/pixel-spots-20261124/发帖原图/05-秋-金阁寺.png",
+   "clean_sha256": "5aa3b7ab3c6df6752ecaea003988c4d288f6950a07fed1df7672cd1f7d13d960",
+   "src_1x": "output/pixel-spots-20261124/发帖原图/05-秋-金阁寺-1x.png",
+   "src_1x_sha256": "43ee1c52c573c787f35b8418fde75dbc3ffc072161dcd6d386f8d7e269ed4c74"
+  },
+  {
+   "platform": "小红书",
+   "code": 791,
+   "k": 16,
+   "file": "~/Pictures/发布/20261126-夜鹿日本景点四季/小红书/06-冬-小樽运河.png",
+   "sha256": "32baab2d7be976991316893df1baee1388140bbe6f28661f79da94b6068e2e90",
+   "clean": "output/pixel-spots-20261124/发帖原图/06-冬-小樽运河.png",
+   "clean_sha256": "8cae82dd158a1f73860901979296abce6a5422ffee08cde5eeb1396c070eacfb",
+   "src_1x": "output/pixel-spots-20261124/发帖原图/06-冬-小樽运河-1x.png",
+   "src_1x_sha256": "96131c47a3f67279352fd0729abe6f285a05187ff64a5e43d7a4188b3b5d1231"
+  },
+  {
+   "platform": "抖音",
+   "code": 792,
+   "k": 16,
+   "file": "~/Pictures/发布/20261126-夜鹿日本景点四季/抖音/06-冬-小樽运河.png",
+   "sha256": "b0c1e58524484d2053020f0ea5851fa9a4c29eac476ab1e27503c8523738a629",
+   "clean": "output/pixel-spots-20261124/发帖原图/06-冬-小樽运河.png",
+   "clean_sha256": "8cae82dd158a1f73860901979296abce6a5422ffee08cde5eeb1396c070eacfb",
+   "src_1x": "output/pixel-spots-20261124/发帖原图/06-冬-小樽运河-1x.png",
+   "src_1x_sha256": "96131c47a3f67279352fd0729abe6f285a05187ff64a5e43d7a4188b3b5d1231"
+  }
+ ]
+}
