@@ -660,7 +660,7 @@
       "media": "pixel-iso-anim2-20261126/待验收-鹿105/鹿105-1-tsukineko2024-灯光.gif",
       "versions": 1,
       "disposition": "待排发",
-      "note": "分帖已定（11-26 本人）：动图帖 5 张，静图另一帖；发帖日与文案待本人说发时再备",
+      "note": "分帖已定（11-26 本人）：动图帖 11 张，静图另一帖；发帖日与文案待本人说发时再备",
       "alt_media": [
         "pixel-iso-anim2-20261126/待验收-鹿105/鹿105-1-tsukineko2024-灯光.mp4",
         "pixel-iso-anim2-20261126/待验收-鹿105/鹿105-1-tsukineko2024-逐帧条.png",
@@ -680,7 +680,7 @@
       "media": "pixel-iso-anim2-20261126/待验收-鹿105/鹿105-2-gekkou2022-灯光.gif",
       "versions": 1,
       "disposition": "待排发",
-      "note": "分帖已定（11-26 本人）：动图帖 5 张，静图另一帖；发帖日与文案待本人说发时再备",
+      "note": "分帖已定（11-26 本人）：动图帖 11 张，静图另一帖；发帖日与文案待本人说发时再备",
       "alt_media": [
         "pixel-iso-anim2-20261126/待验收-鹿105/鹿105-2-gekkou2022-灯光.mp4",
         "pixel-iso-anim2-20261126/待验收-鹿105/鹿105-2-gekkou2022-逐帧条.png",
@@ -700,11 +700,131 @@
       "media": "pixel-iso-anim2-20261126/待验收-鹿105/鹿105-3-zense2021-灯光.gif",
       "versions": 1,
       "disposition": "待排发",
-      "note": "分帖已定（11-26 本人）：动图帖 5 张，静图另一帖；发帖日与文案待本人说发时再备",
+      "note": "分帖已定（11-26 本人）：动图帖 11 张，静图另一帖；发帖日与文案待本人说发时再备",
       "alt_media": [
         "pixel-iso-anim2-20261126/待验收-鹿105/鹿105-3-zense2021-灯光.mp4",
         "pixel-iso-anim2-20261126/待验收-鹿105/鹿105-3-zense2021-逐帧条.png",
         "pixel-iso3-20261125/待验收-鹿95/鹿95-3-zense2021-箱庭.png"
+      ]
+    },
+    {
+      "id": "iso-plan-119-zense2024fire",
+      "direction": "iso-stage",
+      "batch": "箱庭灯光动画版",
+      "title": "前世 2024 · 花に亡霊书房烟花箱庭灯光动画 GIF",
+      "live": "前世 2024",
+      "song": "花に亡霊",
+      "tc": null,
+      "card": "鹿119",
+      "planned_card": "鹿119",
+      "media": "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-1-zense2024fire-灯光.gif",
+      "versions": 1,
+      "disposition": "待排发",
+      "note": "分帖已定（11-26 本人）：动图帖 11 张，静图另一帖；发帖日与文案待本人说发时再备",
+      "alt_media": [
+        "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-1-zense2024fire-灯光.mp4",
+        "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-1-zense2024fire-逐帧条.png",
+        "pixel-iso4-20261126/待验收-鹿102/鹿102-1-zense2024fire-箱庭.png"
+      ]
+    },
+    {
+      "id": "iso-plan-119-tsukineko2024suit",
+      "direction": "iso-stage",
+      "batch": "箱庭灯光动画版",
+      "title": "月と猫のダンス 2024 · ブレーメンA 套黄光屋子箱庭灯光动画 GIF",
+      "live": "月と猫のダンス 2024",
+      "song": "ブレーメン",
+      "tc": null,
+      "card": "鹿119",
+      "planned_card": "鹿119",
+      "media": "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-2-tsukineko2024suit-灯光.gif",
+      "versions": 1,
+      "disposition": "待排发",
+      "note": "分帖已定（11-26 本人）：动图帖 11 张，静图另一帖；发帖日与文案待本人说发时再备",
+      "alt_media": [
+        "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-2-tsukineko2024suit-灯光.mp4",
+        "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-2-tsukineko2024suit-逐帧条.png",
+        "pixel-iso4-20261126/待验收-鹿102/鹿102-2-tsukineko2024suit-箱庭.png"
+      ]
+    },
+    {
+      "id": "iso-plan-119-zense2024tree",
+      "direction": "iso-stage",
+      "batch": "箱庭灯光动画版",
+      "title": "前世 2024 · 春泥棒洋楼红花树箱庭灯光动画 GIF",
+      "live": "前世 2024",
+      "song": "春泥棒",
+      "tc": null,
+      "card": "鹿119",
+      "planned_card": "鹿119",
+      "media": "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-3-zense2024tree-灯光.gif",
+      "versions": 1,
+      "disposition": "待排发",
+      "note": "分帖已定（11-26 本人）：动图帖 11 张，静图另一帖；发帖日与文案待本人说发时再备",
+      "alt_media": [
+        "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-3-zense2024tree-灯光.mp4",
+        "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-3-zense2024tree-逐帧条.png",
+        "pixel-iso4-20261126/待验收-鹿103/鹿103-3-zense2024tree-箱庭.png"
+      ]
+    },
+    {
+      "id": "iso-plan-119-gekkou2022moon",
+      "direction": "iso-stage",
+      "batch": "箱庭灯光动画版",
+      "title": "月光 2022 · 憂一乗大新月长椅箱庭灯光动画 GIF",
+      "live": "月光 2022",
+      "song": "憂一乗",
+      "tc": null,
+      "card": "鹿119",
+      "planned_card": "鹿119",
+      "media": "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-4-gekkou2022moon-灯光.gif",
+      "versions": 1,
+      "disposition": "待排发",
+      "note": "分帖已定（11-26 本人）：动图帖 11 张，静图另一帖；发帖日与文案待本人说发时再备",
+      "alt_media": [
+        "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-4-gekkou2022moon-灯光.mp4",
+        "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-4-gekkou2022moon-逐帧条.png",
+        "pixel-iso4-20261126/待验收-鹿103/鹿103-4-gekkou2022moon-箱庭.png"
+      ]
+    },
+    {
+      "id": "iso-plan-119-tousaku2025steps",
+      "direction": "iso-stage",
+      "batch": "箱庭灯光动画版",
+      "title": "盗作 2025 · 逃亡灯笼台阶箱庭灯光动画 GIF",
+      "live": "盗作 2025",
+      "song": "逃亡",
+      "tc": "00:40:21",
+      "card": "鹿119",
+      "planned_card": "鹿119",
+      "media": "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-5-tousaku2025steps-灯光.gif",
+      "versions": 1,
+      "disposition": "待排发",
+      "note": "分帖已定（11-26 本人）：动图帖 11 张，静图另一帖；发帖日与文案待本人说发时再备",
+      "alt_media": [
+        "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-5-tousaku2025steps-灯光.mp4",
+        "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-5-tousaku2025steps-逐帧条.png",
+        "pixel-iso4-20261126/待验收-鹿104/鹿104-5-tousaku2025steps-箱庭.png"
+      ]
+    },
+    {
+      "id": "iso-plan-119-tousaku2025yatai",
+      "direction": "iso-stage",
+      "batch": "箱庭灯光动画版",
+      "title": "盗作 2025 · 夜行苹果糖屋台箱庭灯光动画 GIF",
+      "live": "盗作 2025",
+      "song": "夜行",
+      "tc": "00:50:00",
+      "card": "鹿119",
+      "planned_card": "鹿119",
+      "media": "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-6-tousaku2025yatai-灯光.gif",
+      "versions": 1,
+      "disposition": "待排发",
+      "note": "分帖已定（11-26 本人）：动图帖 11 张，静图另一帖；发帖日与文案待本人说发时再备",
+      "alt_media": [
+        "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-6-tousaku2025yatai-灯光.mp4",
+        "pixel-iso-anim3-20261126/待验收-鹿119/鹿119-6-tousaku2025yatai-逐帧条.png",
+        "pixel-iso4-20261126/待验收-鹿104/鹿104-6-tousaku2025yatai-箱庭.png"
       ]
     },
     {
