@@ -4,6 +4,9 @@
 Usage:
     python3 publish/build_board.py
     python3 publish/build_board.py --apply-updates /tmp/updates.json
+
+本人在夜灯 61702 看板页上改的去向／备注只写 publish/board_edits.json（不写 board_catalog.json），
+出看板时叠在 catalog 的 overrides 之上，同一条同一字段以页面改动为准。两份文件分开提交，git 记录里分得清。
 """
 from __future__ import annotations
 
@@ -19,6 +22,7 @@ from pathlib import Path
 BOT_ROOT = Path(__file__).resolve().parent.parent
 OUT_ROOT = BOT_ROOT / "output"
 CATALOG_PATH = BOT_ROOT / "publish" / "board_catalog.json"
+EDITS_PATH = BOT_ROOT / "publish" / "board_edits.json"  # 本人页面改动，只由 --apply-updates 写
 LEDGER_PATH = BOT_ROOT / "publish" / "ledger.csv"
 MANIFEST_PATH = OUT_ROOT / "pixel-accepted" / "manifest.json"
 PICKS_PATH = OUT_ROOT / "publish-20261118" / "picks.json"
@@ -471,8 +475,10 @@ def build_board(
     catalog_path: Path = CATALOG_PATH,
     vault_dir: Path = DEFAULT_VAULT_CARDS,
     out_path: Path = DEFAULT_BOARD_OUT,
+    edits_path: Path = EDITS_PATH,
 ) -> dict:
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    page_edits = load_edits(edits_path)
     vault_cards = load_vault_cards(vault_dir)
     review_map = load_review_map(REVIEW_PATH)
     ledger_by_work, ledger_rows = load_ledger(LEDGER_PATH)
@@ -551,8 +557,11 @@ def build_board(
         seen_ids.add(it["id"])
         all_items.append(it)
 
-    # 4. Apply manual disposition/note overrides from board_catalog.json
-    overrides = catalog.get("overrides", {})
+    # 4. Apply manual disposition/note overrides: board_catalog.json 先，board_edits.json（页面改动）按字段叠上
+    overrides = {k: dict(v) for k, v in (catalog.get("overrides") or {}).items() if isinstance(v, dict)}
+    for k, v in page_edits.items():
+        if isinstance(v, dict):
+            overrides.setdefault(k, {}).update(v)
     for it in all_items:
         ov = overrides.get(it["id"])
         if not isinstance(ov, dict):
@@ -569,6 +578,13 @@ def build_board(
             for pk, pv in ov["platforms_override"].items():
                 if pk in it["platforms"] and pv in ("unpub", "ready", "skip"):
                     it["platforms"][pk]["status"] = pv
+
+    # 4b. 台账里已有帖子的，「待排发／已入发帖夹」自动当「已发布」（本人 11-26 定：发完帖只记台账，看板自动跟）
+    for it in all_items:
+        if it["disposition"] in ("待排发", "已入发帖夹") and any(
+            v.get("status") == "published" for v in it["platforms"].values()
+        ):
+            it["disposition"] = "已发布"
 
     # 5. Validate all items strictly
     for it in all_items:
@@ -682,15 +698,26 @@ def build_board(
     return board
 
 
-def apply_updates(updates_file: Path, catalog_path: Path = CATALOG_PATH) -> int:
-    """Apply batch disposition/note overrides to board_catalog.json cleanly."""
+def load_edits(edits_path: Path) -> dict:
+    """读页面改动文件的 overrides；文件不存在当空。"""
+    if not edits_path.exists():
+        return {}
+    data = json.loads(edits_path.read_text(encoding="utf-8"))
+    ov = data.get("overrides") if isinstance(data, dict) else None
+    if not isinstance(ov, dict):
+        raise ValueError(f"{edits_path.name} 缺少 overrides 对象")
+    return ov
+
+
+def apply_updates(updates_file: Path, edits_path: Path = EDITS_PATH) -> int:
+    """把页面提交的去向／备注改动写进 board_edits.json（不碰 board_catalog.json）。"""
     payload = json.loads(updates_file.read_text(encoding="utf-8"))
     updates = payload.get("updates") if isinstance(payload, dict) else payload
     if not isinstance(updates, list):
         raise ValueError("updates JSON 必须是列表或包含 updates 列表的对象")
 
-    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
-    overrides = catalog.setdefault("overrides", {})
+    overrides = load_edits(edits_path)
+    stamp = datetime.now().astimezone().isoformat(timespec="seconds")
     applied = 0
     for u in updates:
         iid = str(u.get("id") or "").strip()
@@ -707,11 +734,16 @@ def apply_updates(updates_file: Path, catalog_path: Path = CATALOG_PATH) -> int:
         for k in ("disposition", "disposition_reason", "note", "post_folder", "platforms_override"):
             if k in u:
                 entry[k] = u[k]
+        entry["updated_at"] = stamp
         applied += 1
 
-    tmp = catalog_path.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    os.replace(tmp, catalog_path)
+    out = {
+        "_说明": "本人在夜灯 61702 二创看板上改的去向／备注，由控制台写入；出看板时叠在 board_catalog.json 之上，同字段以这里为准。",
+        "overrides": dict(sorted(overrides.items())),
+    }
+    tmp = edits_path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    os.replace(tmp, edits_path)
     return applied
 
 
@@ -720,14 +752,15 @@ def main() -> None:
     parser.add_argument("--catalog", type=Path, default=CATALOG_PATH)
     parser.add_argument("--vault-cards", type=Path, default=Path(os.environ.get("YORU_VAULT_CARDS", DEFAULT_VAULT_CARDS)))
     parser.add_argument("--out", type=Path, default=DEFAULT_BOARD_OUT)
+    parser.add_argument("--edits", type=Path, default=EDITS_PATH, help="本人页面改动文件（--apply-updates 只写这里）")
     parser.add_argument("--apply-updates", type=Path, help="Optional updates JSON file to merge into catalog overrides before rebuilding")
     args = parser.parse_args()
 
     if args.apply_updates:
-        n = apply_updates(args.apply_updates, args.catalog)
-        print(f"Applied {n} overrides into {args.catalog}")
+        n = apply_updates(args.apply_updates, args.edits)
+        print(f"Applied {n} overrides into {args.edits}")
 
-    board = build_board(args.catalog, args.vault_cards, args.out)
+    board = build_board(args.catalog, args.vault_cards, args.out, args.edits)
     t = board["totals"]
     print(
         f"OK -> {args.out}\n"
