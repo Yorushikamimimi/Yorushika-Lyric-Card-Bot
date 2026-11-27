@@ -214,10 +214,12 @@ def load_ledger(ledger_path: Path) -> tuple[dict[str, dict[str, dict]], list[dic
                 "url": "" if url == "NA" else url,
                 "date": (row.get("date") or "").strip(),
                 "title": (row.get("title") or "").strip(),
-                "views": (row.get("d7_views") or row.get("d3_views") or "").strip(),
-                "likes": (row.get("d7_likes") or row.get("d3_likes") or "").strip(),
-                "saves": (row.get("d7_saves") or row.get("d3_saves") or "").strip(),
-                "comments": (row.get("d7_comments") or row.get("d3_comments") or "").strip(),
+                "views": (row.get("views") or row.get("d7_views") or row.get("d3_views") or "").strip(),
+                "likes": (row.get("likes") or row.get("d7_likes") or row.get("d3_likes") or "").strip(),
+                "saves": (row.get("saves") or row.get("d7_saves") or row.get("d3_saves") or "").strip(),
+                "comments": (row.get("comments") or row.get("d7_comments") or row.get("d3_comments") or "").strip(),
+                "shares": (row.get("shares") or "").strip(),
+                "read_date": (row.get("read_date") or "").strip(),
                 "post_key": f"{plat}:{row.get('date','')}:{url or row.get('title','')}",
             }
             for w in (row.get("works") or "").split(";"):
