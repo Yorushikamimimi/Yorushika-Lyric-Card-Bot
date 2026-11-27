@@ -1,0 +1,88 @@
+{
+ "post": "箱静-1：Live 舞台像素箱庭（1）5 张（鹿92×2、鹿93×2、鹿95）",
+ "made": "2026-11-27",
+ "tool": "publish/watermark.py",
+ "note": "clean 为未加码原图（output/ 不进 git，发帖前别删）；读码：python3 publish/watermark.py read <clean> <可疑图> --k 4；编号 120＝分帖方案首帖（鹿119 之后不占卡号）",
+ "files": [
+  {
+   "platform": "小红书",
+   "code": 1201,
+   "k": 4,
+   "file": "~/Pictures/发布/20261127-夜鹿箱庭静图第1期/小红书/01-月猫2024-春泥棒-樱花林屋子.png",
+   "sha256": "b2ef4d68ab676c6c47ff8f6d3ab1dd8fb5c95109156f89f3d3631f18af0958ff",
+   "clean": "output/pixel-iso-20261125/待验收-鹿92/鹿92-1-tsukineko2024-箱庭.png"
+  },
+  {
+   "platform": "小红书",
+   "code": 1201,
+   "k": 4,
+   "file": "~/Pictures/发布/20261127-夜鹿箱庭静图第1期/小红书/02-月光2022-雨晴る-洋楼台阶.png",
+   "sha256": "d0fe0a24e9538760d3726cae3d0afb2f42b4dc3e154372a219630a3149add47e",
+   "clean": "output/pixel-iso-20261125/待验收-鹿92/鹿92-2-gekkou2022-箱庭.png"
+  },
+  {
+   "platform": "小红书",
+   "code": 1201,
+   "k": 4,
+   "file": "~/Pictures/发布/20261127-夜鹿箱庭静图第1期/小红书/03-盗作2025-祭典屋台与火柱.png",
+   "sha256": "014e3b0e659b62ac09df3ddf76c4e1ac7f5006f542b0bff152fb0d5c18d97bcd",
+   "clean": "output/pixel-iso2-20261125/待验收-鹿93/鹿93-1-tousaku2025-箱庭.png"
+  },
+  {
+   "platform": "小红书",
+   "code": 1201,
+   "k": 4,
+   "file": "~/Pictures/发布/20261127-夜鹿箱庭静图第1期/小红书/04-前世2024-靴の花火-大屏真树舞台.png",
+   "sha256": "fab54206a2cf174ba5f73d8c85827e85d3f195d22361cc9dda31e230173ab1c1",
+   "clean": "output/pixel-iso2-20261125/待验收-鹿93/鹿93-2-zense2024-箱庭.png"
+  },
+  {
+   "platform": "小红书",
+   "code": 1201,
+   "k": 4,
+   "file": "~/Pictures/发布/20261127-夜鹿箱庭静图第1期/小红书/05-前世2021-冬眠-水族馆弧形玻璃.png",
+   "sha256": "23d86c371c23817cd6c9cf77b235dde1f5da7a12c80d91e6bcffa82e1b96ef0f",
+   "clean": "output/pixel-iso3-20261125/待验收-鹿95/鹿95-3-zense2021-箱庭.png"
+  },
+  {
+   "platform": "抖音",
+   "code": 1202,
+   "k": 4,
+   "file": "~/Pictures/发布/20261127-夜鹿箱庭静图第1期/抖音/01-月猫2024-春泥棒-樱花林屋子.png",
+   "sha256": "991aa230e24148e52d0568d2770c4446a8d0c28b4b14db506bc77e007fee9bd5",
+   "clean": "output/pixel-iso-20261125/待验收-鹿92/鹿92-1-tsukineko2024-箱庭.png"
+  },
+  {
+   "platform": "抖音",
+   "code": 1202,
+   "k": 4,
+   "file": "~/Pictures/发布/20261127-夜鹿箱庭静图第1期/抖音/02-月光2022-雨晴る-洋楼台阶.png",
+   "sha256": "fd15f8bf9e7bf08e66c29f4274efc9b83b295da8e4d5807d1b60d30ed2f6255f",
+   "clean": "output/pixel-iso-20261125/待验收-鹿92/鹿92-2-gekkou2022-箱庭.png"
+  },
+  {
+   "platform": "抖音",
+   "code": 1202,
+   "k": 4,
+   "file": "~/Pictures/发布/20261127-夜鹿箱庭静图第1期/抖音/03-盗作2025-祭典屋台与火柱.png",
+   "sha256": "9f85d4f3752a560c44db21adb4ec32d97f609f4e5e557fb83ea9ac0d529cb23e",
+   "clean": "output/pixel-iso2-20261125/待验收-鹿93/鹿93-1-tousaku2025-箱庭.png"
+  },
+  {
+   "platform": "抖音",
+   "code": 1202,
+   "k": 4,
+   "file": "~/Pictures/发布/20261127-夜鹿箱庭静图第1期/抖音/04-前世2024-靴の花火-大屏真树舞台.png",
+   "sha256": "cf1cc2e06d93be8d64db2011a4371fb08460e90deb6c240edddfc58456c757bb",
+   "clean": "output/pixel-iso2-20261125/待验收-鹿93/鹿93-2-zense2024-箱庭.png"
+  },
+  {
+   "platform": "抖音",
+   "code": 1202,
+   "k": 4,
+   "file": "~/Pictures/发布/20261127-夜鹿箱庭静图第1期/抖音/05-前世2021-冬眠-水族馆弧形玻璃.png",
+   "sha256": "f26b645dcdaa0b2bc215b047baf9d5a61fb29bc9e88e63d9fffcf969a2d748ab",
+   "clean": "output/pixel-iso3-20261125/待验收-鹿95/鹿95-3-zense2021-箱庭.png"
+  }
+ ]
+}
